@@ -5,70 +5,55 @@
     </div>
 
     <div class="tree-content">
-      <!-- 已保存的连接 -->
-      <div v-if="savedConnections.length > 0" class="saved-connections">
-        <div class="section-title">已保存的连接</div>
-        <div
-          v-for="conn in savedConnections"
-          :key="conn.id"
-          class="node-item saved-connection-node"
-          :class="{ connected: isConnected(conn.id) }"
-        >
-          <span class="node-icon">💾</span>
-          <span class="node-label">{{ conn.name }}</span>
-          <span class="node-status" :class="{ connected: isConnected(conn.id) }">
-            {{ isConnected(conn.id) ? '●' : '○' }}
-          </span>
-          <button
-            class="connect-btn btn btn-small"
-            @click="handleSavedConnection(conn)"
-            :disabled="isConnected(conn.id)"
-          >
-            {{ isConnected(conn.id) ? '已连接' : '连接' }}
-          </button>
-        </div>
-      </div>
-
-      <!-- 活跃会话 -->
-      <div v-if="activeSessions.length > 0" class="active-sessions">
-        <div class="section-title">当前连接</div>
-        <div v-for="session in activeSessions" :key="session.sessionId" class="tree-node">
+      <!-- 所有连接（已保存的+活跃的） -->
+      <div v-if="allConnections.length > 0">
+        <div v-for="item in allConnections" :key="item.id || item.sessionId" class="tree-node">
           <!-- 连接节点 -->
           <div
             class="node-item connection-node"
-            :class="{ active: currentSessionId === session.sessionId }"
-            @click="selectConnection(session)"
+            :class="{
+              active: currentSessionId === item.sessionId,
+              connected: item.sessionId && isConnected(item.connectionInfo?.id)
+            }"
+            @click="handleConnectionClick(item)"
           >
-            <span class="expand-icon" @click.stop="toggleExpand(session.sessionId, 'connection', session.connectionInfo.name)">
-              {{ isExpanded(session.sessionId, 'connection', session.connectionInfo.name) ? '▼' : '▶' }}
+            <span
+              class="expand-icon"
+              @click.stop="item.sessionId ? toggleExpand(item.sessionId, 'connection', item.connectionInfo.name) : null"
+            >
+              {{ item.sessionId && isExpanded(item.sessionId, 'connection', item.connectionInfo.name) ? '▼' : '▶' }}
             </span>
-            <span class="node-icon">🔗</span>
-            <span class="node-label">{{ session.connectionInfo.name }}</span>
-            <span class="node-status" :class="{ connected: true }">●</span>
+            <span class="node-icon">
+              {{ item.sessionId ? '🔗' : '💾' }}
+            </span>
+            <span class="node-label">{{ item.name || item.connectionInfo.name }}</span>
+            <span class="node-status" :class="{ connected: item.sessionId }">
+              {{ item.sessionId ? '●' : '○' }}
+            </span>
           </div>
 
-          <!-- 数据库列表 -->
-          <div v-if="isExpanded(session.sessionId, 'connection', session.connectionInfo.name)" class="children">
+          <!-- 数据库列表（仅当连接活跃时显示） -->
+          <div v-if="item.sessionId && isExpanded(item.sessionId, 'connection', item.connectionInfo.name)" class="children">
             <div
-              v-for="database in session.databases"
+              v-for="database in item.databases"
               :key="database"
               class="node-item database-node"
-              :class="{ active: session.currentDatabase === database }"
-              @click="selectDatabase(session, database)"
+              :class="{ active: item.currentDatabase === database }"
+              @click="selectDatabase(item, database)"
             >
-              <span class="expand-icon" @click.stop="toggleExpand(session.sessionId, 'database', database)">
-                {{ isExpanded(session.sessionId, 'database', database) ? '▼' : '▶' }}
+              <span class="expand-icon" @click.stop="toggleExpand(item.sessionId, 'database', database)">
+                {{ isExpanded(item.sessionId, 'database', database) ? '▼' : '▶' }}
               </span>
               <span class="node-icon">📁</span>
               <span class="node-label">{{ database }}</span>
 
               <!-- 表列表 -->
-              <div v-if="isExpanded(session.sessionId, 'database', database)" class="children">
+              <div v-if="isExpanded(item.sessionId, 'database', database)" class="children">
                 <div
-                  v-for="table in session.tables[database] || []"
+                  v-for="table in item.tables[database] || []"
                   :key="table"
                   class="node-item table-node"
-                  @click="selectTable(session, table)"
+                  @click="selectTable(item, table)"
                 >
                   <span class="node-icon">📊</span>
                   <span class="node-label">{{ table }}</span>
@@ -79,9 +64,9 @@
         </div>
       </div>
 
-      <div v-if="activeSessions.length === 0 && savedConnections.length === 0" class="empty-state">
+      <div v-else class="empty-state">
         <p>暂无连接</p>
-        <p class="empty-hint">点击"新建连接"添加数据库连接</p>
+        <p class="empty-hint">请先在连接管理中创建数据库连接</p>
       </div>
     </div>
 
@@ -121,6 +106,28 @@ export default {
   computed: {
     activeSessions() {
       return connectionStore.getActiveSessions()
+    },
+
+    // 合并已保存的连接和活跃会话
+    allConnections() {
+      const result = []
+
+      // 添加已保存但未连接的连接
+      this.savedConnections.forEach(savedConn => {
+        const isActive = this.activeSessions.some(session =>
+          session.connectionInfo.id === savedConn.id
+        )
+        if (!isActive) {
+          result.push(savedConn)
+        }
+      })
+
+      // 添加所有活跃会话
+      this.activeSessions.forEach(session => {
+        result.push(session)
+      })
+
+      return result
     }
   },
 
@@ -151,27 +158,25 @@ export default {
       )
     },
 
-    async handleSavedConnection(connectionInfo) {
-      try {
-        // 检查是否已经连接
-        const existingSession = this.activeSessions.find(session =>
-          session.connectionInfo.id === connectionInfo.id
-        )
+    async handleConnectionClick(item) {
+      // 如果是已保存的连接（未连接），则连接并自动展开
+      if (!item.sessionId) {
+        try {
+          const sessionId = await connectionStore.connect(item)
+          this.selectSession(sessionId)
+          const session = connectionStore.getSession(sessionId)
 
-        if (existingSession) {
-          // 如果已连接，直接选择
-          this.selectSession(existingSession.sessionId)
-          this.$emit('connection-selected', existingSession)
-          return
+          // 自动展开连接节点
+          connectionStore.toggleNode(sessionId, 'connection', session.connectionInfo.name)
+
+          this.$emit('connection-selected', session)
+        } catch (error) {
+          alert('连接失败: ' + (error.response?.data?.error || error.message))
         }
-
-        // 创建新连接
-        const sessionId = await connectionStore.connect(connectionInfo)
-        this.selectSession(sessionId)
-        const session = connectionStore.getSession(sessionId)
-        this.$emit('connection-selected', session)
-      } catch (error) {
-        alert('连接失败: ' + (error.response?.data?.error || error.message))
+      } else {
+        // 如果是已连接的会话，直接选择
+        this.selectSession(item.sessionId)
+        this.$emit('connection-selected', item)
       }
     },
 
@@ -280,20 +285,6 @@ export default {
   margin-bottom: 2px;
 }
 
-.saved-connections,
-.active-sessions {
-  margin-bottom: var(--spacing-md);
-}
-
-.section-title {
-  font-size: 11px;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  font-weight: 600;
-  padding: 8px 8px 4px 8px;
-  letter-spacing: 0.5px;
-}
-
 .node-item {
   display: flex;
   align-items: center;
@@ -314,32 +305,6 @@ export default {
 
 .node-item.connection-node.active {
   background-color: rgba(86, 156, 214, 0.2);
-}
-
-.saved-connection-node {
-  position: relative;
-}
-
-.saved-connection-node.connected {
-  background-color: var(--bg-quaternary);
-}
-
-.connect-btn {
-  position: absolute;
-  right: 8px;
-  padding: 2px 8px;
-  font-size: 11px;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.node-item:hover .connect-btn {
-  opacity: 1;
-}
-
-.connect-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .expand-icon {
