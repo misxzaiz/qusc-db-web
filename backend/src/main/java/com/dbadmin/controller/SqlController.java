@@ -59,4 +59,39 @@ public class SqlController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    @GetMapping("/databases/{sessionId}")
+    public ResponseEntity<?> getDatabases(@PathVariable String sessionId) {
+        try {
+            List<String> databases = connectionManager.getDatabases(sessionId);
+            return ResponseEntity.ok(Map.of("databases", databases));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/switch-database/{sessionId}")
+    public ResponseEntity<?> switchDatabase(@PathVariable String sessionId, @RequestBody Map<String, String> request) {
+        String databaseName = request.get("database");
+        if (databaseName == null || databaseName.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Database name is required"));
+        }
+
+        try {
+            connectionManager.switchDatabase(sessionId, databaseName);
+            return ResponseEntity.ok(Map.of("message", "Switched to database: " + databaseName));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/current-database/{sessionId}")
+    public ResponseEntity<?> getCurrentDatabase(@PathVariable String sessionId) {
+        try {
+            String database = connectionManager.getCurrentDatabase(sessionId);
+            return ResponseEntity.ok(Map.of("database", database));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }

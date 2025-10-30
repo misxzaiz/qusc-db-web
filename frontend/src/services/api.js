@@ -34,5 +34,17 @@ export const sqlApi = {
 
   getTables(sessionId) {
     return api.get(`/sql/tables/${sessionId}`)
+  },
+
+  getDatabases(sessionId) {
+    return api.get(`/sql/databases/${sessionId}`)
+  },
+
+  switchDatabase(sessionId, databaseName) {
+    return api.post(`/sql/switch-database/${sessionId}`, { database: databaseName })
+  },
+
+  getCurrentDatabase(sessionId) {
+    return api.get(`/sql/current-database/${sessionId}`)
   }
 }

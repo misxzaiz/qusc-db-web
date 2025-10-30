@@ -14,6 +14,23 @@
         </button>
       </div>
 
+      <div v-if="isConnected" class="database-section">
+        <h4>当前数据库</h4>
+        <div class="current-db">
+          <span v-if="currentDatabase">{{ currentDatabase }}</span>
+          <span v-else class="no-db">未选择</span>
+        </div>
+        <select v-model="selectedDatabase" @change="switchDatabase" class="db-select">
+          <option value="">选择数据库</option>
+          <option v-for="db in databases" :key="db" :value="db">
+            {{ db }}
+          </option>
+        </select>
+        <button class="btn btn-small" @click="refreshDatabases" :disabled="loadingDatabases">
+          刷新
+        </button>
+      </div>
+
       <div v-if="isConnected" class="tables-section">
         <h4>数据表</h4>
         <div v-if="loadingTables" class="loading">加载中...</div>
@@ -121,6 +138,10 @@ export default {
       selectedConnection: null,
       sessionId: '',
       isConnected: false,
+      databases: [],
+      selectedDatabase: '',
+      currentDatabase: '',
+      loadingDatabases: false,
       tables: [],
       loadingTables: false,
       sqlText: '',
@@ -194,7 +215,9 @@ export default {
         sessionStorage.save(this.sessionId, this.selectedConnection)
         sessionStorage.save('sessionId', { sessionId: this.sessionId })
 
-        this.loadTables()
+        await this.loadDatabases()
+        await this.loadCurrentDatabase()
+        await this.loadTables()
         alert('连接成功')
       } catch (error) {
         alert('连接失败: ' + error.response?.data?.error || error.message)
@@ -232,6 +255,53 @@ export default {
         this.tables = []
       }
       this.loadingTables = false
+    },
+
+    async loadDatabases() {
+      if (!this.sessionId) return
+
+      this.loadingDatabases = true
+      try {
+        const response = await sqlApi.getDatabases(this.sessionId)
+        this.databases = response.data.databases
+      } catch (error) {
+        console.error('加载数据库列表失败', error)
+        this.databases = []
+      }
+      this.loadingDatabases = false
+    },
+
+    async loadCurrentDatabase() {
+      if (!this.sessionId) return
+
+      try {
+        const response = await sqlApi.getCurrentDatabase(this.sessionId)
+        this.currentDatabase = response.data.database
+        this.selectedDatabase = this.currentDatabase
+      } catch (error) {
+        console.error('获取当前数据库失败', error)
+        this.currentDatabase = ''
+      }
+    },
+
+    async refreshDatabases() {
+      await this.loadDatabases()
+      await this.loadCurrentDatabase()
+    },
+
+    async switchDatabase() {
+      if (!this.selectedDatabase || !this.sessionId) return
+
+      if (this.selectedDatabase === this.currentDatabase) return
+
+      try {
+        await sqlApi.switchDatabase(this.sessionId, this.selectedDatabase)
+        this.currentDatabase = this.selectedDatabase
+        await this.loadTables()
+        alert(`已切换到数据库: ${this.selectedDatabase}`)
+      } catch (error) {
+        alert('切换数据库失败: ' + error.response?.data?.error || error.message)
+      }
     },
 
     async executeQuery() {
@@ -428,12 +498,39 @@ export default {
   font-size: 13px;
 }
 
+.database-section h4,
 .tables-section h4,
 .history-section h4 {
   margin: 0 0 var(--spacing-md) 0;
   color: var(--text-secondary);
   font-size: 13px;
   text-transform: uppercase;
+}
+
+.current-db {
+  padding: var(--spacing-sm);
+  background-color: var(--bg-highlight);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-sm);
+  font-family: var(--font-family-mono);
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.no-db {
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+.db-select {
+  width: 100%;
+  padding: 6px 10px;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 13px;
+  margin-bottom: var(--spacing-sm);
 }
 
 .loading {

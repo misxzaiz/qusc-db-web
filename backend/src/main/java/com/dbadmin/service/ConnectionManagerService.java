@@ -74,6 +74,67 @@ public class ConnectionManagerService {
         }
     }
 
+    public List<String> getDatabases(String sessionId) throws SQLException {
+        Connection conn = activeConnections.get(sessionId);
+        if (conn == null || conn.isClosed()) {
+            throw new SQLException("Connection not found or closed");
+        }
+
+        List<String> databases = new ArrayList<>();
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SHOW DATABASES")) {
+            while (rs.next()) {
+                String dbName = rs.getString(1);
+                // 过滤系统数据库
+                if (!"information_schema".equals(dbName) &&
+                    !"performance_schema".equals(dbName) &&
+                    !"mysql".equals(dbName) &&
+                    !"sys".equals(dbName)) {
+                    databases.add(dbName);
+                }
+            }
+        } catch (SQLException e) {
+            throw new SQLException("Failed to get databases: " + e.getMessage());
+        }
+        return databases;
+    }
+
+    public void switchDatabase(String sessionId, String databaseName) throws SQLException {
+        Connection conn = activeConnections.get(sessionId);
+        if (conn == null || conn.isClosed()) {
+            throw new SQLException("Connection not found or closed");
+        }
+
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("USE `" + databaseName + "`");
+
+            // 更新连接信息中的数据库名
+            ConnectionInfo info = connectionInfoMap.get(sessionId);
+            if (info != null) {
+                info.setDatabase(databaseName);
+            }
+        } catch (SQLException e) {
+            throw new SQLException("Failed to switch database: " + e.getMessage());
+        }
+    }
+
+    public String getCurrentDatabase(String sessionId) throws SQLException {
+        Connection conn = activeConnections.get(sessionId);
+        if (conn == null || conn.isClosed()) {
+            throw new SQLException("Connection not found or closed");
+        }
+
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT DATABASE()")) {
+            if (rs.next()) {
+                return rs.getString(1);
+            }
+            return null;
+        } catch (SQLException e) {
+            throw new SQLException("Failed to get current database: " + e.getMessage());
+        }
+    }
+
     public void closeConnection(String sessionId) {
         Connection conn = activeConnections.remove(sessionId);
         connectionInfoMap.remove(sessionId);
@@ -101,8 +162,14 @@ public class ConnectionManagerService {
     }
 
     private Connection createPhysicalConnection(ConnectionInfo info) throws SQLException {
+        String database = info.getDatabase();
+        if (database == null || database.trim().isEmpty()) {
+            // 不指定数据库，连接到服务器
+            database = "";
+        }
+
         String url = String.format("jdbc:mysql://%s:%d/%s?useSSL=%s&allowPublicKeyRetrieval=true",
-                info.getHost(), info.getPort(), info.getDatabase(),
+                info.getHost(), info.getPort(), database,
                 "REQUIRED".equalsIgnoreCase(info.getSslMode()) ? "true" : "false");
 
         Properties props = new Properties();

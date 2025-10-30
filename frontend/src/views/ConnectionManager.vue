@@ -67,8 +67,8 @@
           </div>
 
           <div class="form-group">
-            <label>数据库名</label>
-            <input v-model="formData.database" type="text" placeholder="数据库名称" />
+            <label>数据库名（可选）</label>
+            <input v-model="formData.database" type="text" placeholder="留空连接后可选择数据库" />
           </div>
 
           <div class="form-group">
@@ -147,8 +147,8 @@ export default {
     },
 
     async testAndSave() {
-      if (!this.formData.name || !this.formData.host || !this.formData.database || !this.formData.username) {
-        alert('请填写必要字段')
+      if (!this.formData.name || !this.formData.host || !this.formData.username) {
+        alert('请填写必要字段（连接名、主机、用户名）')
         return
       }
 
