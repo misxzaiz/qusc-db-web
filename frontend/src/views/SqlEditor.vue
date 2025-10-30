@@ -1,75 +1,89 @@
 <template>
   <div class="sql-editor">
-    <div class="sidebar">
-      <div class="sidebar-header">
-        <h3>数据库连接</h3>
-        <select v-model="selectedConnectionId" @change="handleConnectionChange" class="connection-select">
-          <option value="">选择连接</option>
-          <option v-for="conn in connections" :key="conn.id" :value="conn.id">
-            {{ conn.name }}
-          </option>
-        </select>
-        <button v-if="selectedConnection" class="btn btn-small btn-connect" @click="toggleConnection">
-          {{ isConnected ? '断开' : '连接' }}
-        </button>
-      </div>
+    <ConnectionTree
+      @new-connection="showConnectionDialog = true"
+      @connection-selected="onConnectionSelected"
+      @database-selected="onDatabaseSelected"
+      @table-selected="onTableSelected"
+    />
 
-      <div v-if="isConnected" class="database-section">
-        <h4>当前数据库</h4>
-        <div class="current-db">
-          <span v-if="currentDatabase">{{ currentDatabase }}</span>
-          <span v-else class="no-db">未选择</span>
+    <!-- 新建连接对话框 -->
+    <div v-if="showConnectionDialog" class="dialog-overlay" @click="closeConnectionDialog">
+      <div class="dialog" @click.stop>
+        <div class="dialog-header">
+          <h2>新建连接</h2>
+          <button class="close-btn" @click="closeConnectionDialog">×</button>
         </div>
-        <select v-model="selectedDatabase" @change="switchDatabase" class="db-select">
-          <option value="">选择数据库</option>
-          <option v-for="db in databases" :key="db" :value="db">
-            {{ db }}
-          </option>
-        </select>
-        <button class="btn btn-small" @click="refreshDatabases" :disabled="loadingDatabases">
-          刷新
-        </button>
-      </div>
-
-      <div v-if="isConnected" class="tables-section">
-        <h4>数据表</h4>
-        <div v-if="loadingTables" class="loading">加载中...</div>
-        <div v-else-if="tables.length === 0" class="empty">无数据表</div>
-        <ul v-else class="table-list">
-          <li v-for="table in tables" :key="table" @click="insertTableName(table)">
-            {{ table }}
-          </li>
-        </ul>
-      </div>
-
-      <div v-if="isConnected" class="history-section">
-        <h4>查询历史</h4>
-        <div v-if="queryHistory.length === 0" class="empty">暂无历史</div>
-        <ul v-else class="history-list">
-          <li v-for="(item, index) in queryHistory.slice(-10).reverse()" :key="index" @click="loadHistory(item)">
-            <div class="history-item">
-              <div class="history-sql">{{ item.sql.substring(0, 50) }}...</div>
-              <div class="history-time">{{ formatTime(item.time) }}</div>
+        <div class="dialog-body">
+          <div class="form-group">
+            <label>连接名称</label>
+            <input v-model="newConnection.name" type="text" placeholder="输入连接名称" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>主机地址</label>
+              <input v-model="newConnection.host" type="text" placeholder="localhost" />
             </div>
-          </li>
-        </ul>
+            <div class="form-group">
+              <label>端口</label>
+              <input v-model.number="newConnection.port" type="number" placeholder="3306" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>数据库名（可选）</label>
+            <input v-model="newConnection.database" type="text" placeholder="留空连接后可选择数据库" />
+          </div>
+          <div class="form-group">
+            <label>用户名</label>
+            <input v-model="newConnection.username" type="text" placeholder="用户名" />
+          </div>
+          <div class="form-group">
+            <label>密码</label>
+            <input v-model="newConnection.password" type="password" placeholder="密码" />
+          </div>
+          <div class="form-group">
+            <label>SSL模式</label>
+            <select v-model="newConnection.sslMode">
+              <option value="DISABLED">禁用</option>
+              <option value="REQUIRED">必需</option>
+            </select>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn btn-secondary" @click="closeConnectionDialog">取消</button>
+          <button class="btn btn-primary" @click="testAndConnect">测试并连接</button>
+        </div>
       </div>
     </div>
 
     <div class="main-content">
       <div class="editor-section">
         <div class="editor-toolbar">
-          <button class="btn btn-primary" @click="executeQuery" :disabled="!isConnected || !sqlText.trim()">
-            执行查询 (F5)
-          </button>
-          <button class="btn btn-secondary" @click="executeUpdate" :disabled="!isConnected || !sqlText.trim()">
-            执行更新
-          </button>
-          <button class="btn btn-secondary" @click="clearEditor">清空</button>
-          <button class="btn btn-secondary" @click="formatSql">格式化</button>
-          <span v-if="queryResult" class="result-info">
-            {{ queryResult.data ? `${queryResult.data.length} 行` : `${queryResult.affectedRows} 行受影响` }}
-          </span>
+          <div class="toolbar-left">
+            <button class="btn btn-primary" @click="executeQuery" :disabled="!currentSession || !sqlText.trim()">
+              执行查询 (F5)
+            </button>
+            <button class="btn btn-secondary" @click="executeUpdate" :disabled="!currentSession || !sqlText.trim()">
+              执行更新
+            </button>
+            <button class="btn btn-secondary" @click="clearEditor">清空</button>
+            <button class="btn btn-secondary" @click="formatSql">格式化</button>
+          </div>
+          <div class="toolbar-right">
+            <div v-if="currentSession" class="connection-info">
+              <span class="info-item">
+                <span class="label">连接:</span>
+                <span class="value">{{ currentSession.connectionInfo.name }}</span>
+              </span>
+              <span class="info-item">
+                <span class="label">数据库:</span>
+                <span class="value">{{ currentDatabase || '未选择' }}</span>
+              </span>
+            </div>
+            <span v-if="queryResult" class="result-info">
+              {{ queryResult.data ? `${queryResult.data.length} 行` : `${queryResult.affectedRows} 行受影响` }}
+            </span>
+          </div>
         </div>
 
         <div class="editor-wrapper">
@@ -118,234 +132,195 @@
         </div>
       </div>
     </div>
+
+    <!-- 查询历史侧边栏 -->
+    <div class="history-sidebar">
+      <h4>查询历史</h4>
+      <div v-if="queryHistory.length === 0" class="empty">暂无历史</div>
+      <ul v-else class="history-list">
+        <li v-for="(item, index) in queryHistory.slice(-20).reverse()" :key="index" @click="loadHistory(item)">
+          <div class="history-item">
+            <div class="history-sql">{{ item.sql.substring(0, 60) }}...</div>
+            <div class="history-meta">
+              <span class="history-time">{{ formatTime(item.time) }}</span>
+              <span class="history-duration">{{ item.duration }}ms</span>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
 <script>
 import { connectionApi, sqlApi } from '../services/api'
-import { connectionStorage, sessionStorage } from '../utils/storage'
+import { connectionStore } from '../stores/connectionStore'
 import SqlCodeEditor from '../components/SqlCodeEditor.vue'
+import ConnectionTree from '../components/ConnectionTree.vue'
 
 export default {
   name: 'SqlEditor',
   components: {
-    SqlCodeEditor
+    SqlCodeEditor,
+    ConnectionTree
   },
+
   data() {
     return {
-      connections: [],
-      selectedConnectionId: '',
-      selectedConnection: null,
-      sessionId: '',
-      isConnected: false,
-      databases: [],
-      selectedDatabase: '',
-      currentDatabase: '',
-      loadingDatabases: false,
-      tables: [],
-      loadingTables: false,
+      currentSession: null,
+      currentDatabase: null,
       sqlText: '',
       queryResult: null,
       error: null,
       columns: [],
-      queryHistory: []
+      queryHistory: [],
+      showConnectionDialog: false,
+      newConnection: {
+        name: 'db',
+        host: 'localhost',
+        port: 3306,
+        database: '',
+        username: 'root',
+        password: '1234',
+        sslMode: 'DISABLED'
+      }
     }
   },
 
   mounted() {
-    this.loadConnections()
-    this.checkExistingConnection()
     this.loadQueryHistory()
   },
 
-  beforeUnmount() {
-    if (this.isConnected && this.sessionId) {
-      this.disconnect()
-    }
-  },
-
   methods: {
-    loadConnections() {
-      this.connections = connectionStorage.getAll()
+    onConnectionSelected(session) {
+      this.currentSession = session
+      this.currentDatabase = session?.currentDatabase || null
+      this.queryResult = null
+      this.error = null
     },
 
-    checkExistingConnection() {
-      const savedSessionId = sessionStorage.get('sessionId')
-      const savedConnection = sessionStorage.get(savedSessionId?.sessionId)
+    async onDatabaseSelected({ session, database }) {
+      this.currentSession = session
+      this.currentDatabase = database
+      this.queryResult = null
+      this.error = null
+    },
 
-      if (savedSessionId && savedConnection) {
-        this.sessionId = savedSessionId.sessionId
-        this.selectedConnection = savedConnection
-        this.selectedConnectionId = savedConnection.id
-        this.isConnected = true
-        this.loadTables()
+    onTableSelected({ session, table }) {
+      // 生成基本查询语句，如果SQL编辑器有内容则追加
+      const query = `SELECT * FROM \`${table}\` LIMIT 100;`
+      const insertText = this.sqlText.trim() ? `\n${query}` : query
+
+      // 插入到编辑器
+      this.$refs.codeEditor?.insertText(insertText)
+      this.$refs.codeEditor?.focus()
+    },
+
+    closeConnectionDialog() {
+      this.showConnectionDialog = false
+      this.newConnection = {
+        name: '',
+        host: 'localhost',
+        port: 3306,
+        database: '',
+        username: '',
+        password: '',
+        sslMode: 'DISABLED'
       }
     },
 
-    async handleConnectionChange() {
-      if (this.selectedConnectionId) {
-        this.selectedConnection = this.connections.find(c => c.id === this.selectedConnectionId)
-        if (this.isConnected) {
-          await this.disconnect()
-        }
-      } else {
-        this.selectedConnection = null
-      }
-    },
-
-    async toggleConnection() {
-      if (this.isConnected) {
-        await this.disconnect()
-      } else {
-        await this.connect()
-      }
-    },
-
-    async connect() {
-      if (!this.selectedConnection) {
-        alert('请选择连接')
+    async testAndConnect() {
+      if (!this.newConnection.name || !this.newConnection.host || !this.newConnection.username) {
+        alert('请填写必要字段')
         return
       }
 
       try {
-        const response = await connectionApi.connect(this.selectedConnection)
-        this.sessionId = response.data.sessionId
-        this.isConnected = true
+        // 先测试连接
+        const testResponse = await connectionApi.test(this.newConnection)
+        if (!testResponse.data.success) {
+          alert('连接测试失败')
+          return
+        }
 
-        sessionStorage.save(this.sessionId, this.selectedConnection)
-        sessionStorage.save('sessionId', { sessionId: this.sessionId })
+        // 保存连接信息
+        const connectionToSave = { ...this.newConnection }
 
-        await this.loadDatabases()
-        await this.loadCurrentDatabase()
-        await this.loadTables()
+        // 关闭对话框
+        this.closeConnectionDialog()
+
+        // 建立连接
+        const sessionId = await connectionStore.connect(connectionToSave)
+        const session = connectionStore.getSession(sessionId)
+        this.onConnectionSelected(session)
         alert('连接成功')
       } catch (error) {
+        console.error('Connection data:', this.newConnection)
         alert('连接失败: ' + error.response?.data?.error || error.message)
       }
     },
 
-    async disconnect() {
-      if (!this.sessionId) return
-
-      try {
-        await connectionApi.disconnect(this.sessionId)
-      } catch (error) {
-        console.error('断开连接失败', error)
-      }
-
-      this.isConnected = false
-      this.sessionId = ''
-      this.tables = []
-      this.queryResult = null
-      this.error = null
-
-      sessionStorage.remove(this.sessionId)
-      sessionStorage.remove('sessionId')
-    },
-
-    async loadTables() {
-      if (!this.sessionId) return
-
-      this.loadingTables = true
-      try {
-        const response = await sqlApi.getTables(this.sessionId)
-        this.tables = response.data.tables
-      } catch (error) {
-        console.error('加载表列表失败', error)
-        this.tables = []
-      }
-      this.loadingTables = false
-    },
-
-    async loadDatabases() {
-      if (!this.sessionId) return
-
-      this.loadingDatabases = true
-      try {
-        const response = await sqlApi.getDatabases(this.sessionId)
-        this.databases = response.data.databases
-      } catch (error) {
-        console.error('加载数据库列表失败', error)
-        this.databases = []
-      }
-      this.loadingDatabases = false
-    },
-
-    async loadCurrentDatabase() {
-      if (!this.sessionId) return
-
-      try {
-        const response = await sqlApi.getCurrentDatabase(this.sessionId)
-        this.currentDatabase = response.data.database
-        this.selectedDatabase = this.currentDatabase
-      } catch (error) {
-        console.error('获取当前数据库失败', error)
-        this.currentDatabase = ''
-      }
-    },
-
-    async refreshDatabases() {
-      await this.loadDatabases()
-      await this.loadCurrentDatabase()
-    },
-
-    async switchDatabase() {
-      if (!this.selectedDatabase || !this.sessionId) return
-
-      if (this.selectedDatabase === this.currentDatabase) return
-
-      try {
-        await sqlApi.switchDatabase(this.sessionId, this.selectedDatabase)
-        this.currentDatabase = this.selectedDatabase
-        await this.loadTables()
-        alert(`已切换到数据库: ${this.selectedDatabase}`)
-      } catch (error) {
-        alert('切换数据库失败: ' + error.response?.data?.error || error.message)
-      }
-    },
-
     async executeQuery() {
-      if (!this.sessionId || !this.sqlText.trim()) {
-        return
-      }
+      if (!this.currentSession || !this.sqlText.trim()) return
 
       this.error = null
       this.queryResult = null
-
       const startTime = Date.now()
 
-      try {
-        const response = await sqlApi.query(this.sessionId, this.sqlText.trim())
-        this.queryResult = response.data
+      const sqlText = this.sqlText.trim()
 
-        if (this.queryResult.data && this.queryResult.data.length > 0) {
-          this.columns = Object.keys(this.queryResult.data[0])
+      try {
+        // 检查是否是 USE 语句
+        if (sqlText.toUpperCase().startsWith('USE ')) {
+          // 执行 USE 语句（使用 execute 方法）
+          const response = await sqlApi.execute(this.currentSession.sessionId, sqlText)
+
+          // 更新当前数据库
+          if (response.data.affectedRows > 0) {
+            try {
+              const dbResponse = await sqlApi.getCurrentDatabase(this.currentSession.sessionId)
+              if (dbResponse.data && dbResponse.data.database !== this.currentDatabase) {
+                this.currentDatabase = dbResponse.data.database
+                // 更新 session 中的当前数据库
+                const session = connectionStore.getSession(this.currentSession.sessionId)
+                if (session) {
+                  session.currentDatabase = this.currentDatabase
+                }
+              }
+            } catch (e) {
+              console.error('获取当前数据库失败', e)
+            }
+          }
+
+          this.queryResult = { affectedRows: response.data.affectedRows }
+        } else {
+          // 普通查询
+          const response = await sqlApi.query(this.currentSession.sessionId, sqlText)
+          this.queryResult = response.data
+
+          if (this.queryResult.data && this.queryResult.data.length > 0) {
+            this.columns = Object.keys(this.queryResult.data[0])
+          }
         }
 
-        // 添加到历史记录
-        this.addToHistory(this.sqlText.trim(), 'query', Date.now() - startTime)
+        this.addToHistory(sqlText, 'query', Date.now() - startTime)
       } catch (error) {
         this.error = error.response?.data?.error || error.message
-        this.addToHistory(this.sqlText.trim(), 'error', Date.now() - startTime, this.error)
+        this.addToHistory(sqlText, 'error', Date.now() - startTime, this.error)
       }
     },
 
     async executeUpdate() {
-      if (!this.sessionId || !this.sqlText.trim()) {
-        return
-      }
+      if (!this.currentSession || !this.sqlText.trim()) return
 
-      if (!confirm('确定要执行此更新语句吗？')) {
-        return
-      }
+      if (!confirm('确定要执行此更新语句吗？')) return
 
       this.error = null
       this.queryResult = null
-
       const startTime = Date.now()
 
       try {
-        const response = await sqlApi.execute(this.sessionId, this.sqlText.trim())
+        const response = await sqlApi.execute(this.currentSession.sessionId, this.sqlText.trim())
         this.queryResult = response.data
         this.addToHistory(this.sqlText.trim(), 'update', Date.now() - startTime)
       } catch (error) {
@@ -362,7 +337,6 @@ export default {
     },
 
     formatSql() {
-      // 简单的SQL格式化
       let formatted = this.sqlText
         .replace(/\s+/g, ' ')
         .replace(/\bSELECT\b/gi, '\nSELECT')
@@ -376,10 +350,6 @@ export default {
         .trim()
 
       this.sqlText = formatted
-    },
-
-    insertTableName(tableName) {
-      this.$refs.codeEditor?.insertText(`${tableName}\n`)
     },
 
     loadHistory(item) {
@@ -396,12 +366,10 @@ export default {
         time: new Date().toISOString()
       })
 
-      // 只保留最近100条记录
       if (this.queryHistory.length > 100) {
         this.queryHistory = this.queryHistory.slice(-100)
       }
 
-      // 保存到localStorage
       localStorage.setItem('queryHistory', JSON.stringify(this.queryHistory))
     },
 
@@ -465,130 +433,6 @@ export default {
   display: flex;
 }
 
-.sidebar {
-  width: 250px;
-  background-color: var(--bg-secondary);
-  border-right: 1px solid var(--border-primary);
-  padding: var(--spacing-xl);
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xl);
-}
-
-.sidebar-header h3 {
-  margin: 0 0 var(--spacing-md) 0;
-  color: var(--text-primary);
-  font-size: 14px;
-}
-
-.connection-select {
-  width: 100%;
-  padding: 6px 10px;
-  background-color: var(--bg-tertiary);
-  border: 1px solid var(--border-secondary);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: 13px;
-  margin-bottom: var(--spacing-sm);
-}
-
-.btn-connect {
-  width: 100%;
-  font-size: 13px;
-}
-
-.database-section h4,
-.tables-section h4,
-.history-section h4 {
-  margin: 0 0 var(--spacing-md) 0;
-  color: var(--text-secondary);
-  font-size: 13px;
-  text-transform: uppercase;
-}
-
-.current-db {
-  padding: var(--spacing-sm);
-  background-color: var(--bg-highlight);
-  border-radius: var(--radius-sm);
-  margin-bottom: var(--spacing-sm);
-  font-family: var(--font-family-mono);
-  font-size: 13px;
-  color: var(--text-primary);
-}
-
-.no-db {
-  color: var(--text-tertiary);
-  font-style: italic;
-}
-
-.db-select {
-  width: 100%;
-  padding: 6px 10px;
-  background-color: var(--bg-tertiary);
-  border: 1px solid var(--border-secondary);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: 13px;
-  margin-bottom: var(--spacing-sm);
-}
-
-.loading {
-  color: var(--text-secondary);
-  font-size: 13px;
-}
-
-.empty {
-  color: var(--text-secondary);
-  font-size: 13px;
-}
-
-.table-list,
-.history-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.table-list li {
-  padding: var(--spacing-sm) var(--spacing-sm);
-  color: var(--text-primary);
-  cursor: pointer;
-  font-size: 13px;
-  border-radius: var(--radius-sm);
-  transition: var(--transition-fast);
-}
-
-.table-list li:hover {
-  background-color: var(--bg-quaternary);
-}
-
-.history-list li {
-  cursor: pointer;
-}
-
-.history-item {
-  padding: var(--spacing-sm);
-  border-radius: var(--radius-sm);
-  transition: var(--transition-fast);
-}
-
-.history-item:hover {
-  background-color: var(--bg-quaternary);
-}
-
-.history-sql {
-  color: var(--text-primary);
-  font-size: 13px;
-  font-family: var(--font-family-mono);
-  margin-bottom: 4px;
-}
-
-.history-time {
-  color: var(--text-tertiary);
-  font-size: 12px;
-}
-
 .main-content {
   flex: 1;
   display: flex;
@@ -606,9 +450,41 @@ export default {
 
 .editor-toolbar {
   display: flex;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
+  justify-content: space-between;
   align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.toolbar-left {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.toolbar-right {
+  display: flex;
+  gap: var(--spacing-lg);
+  align-items: center;
+}
+
+.connection-info {
+  display: flex;
+  gap: var(--spacing-lg);
+  font-size: 12px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.info-item .label {
+  color: var(--text-secondary);
+}
+
+.info-item .value {
+  color: var(--accent-primary);
+  font-family: var(--font-family-mono);
 }
 
 .btn {
@@ -652,7 +528,6 @@ export default {
 .result-info {
   color: var(--text-secondary);
   font-size: 13px;
-  margin-left: auto;
 }
 
 .editor-wrapper {
@@ -754,5 +629,172 @@ export default {
   border-radius: var(--radius-sm);
   color: var(--success);
   font-size: 14px;
+}
+
+.history-sidebar {
+  width: 280px;
+  background-color: var(--bg-secondary);
+  border-left: 1px solid var(--border-primary);
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+}
+
+.history-sidebar h4 {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.empty {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.history-list li {
+  cursor: pointer;
+}
+
+.history-item {
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+}
+
+.history-item:hover {
+  background-color: var(--bg-highlight);
+}
+
+.history-sql {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: var(--font-family-mono);
+  margin-bottom: 4px;
+}
+
+.history-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+.history-time {
+  color: var(--text-tertiary);
+}
+
+.history-duration {
+  color: var(--accent-primary);
+}
+
+/* 对话框样式 */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  width: 500px;
+  max-width: 90%;
+  box-shadow: var(--shadow-heavy);
+}
+
+.dialog-header {
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-primary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dialog-header h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 18px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+}
+
+.close-btn:hover {
+  color: var(--text-primary);
+}
+
+.dialog-body {
+  padding: var(--spacing-xl);
+}
+
+.form-group {
+  margin-bottom: var(--spacing-lg);
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 8px 12px;
+  background-color: var(--bg-highlight);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: var(--transition-fast);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--border-focus);
+}
+
+.form-row {
+  display: flex;
+  gap: var(--spacing-lg);
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+.dialog-footer {
+  padding: var(--spacing-lg);
+  border-top: 1px solid var(--border-primary);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
 }
 </style>

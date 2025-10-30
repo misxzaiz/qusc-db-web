@@ -101,7 +101,7 @@
 
 <script>
 import { connectionApi } from '../services/api'
-import { connectionStorage } from '../utils/storage'
+import { connectionStore } from '../stores/connectionStore'
 
 export default {
   name: 'ConnectionManager',
@@ -123,12 +123,13 @@ export default {
   },
 
   mounted() {
+    connectionStore.loadConnections()
     this.loadConnections()
   },
 
   methods: {
     loadConnections() {
-      this.connections = connectionStorage.getAll()
+      this.connections = connectionStore.connections
     },
 
     async testConnection(connection) {
@@ -160,8 +161,11 @@ export default {
           return
         }
 
-        // 保存连接到localStorage
-        connectionStorage.save(this.formData)
+        // 保存连接
+        if (!this.formData.id) {
+          this.formData.id = Date.now().toString()
+        }
+        connectionStore.saveConnection(this.formData)
         alert(this.editingConnection ? '连接更新成功' : '连接创建成功')
 
         this.closeDialog()
@@ -181,7 +185,7 @@ export default {
         return
       }
 
-      connectionStorage.delete(id)
+      connectionStore.deleteConnection(id)
       alert('连接已删除')
       this.loadConnections()
     },

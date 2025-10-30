@@ -32,8 +32,9 @@ export const sqlApi = {
     return api.post('/sql/execute', { sessionId, sql })
   },
 
-  getTables(sessionId) {
-    return api.get(`/sql/tables/${sessionId}`)
+  getTables(sessionId, database) {
+    const params = database ? `?database=${encodeURIComponent(database)}` : ''
+    return api.get(`/sql/tables/${sessionId}${params}`)
   },
 
   getDatabases(sessionId) {

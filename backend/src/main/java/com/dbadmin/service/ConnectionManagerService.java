@@ -54,15 +54,21 @@ public class ConnectionManagerService {
         }
     }
 
-    public List<String> getTables(String sessionId) throws SQLException {
+    public List<String> getTables(String sessionId, String database) throws SQLException {
         Connection conn = activeConnections.get(sessionId);
         if (conn == null || conn.isClosed()) {
             throw new SQLException("Connection not found or closed");
         }
 
+        // 如果没有指定数据库，使用当前连接的数据库
+        if (database == null || database.trim().isEmpty()) {
+            ConnectionInfo info = connectionInfoMap.get(sessionId);
+            database = info != null ? info.getDatabase() : null;
+        }
+
         try {
             DatabaseMetaData metaData = conn.getMetaData();
-            try (ResultSet rs = metaData.getTables(null, null, "%", new String[]{"TABLE"})) {
+            try (ResultSet rs = metaData.getTables(database, null, "%", new String[]{"TABLE"})) {
                 List<String> tables = new ArrayList<>();
                 while (rs.next()) {
                     tables.add(rs.getString("TABLE_NAME"));

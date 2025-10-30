@@ -4,15 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="chore(deps): 更新前端依赖配置- 为多个依赖包添加或更新 .eslintrc 配置文件- 统一配置 eslint 规则，包括 func-name-matching、id-length、new-cap 等&#10;- 为测试目录添加特定的 eslint 覆盖规则&#10;- 更新 .nycrc 覆盖率配置文件&#10;- 添加 package-lock.json 文件锁定依赖版本- 引入 codemirror 相关依赖用于代码编辑器功能&#10;- 更新 vue 和相关编译器核心依赖到最新版本&#10;- 添加 element-plus 图标库支持- 升级 axios 到 1.13.1 版本&#10;- 引入 proxy-from-env 处理代理环境变量- 添加 call-bind-apply-helpers 等底层工具库- 更新 es-define-property、dunder-proto 等 es-* 系列包&#10;- 锁定 @babel/parser、@babel/types 等解析器版本&#10;- 添加 @codemirror/lang-sql 支持 SQL 语法高亮&#10;- 更新 rollup 和 esbuild 构建工具依赖&#10;- 添加 @vue/devtools-api 开发者工具支持&#10;- 引入 csstype 类型定义文件&#10;- 添加 crelt 虚拟 DOM 工具库&#10;- 更新 source-map-js 和 magic-string 工具库版本">
+    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(sql): 实现数据库切换功能&#10;&#10;- 新增获取数据库列表接口&#10;- 新增切换数据库接口&#10;- 新增获取当前数据库接口- 前端支持数据库选择和切换&#10;- 连接时数据库字段改为可选&#10;-优化连接流程，先加载数据库再加载表&#10;- 添加数据库列表刷新功能- 完善错误处理和用户提示">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/node_modules/.package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/node_modules/.package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/node_modules/.vite/deps/_metadata.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/node_modules/.vite/deps/_metadata.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/App.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/main.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/service/ConnectionManagerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/service/ConnectionManagerService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/views/ConnectionManager.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/ConnectionManager.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" afterDir="false" />
     </list>
@@ -49,6 +43,7 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
+    "ts.external.directory.path": "D:\\Program Files\\JetBrains\\IntelliJ IDEA 2024.3.5\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -77,7 +72,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1761843015910</updated>
-      <workItem from="1761843018540" duration="3174000" />
+      <workItem from="1761843018540" duration="5106000" />
     </task>
     <task id="LOCAL-00001" summary="chore(deps): 更新前端依赖配置- 为多个依赖包添加或更新 .eslintrc 配置文件- 统一配置 eslint 规则，包括 func-name-matching、id-length、new-cap 等&#10;- 为测试目录添加特定的 eslint 覆盖规则&#10;- 更新 .nycrc 覆盖率配置文件&#10;- 添加 package-lock.json 文件锁定依赖版本- 引入 codemirror 相关依赖用于代码编辑器功能&#10;- 更新 vue 和相关编译器核心依赖到最新版本&#10;- 添加 element-plus 图标库支持- 升级 axios 到 1.13.1 版本&#10;- 引入 proxy-from-env 处理代理环境变量- 添加 call-bind-apply-helpers 等底层工具库- 更新 es-define-property、dunder-proto 等 es-* 系列包&#10;- 锁定 @babel/parser、@babel/types 等解析器版本&#10;- 添加 @codemirror/lang-sql 支持 SQL 语法高亮&#10;- 更新 rollup 和 esbuild 构建工具依赖&#10;- 添加 @vue/devtools-api 开发者工具支持&#10;- 引入 csstype 类型定义文件&#10;- 添加 crelt 虚拟 DOM 工具库&#10;- 更新 source-map-js 和 magic-string 工具库版本">
       <option name="closed" value="true" />
@@ -87,7 +82,23 @@
       <option name="project" value="LOCAL" />
       <updated>1761845237838</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="feat(editor): 引入SQL代码编辑器组件并优化样式系统- 集成 CodeMirror 6 SQL 编辑器，支持语法高亮和自动补全&#10;- 添加 One Dark 主题支持&#10;- 实现SQL格式化功能- 增加查询历史记录功能，支持时间显示和点击加载&#10;- 添加结果导出为 CSV 功能- 统一使用CSS变量重构全局样式系统- 移除内联样式，引入独立主题文件-优化按钮、表单、卡片等UI组件样式&#10;- 改进响应式设计和交互效果- 增强可访问性和用户体验">
+      <option name="closed" value="true" />
+      <created>1761846237314</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1761846237314</updated>
+    </task>
+    <task id="LOCAL-00003" summary="feat(sql): 实现数据库切换功能&#10;&#10;- 新增获取数据库列表接口&#10;- 新增切换数据库接口&#10;- 新增获取当前数据库接口- 前端支持数据库选择和切换&#10;- 连接时数据库字段改为可选&#10;-优化连接流程，先加载数据库再加载表&#10;- 添加数据库列表刷新功能- 完善错误处理和用户提示">
+      <option name="closed" value="true" />
+      <created>1761846627780</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1761846627780</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -118,6 +129,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="chore(deps): 更新前端依赖配置- 为多个依赖包添加或更新 .eslintrc 配置文件- 统一配置 eslint 规则，包括 func-name-matching、id-length、new-cap 等&#10;- 为测试目录添加特定的 eslint 覆盖规则&#10;- 更新 .nycrc 覆盖率配置文件&#10;- 添加 package-lock.json 文件锁定依赖版本- 引入 codemirror 相关依赖用于代码编辑器功能&#10;- 更新 vue 和相关编译器核心依赖到最新版本&#10;- 添加 element-plus 图标库支持- 升级 axios 到 1.13.1 版本&#10;- 引入 proxy-from-env 处理代理环境变量- 添加 call-bind-apply-helpers 等底层工具库- 更新 es-define-property、dunder-proto 等 es-* 系列包&#10;- 锁定 @babel/parser、@babel/types 等解析器版本&#10;- 添加 @codemirror/lang-sql 支持 SQL 语法高亮&#10;- 更新 rollup 和 esbuild 构建工具依赖&#10;- 添加 @vue/devtools-api 开发者工具支持&#10;- 引入 csstype 类型定义文件&#10;- 添加 crelt 虚拟 DOM 工具库&#10;- 更新 source-map-js 和 magic-string 工具库版本" />
-    <option name="LAST_COMMIT_MESSAGE" value="chore(deps): 更新前端依赖配置- 为多个依赖包添加或更新 .eslintrc 配置文件- 统一配置 eslint 规则，包括 func-name-matching、id-length、new-cap 等&#10;- 为测试目录添加特定的 eslint 覆盖规则&#10;- 更新 .nycrc 覆盖率配置文件&#10;- 添加 package-lock.json 文件锁定依赖版本- 引入 codemirror 相关依赖用于代码编辑器功能&#10;- 更新 vue 和相关编译器核心依赖到最新版本&#10;- 添加 element-plus 图标库支持- 升级 axios 到 1.13.1 版本&#10;- 引入 proxy-from-env 处理代理环境变量- 添加 call-bind-apply-helpers 等底层工具库- 更新 es-define-property、dunder-proto 等 es-* 系列包&#10;- 锁定 @babel/parser、@babel/types 等解析器版本&#10;- 添加 @codemirror/lang-sql 支持 SQL 语法高亮&#10;- 更新 rollup 和 esbuild 构建工具依赖&#10;- 添加 @vue/devtools-api 开发者工具支持&#10;- 引入 csstype 类型定义文件&#10;- 添加 crelt 虚拟 DOM 工具库&#10;- 更新 source-map-js 和 magic-string 工具库版本" />
+    <MESSAGE value="feat(editor): 引入SQL代码编辑器组件并优化样式系统- 集成 CodeMirror 6 SQL 编辑器，支持语法高亮和自动补全&#10;- 添加 One Dark 主题支持&#10;- 实现SQL格式化功能- 增加查询历史记录功能，支持时间显示和点击加载&#10;- 添加结果导出为 CSV 功能- 统一使用CSS变量重构全局样式系统- 移除内联样式，引入独立主题文件-优化按钮、表单、卡片等UI组件样式&#10;- 改进响应式设计和交互效果- 增强可访问性和用户体验" />
+    <MESSAGE value="feat(sql): 实现数据库切换功能&#10;&#10;- 新增获取数据库列表接口&#10;- 新增切换数据库接口&#10;- 新增获取当前数据库接口- 前端支持数据库选择和切换&#10;- 连接时数据库字段改为可选&#10;-优化连接流程，先加载数据库再加载表&#10;- 添加数据库列表刷新功能- 完善错误处理和用户提示" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(sql): 实现数据库切换功能&#10;&#10;- 新增获取数据库列表接口&#10;- 新增切换数据库接口&#10;- 新增获取当前数据库接口- 前端支持数据库选择和切换&#10;- 连接时数据库字段改为可选&#10;-优化连接流程，先加载数据库再加载表&#10;- 添加数据库列表刷新功能- 完善错误处理和用户提示" />
   </component>
 </project>

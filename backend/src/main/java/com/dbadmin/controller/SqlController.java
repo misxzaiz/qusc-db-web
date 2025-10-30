@@ -51,9 +51,9 @@ public class SqlController {
     }
 
     @GetMapping("/tables/{sessionId}")
-    public ResponseEntity<?> getTables(@PathVariable String sessionId) {
+    public ResponseEntity<?> getTables(@PathVariable String sessionId, @RequestParam(required = false) String database) {
         try {
-            List<String> tables = connectionManager.getTables(sessionId);
+            List<String> tables = connectionManager.getTables(sessionId, database);
             return ResponseEntity.ok(Map.of("tables", tables));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
