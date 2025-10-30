@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p backend/src/main/java/com/dbadmin)",
+      "Bash(mkdir -p backend/src/main/resources)",
+      "Bash(mkdir -p backend/src/test/java)",
+      "Bash(mkdir -p frontend)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
