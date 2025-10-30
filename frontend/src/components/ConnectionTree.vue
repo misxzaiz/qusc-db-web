@@ -108,23 +108,29 @@ export default {
       return connectionStore.getActiveSessions()
     },
 
-    // 合并已保存的连接和活跃会话
+    // 合并已保存的连接和活跃会话，保持原始顺序
     allConnections() {
       const result = []
 
-      // 添加已保存但未连接的连接
+      // 遍历已保存的连接，保持原始顺序
       this.savedConnections.forEach(savedConn => {
-        const isActive = this.activeSessions.some(session =>
+        const activeSession = this.activeSessions.find(session =>
           session.connectionInfo.id === savedConn.id
         )
-        if (!isActive) {
+        if (activeSession) {
+          // 如果连接活跃，使用活跃会话数据（包含数据库和表信息）
+          result.push(activeSession)
+        } else {
+          // 如果未连接，使用保存的连接信息
           result.push(savedConn)
         }
       })
 
-      // 添加所有活跃会话
+      // 添加没有对应保存连接的活跃会话（例如直接创建的会话）
       this.activeSessions.forEach(session => {
-        result.push(session)
+        if (!session.connectionInfo.id || !this.savedConnections.find(sc => sc.id === session.connectionInfo.id)) {
+          result.push(session)
+        }
       })
 
       return result
@@ -159,16 +165,12 @@ export default {
     },
 
     async handleConnectionClick(item) {
-      // 如果是已保存的连接（未连接），则连接并自动展开
+      // 如果是已保存的连接（未连接），则连接
       if (!item.sessionId) {
         try {
           const sessionId = await connectionStore.connect(item)
           this.selectSession(sessionId)
           const session = connectionStore.getSession(sessionId)
-
-          // 自动展开连接节点
-          connectionStore.toggleNode(sessionId, 'connection', session.connectionInfo.name)
-
           this.$emit('connection-selected', session)
         } catch (error) {
           alert('连接失败: ' + (error.response?.data?.error || error.message))
