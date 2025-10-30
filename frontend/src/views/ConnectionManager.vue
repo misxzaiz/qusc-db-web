@@ -210,50 +210,53 @@ export default {
 </script>
 
 <style scoped>
+@import '../styles/theme.css';
+
 .connection-manager {
   height: 100%;
-  padding: 20px;
+  padding: var(--spacing-xl);
   overflow-y: auto;
 }
 
 .toolbar {
-  margin-bottom: 20px;
+  margin-bottom: var(--spacing-xl);
 }
 
 .btn {
   padding: 8px 16px;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 14px;
-  transition: all 0.2s;
+  transition: var(--transition-fast);
+  font-family: var(--font-family-base);
 }
 
 .btn-primary {
-  background-color: #0e639c;
-  color: white;
+  background-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
 }
 
 .btn-primary:hover {
-  background-color: #1177bb;
+  background-color: var(--btn-primary-hover);
 }
 
 .btn-secondary {
-  background-color: #3c3c3c;
-  color: #d4d4d4;
+  background-color: var(--btn-secondary-bg);
+  color: var(--btn-secondary-text);
 }
 
 .btn-secondary:hover {
-  background-color: #464647;
+  background-color: var(--btn-secondary-hover);
 }
 
 .btn-danger {
-  background-color: #c41e3a;
-  color: white;
+  background-color: var(--btn-danger-bg);
+  color: var(--btn-danger-text);
 }
 
 .btn-danger:hover {
-  background-color: #f14c4c;
+  background-color: var(--btn-danger-hover);
 }
 
 .btn-small {
@@ -264,35 +267,36 @@ export default {
 .empty-state {
   text-align: center;
   padding: 60px 20px;
-  color: #969696;
+  color: var(--text-secondary);
 }
 
 .empty-hint {
-  margin-top: 10px;
+  margin-top: var(--spacing-sm);
   font-size: 14px;
 }
 
 .connection-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  gap: 20px;
+  gap: var(--spacing-xl);
 }
 
 .connection-card {
-  background-color: #252526;
-  border: 1px solid #3e3e42;
-  border-radius: 6px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
   overflow: hidden;
+  transition: var(--transition-fast);
 }
 
 .connection-card:hover {
-  border-color: #569cd6;
+  border-color: var(--accent-primary);
 }
 
 .card-header {
-  padding: 16px;
-  background-color: #2d2d30;
-  border-bottom: 1px solid #3e3e42;
+  padding: var(--spacing-lg);
+  background-color: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-primary);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -300,23 +304,23 @@ export default {
 
 .card-header h3 {
   margin: 0;
-  color: #569cd6;
+  color: var(--accent-primary);
   font-size: 16px;
 }
 
 .card-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .card-body {
-  padding: 16px;
+  padding: var(--spacing-lg);
 }
 
 .connection-info {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .info-item {
@@ -325,13 +329,13 @@ export default {
 }
 
 .label {
-  color: #969696;
+  color: var(--text-secondary);
   min-width: 60px;
 }
 
 .value {
-  color: #d4d4d4;
-  font-family: 'Consolas', monospace;
+  color: var(--text-primary);
+  font-family: var(--font-family-mono);
 }
 
 .dialog-overlay {
@@ -348,16 +352,17 @@ export default {
 }
 
 .dialog {
-  background-color: #2d2d30;
-  border: 1px solid #3e3e42;
-  border-radius: 6px;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
   width: 500px;
   max-width: 90%;
+  box-shadow: var(--shadow-heavy);
 }
 
 .dialog-header {
-  padding: 16px;
-  border-bottom: 1px solid #3e3e42;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-primary);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -365,14 +370,14 @@ export default {
 
 .dialog-header h2 {
   margin: 0;
-  color: #d4d4d4;
+  color: var(--text-primary);
   font-size: 18px;
 }
 
 .close-btn {
   background: none;
   border: none;
-  color: #969696;
+  color: var(--text-secondary);
   font-size: 24px;
   cursor: pointer;
   padding: 0;
@@ -381,24 +386,25 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: var(--transition-fast);
 }
 
 .close-btn:hover {
-  color: #d4d4d4;
+  color: var(--text-primary);
 }
 
 .dialog-body {
-  padding: 20px;
+  padding: var(--spacing-xl);
 }
 
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-lg);
 }
 
 .form-group label {
   display: block;
   margin-bottom: 6px;
-  color: #969696;
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
@@ -406,22 +412,23 @@ export default {
 .form-group select {
   width: 100%;
   padding: 8px 12px;
-  background-color: #3c3c3c;
-  border: 1px solid #5a5a5a;
-  border-radius: 4px;
-  color: #d4d4d4;
+  background-color: var(--bg-highlight);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
   font-size: 14px;
+  transition: var(--transition-fast);
 }
 
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #569cd6;
+  border-color: var(--border-focus);
 }
 
 .form-row {
   display: flex;
-  gap: 16px;
+  gap: var(--spacing-lg);
 }
 
 .form-row .form-group {
@@ -429,10 +436,10 @@ export default {
 }
 
 .dialog-footer {
-  padding: 16px;
-  border-top: 1px solid #3e3e42;
+  padding: var(--spacing-lg);
+  border-top: 1px solid var(--border-primary);
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  gap: var(--spacing-md);
 }
 </style>

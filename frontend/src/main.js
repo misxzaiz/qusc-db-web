@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
 import ConnectionManager from './views/ConnectionManager.vue'
 import SqlEditor from './views/SqlEditor.vue'
+import './styles/theme.css'
 
 const routes = [
   { path: '/', redirect: '/connections' },

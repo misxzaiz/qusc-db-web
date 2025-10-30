@@ -23,13 +23,15 @@ export default {
 </script>
 
 <style>
+@import './styles/theme.css';
+
 .header {
   height: 48px;
-  background-color: #2d2d30;
-  border-bottom: 1px solid #3e3e42;
+  background-color: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-primary);
   display: flex;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 var(--spacing-xl);
 }
 
 .header-left {
@@ -41,7 +43,7 @@ export default {
 .logo {
   font-size: 18px;
   font-weight: 600;
-  color: #569cd6;
+  color: var(--accent-primary);
 }
 
 .nav {
@@ -50,22 +52,22 @@ export default {
 }
 
 .nav-link {
-  color: #969696;
+  color: var(--text-secondary);
   text-decoration: none;
   font-size: 14px;
   padding: 5px 10px;
-  border-radius: 3px;
-  transition: all 0.2s;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
 }
 
 .nav-link:hover {
-  background-color: #3e3e42;
-  color: #d4d4d4;
+  background-color: var(--bg-quaternary);
+  color: var(--text-primary);
 }
 
 .nav-link.router-link-active {
-  color: #569cd6;
-  background-color: #3e3e42;
+  color: var(--accent-primary);
+  background-color: var(--bg-quaternary);
 }
 
 .main {

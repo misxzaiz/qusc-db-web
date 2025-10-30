@@ -24,6 +24,19 @@
           </li>
         </ul>
       </div>
+
+      <div v-if="isConnected" class="history-section">
+        <h4>查询历史</h4>
+        <div v-if="queryHistory.length === 0" class="empty">暂无历史</div>
+        <ul v-else class="history-list">
+          <li v-for="(item, index) in queryHistory.slice(-10).reverse()" :key="index" @click="loadHistory(item)">
+            <div class="history-item">
+              <div class="history-sql">{{ item.sql.substring(0, 50) }}...</div>
+              <div class="history-time">{{ formatTime(item.time) }}</div>
+            </div>
+          </li>
+        </ul>
+      </div>
     </div>
 
     <div class="main-content">
@@ -36,18 +49,19 @@
             执行更新
           </button>
           <button class="btn btn-secondary" @click="clearEditor">清空</button>
+          <button class="btn btn-secondary" @click="formatSql">格式化</button>
           <span v-if="queryResult" class="result-info">
             {{ queryResult.data ? `${queryResult.data.length} 行` : `${queryResult.affectedRows} 行受影响` }}
           </span>
         </div>
 
-        <textarea
-          v-model="sqlText"
-          class="sql-textarea"
-          placeholder="输入SQL语句..."
-          @keydown="handleKeyDown"
-          spellcheck="false"
-        ></textarea>
+        <div class="editor-wrapper">
+          <SqlCodeEditor
+            ref="codeEditor"
+            v-model="sqlText"
+            @execute="executeQuery"
+          />
+        </div>
       </div>
 
       <div v-if="error" class="error-section">
@@ -58,7 +72,10 @@
       <div v-if="queryResult && queryResult.data" class="result-section">
         <div class="result-header">
           <h4>查询结果</h4>
-          <span class="row-count">{{ queryResult.data.length }} 行</span>
+          <div class="result-actions">
+            <span class="row-count">{{ queryResult.data.length }} 行</span>
+            <button class="btn btn-small" @click="exportData">导出CSV</button>
+          </div>
         </div>
         <div class="table-wrapper">
           <table class="result-table">
@@ -90,9 +107,13 @@
 <script>
 import { connectionApi, sqlApi } from '../services/api'
 import { connectionStorage, sessionStorage } from '../utils/storage'
+import SqlCodeEditor from '../components/SqlCodeEditor.vue'
 
 export default {
   name: 'SqlEditor',
+  components: {
+    SqlCodeEditor
+  },
   data() {
     return {
       connections: [],
@@ -105,13 +126,15 @@ export default {
       sqlText: '',
       queryResult: null,
       error: null,
-      columns: []
+      columns: [],
+      queryHistory: []
     }
   },
 
   mounted() {
     this.loadConnections()
     this.checkExistingConnection()
+    this.loadQueryHistory()
   },
 
   beforeUnmount() {
@@ -168,7 +191,6 @@ export default {
         this.sessionId = response.data.sessionId
         this.isConnected = true
 
-        // 保存session信息
         sessionStorage.save(this.sessionId, this.selectedConnection)
         sessionStorage.save('sessionId', { sessionId: this.sessionId })
 
@@ -194,7 +216,6 @@ export default {
       this.queryResult = null
       this.error = null
 
-      // 清理session信息
       sessionStorage.remove(this.sessionId)
       sessionStorage.remove('sessionId')
     },
@@ -221,6 +242,8 @@ export default {
       this.error = null
       this.queryResult = null
 
+      const startTime = Date.now()
+
       try {
         const response = await sqlApi.query(this.sessionId, this.sqlText.trim())
         this.queryResult = response.data
@@ -228,8 +251,12 @@ export default {
         if (this.queryResult.data && this.queryResult.data.length > 0) {
           this.columns = Object.keys(this.queryResult.data[0])
         }
+
+        // 添加到历史记录
+        this.addToHistory(this.sqlText.trim(), 'query', Date.now() - startTime)
       } catch (error) {
         this.error = error.response?.data?.error || error.message
+        this.addToHistory(this.sqlText.trim(), 'error', Date.now() - startTime, this.error)
       }
     },
 
@@ -245,11 +272,15 @@ export default {
       this.error = null
       this.queryResult = null
 
+      const startTime = Date.now()
+
       try {
         const response = await sqlApi.execute(this.sessionId, this.sqlText.trim())
         this.queryResult = response.data
+        this.addToHistory(this.sqlText.trim(), 'update', Date.now() - startTime)
       } catch (error) {
         this.error = error.response?.data?.error || error.message
+        this.addToHistory(this.sqlText.trim(), 'error', Date.now() - startTime, this.error)
       }
     },
 
@@ -257,16 +288,93 @@ export default {
       this.sqlText = ''
       this.queryResult = null
       this.error = null
+      this.$refs.codeEditor?.focus()
+    },
+
+    formatSql() {
+      // 简单的SQL格式化
+      let formatted = this.sqlText
+        .replace(/\s+/g, ' ')
+        .replace(/\bSELECT\b/gi, '\nSELECT')
+        .replace(/\bFROM\b/gi, '\nFROM')
+        .replace(/\bWHERE\b/gi, '\nWHERE')
+        .replace(/\bORDER BY\b/gi, '\nORDER BY')
+        .replace(/\bGROUP BY\b/gi, '\nGROUP BY')
+        .replace(/\bHAVING\b/gi, '\nHAVING')
+        .replace(/\bUNION\b/gi, '\nUNION')
+        .replace(/,/g, ',\n  ')
+        .trim()
+
+      this.sqlText = formatted
     },
 
     insertTableName(tableName) {
-      this.sqlText += `${tableName}\n`
+      this.$refs.codeEditor?.insertText(`${tableName}\n`)
     },
 
-    handleKeyDown(e) {
-      if (e.key === 'F5') {
-        e.preventDefault()
-        this.executeQuery()
+    loadHistory(item) {
+      this.sqlText = item.sql
+      this.$refs.codeEditor?.focus()
+    },
+
+    addToHistory(sql, type, duration, error = null) {
+      this.queryHistory.push({
+        sql,
+        type,
+        duration,
+        error,
+        time: new Date().toISOString()
+      })
+
+      // 只保留最近100条记录
+      if (this.queryHistory.length > 100) {
+        this.queryHistory = this.queryHistory.slice(-100)
+      }
+
+      // 保存到localStorage
+      localStorage.setItem('queryHistory', JSON.stringify(this.queryHistory))
+    },
+
+    loadQueryHistory() {
+      const saved = localStorage.getItem('queryHistory')
+      if (saved) {
+        this.queryHistory = JSON.parse(saved)
+      }
+    },
+
+    exportData() {
+      if (!this.queryResult?.data) return
+
+      const csv = [
+        this.columns.join(','),
+        ...this.queryResult.data.map(row =>
+          this.columns.map(col => {
+            const val = row[col]
+            return val === null ? 'NULL' : `"${String(val).replace(/"/g, '""')}"`
+          }).join(',')
+        )
+      ].join('\n')
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.download = `query_result_${Date.now()}.csv`
+      link.click()
+    },
+
+    formatTime(timeStr) {
+      const date = new Date(timeStr)
+      const now = new Date()
+      const diff = now - date
+
+      if (diff < 60000) {
+        return `${Math.floor(diff / 1000)}秒前`
+      } else if (diff < 3600000) {
+        return `${Math.floor(diff / 60000)}分钟前`
+      } else if (diff < 86400000) {
+        return `${Math.floor(diff / 3600000)}小时前`
+      } else {
+        return date.toLocaleDateString()
       }
     },
 
@@ -280,6 +388,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../styles/theme.css';
+
 .sql-editor {
   height: 100%;
   display: flex;
@@ -287,79 +397,106 @@ export default {
 
 .sidebar {
   width: 250px;
-  background-color: #252526;
-  border-right: 1px solid #3e3e42;
-  padding: 20px;
+  background-color: var(--bg-secondary);
+  border-right: 1px solid var(--border-primary);
+  padding: var(--spacing-xl);
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
 }
 
 .sidebar-header h3 {
-  margin: 0 0 12px 0;
-  color: #d4d4d4;
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--text-primary);
   font-size: 14px;
 }
 
 .connection-select {
   width: 100%;
   padding: 6px 10px;
-  background-color: #3c3c3c;
-  border: 1px solid #5a5a5a;
-  border-radius: 4px;
-  color: #d4d4d4;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
   font-size: 13px;
-  margin-bottom: 8px;
+  margin-bottom: var(--spacing-sm);
 }
 
 .btn-connect {
   width: 100%;
-  margin-top: 8px;
   font-size: 13px;
 }
 
-.tables-section {
-  margin-top: 24px;
-}
-
-.tables-section h4 {
-  margin: 0 0 12px 0;
-  color: #969696;
+.tables-section h4,
+.history-section h4 {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--text-secondary);
   font-size: 13px;
   text-transform: uppercase;
 }
 
 .loading {
-  color: #969696;
+  color: var(--text-secondary);
   font-size: 13px;
 }
 
 .empty {
-  color: #969696;
+  color: var(--text-secondary);
   font-size: 13px;
 }
 
-.table-list {
+.table-list,
+.history-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
 .table-list li {
-  padding: 6px 10px;
-  color: #d4d4d4;
+  padding: var(--spacing-sm) var(--spacing-sm);
+  color: var(--text-primary);
   cursor: pointer;
   font-size: 13px;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
 }
 
 .table-list li:hover {
-  background-color: #3e3e42;
+  background-color: var(--bg-quaternary);
+}
+
+.history-list li {
+  cursor: pointer;
+}
+
+.history-item {
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+}
+
+.history-item:hover {
+  background-color: var(--bg-quaternary);
+}
+
+.history-sql {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: var(--font-family-mono);
+  margin-bottom: 4px;
+}
+
+.history-time {
+  color: var(--text-tertiary);
+  font-size: 12px;
 }
 
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  padding: var(--spacing-xl);
   overflow-y: auto;
 }
 
@@ -372,18 +509,19 @@ export default {
 
 .editor-toolbar {
   display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
   align-items: center;
 }
 
 .btn {
   padding: 8px 16px;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 13px;
-  transition: all 0.2s;
+  transition: var(--transition-fast);
+  font-family: var(--font-family-base);
 }
 
 .btn:disabled {
@@ -392,21 +530,21 @@ export default {
 }
 
 .btn-primary {
-  background-color: #0e639c;
-  color: white;
+  background-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #1177bb;
+  background-color: var(--btn-primary-hover);
 }
 
 .btn-secondary {
-  background-color: #3c3c3c;
-  color: #d4d4d4;
+  background-color: var(--btn-secondary-bg);
+  color: var(--btn-secondary-text);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: #464647;
+  background-color: var(--btn-secondary-hover);
 }
 
 .btn-small {
@@ -415,78 +553,69 @@ export default {
 }
 
 .result-info {
-  color: #969696;
+  color: var(--text-secondary);
   font-size: 13px;
   margin-left: auto;
 }
 
-.sql-textarea {
+.editor-wrapper {
   flex: 1;
-  width: 100%;
   min-height: 200px;
-  padding: 12px;
-  background-color: #1e1e1e;
-  border: 1px solid #3e3e42;
-  border-radius: 4px;
-  color: #d4d4d4;
-  font-family: 'Consolas', 'Monaco', monospace;
-  font-size: 14px;
-  line-height: 1.5;
-  resize: vertical;
-}
-
-.sql-textarea:focus {
-  outline: none;
-  border-color: #569cd6;
 }
 
 .error-section {
-  margin-top: 20px;
-  padding: 16px;
-  background-color: #2d1b1b;
-  border: 1px solid #8b0000;
-  border-radius: 4px;
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  background-color: var(--error-bg);
+  border: 1px solid var(--error-border);
+  border-radius: var(--radius-sm);
 }
 
 .error-section h4 {
-  margin: 0 0 8px 0;
-  color: #f14c4c;
+  margin: 0 0 var(--spacing-sm) 0;
+  color: var(--error);
   font-size: 14px;
 }
 
 .error-message {
   margin: 0;
-  color: #f14c4c;
-  font-family: 'Consolas', monospace;
+  color: var(--error);
+  font-family: var(--font-family-mono);
   font-size: 13px;
   white-space: pre-wrap;
 }
 
 .result-section {
-  margin-top: 20px;
+  margin-top: var(--spacing-xl);
 }
 
 .result-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: var(--spacing-md);
 }
 
 .result-header h4 {
   margin: 0;
-  color: #d4d4d4;
+  color: var(--text-primary);
   font-size: 14px;
 }
 
+.result-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+}
+
 .row-count {
-  color: #969696;
+  color: var(--text-secondary);
   font-size: 13px;
 }
 
 .table-wrapper {
-  border: 1px solid #3e3e42;
-  border-radius: 4px;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
   overflow: auto;
   max-height: 400px;
 }
@@ -494,39 +623,39 @@ export default {
 .result-table {
   width: 100%;
   border-collapse: collapse;
-  background-color: #2d2d30;
+  background-color: var(--bg-tertiary);
 }
 
 .result-table th {
-  background-color: #3e3e42;
+  background-color: var(--bg-quaternary);
   padding: 8px 12px;
   text-align: left;
   font-weight: 600;
-  color: #d4d4d4;
+  color: var(--text-primary);
   font-size: 13px;
-  border-bottom: 1px solid #5a5a5a;
+  border-bottom: 1px solid var(--border-secondary);
   position: sticky;
   top: 0;
 }
 
 .result-table td {
   padding: 6px 12px;
-  border-bottom: 1px solid #3e3e42;
-  color: #d4d4d4;
+  border-bottom: 1px solid var(--border-primary);
+  color: var(--text-primary);
   font-size: 13px;
-  font-family: 'Consolas', monospace;
+  font-family: var(--font-family-mono);
 }
 
 .result-table tr:hover {
-  background-color: #3e3e42;
+  background-color: var(--bg-highlight);
 }
 
 .success-message {
-  padding: 16px;
-  background-color: #1b2d1b;
-  border: 1px solid #008000;
-  border-radius: 4px;
-  color: #4ec9b0;
+  padding: var(--spacing-lg);
+  background-color: var(--success-bg);
+  border: 1px solid var(--success-border);
+  border-radius: var(--radius-sm);
+  color: var(--success);
   font-size: 14px;
 }
 </style>
