@@ -1,61 +1,12 @@
 <template>
   <div class="sql-editor">
     <ConnectionTree
-      @new-connection="showConnectionDialog = true"
       @connection-selected="onConnectionSelected"
       @database-selected="onDatabaseSelected"
       @table-selected="onTableSelected"
     />
 
-    <!-- 新建连接对话框 -->
-    <div v-if="showConnectionDialog" class="dialog-overlay" @click="closeConnectionDialog">
-      <div class="dialog" @click.stop>
-        <div class="dialog-header">
-          <h2>新建连接</h2>
-          <button class="close-btn" @click="closeConnectionDialog">×</button>
-        </div>
-        <div class="dialog-body">
-          <div class="form-group">
-            <label>连接名称</label>
-            <input v-model="newConnection.name" type="text" placeholder="输入连接名称" />
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>主机地址</label>
-              <input v-model="newConnection.host" type="text" placeholder="localhost" />
-            </div>
-            <div class="form-group">
-              <label>端口</label>
-              <input v-model.number="newConnection.port" type="number" placeholder="3306" />
-            </div>
-          </div>
-          <div class="form-group">
-            <label>数据库名（可选）</label>
-            <input v-model="newConnection.database" type="text" placeholder="留空连接后可选择数据库" />
-          </div>
-          <div class="form-group">
-            <label>用户名</label>
-            <input v-model="newConnection.username" type="text" placeholder="用户名" />
-          </div>
-          <div class="form-group">
-            <label>密码</label>
-            <input v-model="newConnection.password" type="password" placeholder="密码" />
-          </div>
-          <div class="form-group">
-            <label>SSL模式</label>
-            <select v-model="newConnection.sslMode">
-              <option value="DISABLED">禁用</option>
-              <option value="REQUIRED">必需</option>
-            </select>
-          </div>
-        </div>
-        <div class="dialog-footer">
-          <button class="btn btn-secondary" @click="closeConnectionDialog">取消</button>
-          <button class="btn btn-primary" @click="testAndConnect">测试并连接</button>
-        </div>
-      </div>
-    </div>
-
+    
     <div class="main-content">
       <div class="editor-section">
         <div class="editor-toolbar">
@@ -153,7 +104,7 @@
 </template>
 
 <script>
-import { connectionApi, sqlApi } from '../services/api'
+import { sqlApi } from '../services/api'
 import { connectionStore } from '../stores/connectionStore'
 import SqlCodeEditor from '../components/SqlCodeEditor.vue'
 import ConnectionTree from '../components/ConnectionTree.vue'
@@ -173,17 +124,7 @@ export default {
       queryResult: null,
       error: null,
       columns: [],
-      queryHistory: [],
-      showConnectionDialog: false,
-      newConnection: {
-        name: 'db',
-        host: 'localhost',
-        port: 3306,
-        database: '',
-        username: 'root',
-        password: '1234',
-        sslMode: 'DISABLED'
-      }
+      queryHistory: []
     }
   },
 
@@ -216,50 +157,7 @@ export default {
       this.$refs.codeEditor?.focus()
     },
 
-    closeConnectionDialog() {
-      this.showConnectionDialog = false
-      this.newConnection = {
-        name: '',
-        host: 'localhost',
-        port: 3306,
-        database: '',
-        username: '',
-        password: '',
-        sslMode: 'DISABLED'
-      }
-    },
-
-    async testAndConnect() {
-      if (!this.newConnection.name || !this.newConnection.host || !this.newConnection.username) {
-        alert('请填写必要字段')
-        return
-      }
-
-      try {
-        // 先测试连接
-        const testResponse = await connectionApi.test(this.newConnection)
-        if (!testResponse.data.success) {
-          alert('连接测试失败')
-          return
-        }
-
-        // 保存连接信息
-        const connectionToSave = { ...this.newConnection }
-
-        // 关闭对话框
-        this.closeConnectionDialog()
-
-        // 建立连接
-        const sessionId = await connectionStore.connect(connectionToSave)
-        const session = connectionStore.getSession(sessionId)
-        this.onConnectionSelected(session)
-        alert('连接成功')
-      } catch (error) {
-        console.error('Connection data:', this.newConnection)
-        alert('连接失败: ' + error.response?.data?.error || error.message)
-      }
-    },
-
+    
     async executeQuery() {
       if (!this.currentSession || !this.sqlText.trim()) return
 
