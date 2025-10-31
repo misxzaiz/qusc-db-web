@@ -4,13 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="2">
-      <change beforePath="$PROJECT_DIR$/.claude/settings.local.json" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/settings.local.json" afterDir="false" />
+    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="3">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/AiSidebar.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/AiSidebar.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/ConnectionTree.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/ConnectionTree.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/components/TabSidebar.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/TabSidebar.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -78,7 +77,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1761843015910</updated>
-      <workItem from="1761843018540" duration="15058000" />
+      <workItem from="1761843018540" duration="15358000" />
     </task>
     <task id="LOCAL-00001" summary="chore(deps): 更新前端依赖配置- 为多个依赖包添加或更新 .eslintrc 配置文件- 统一配置 eslint 规则，包括 func-name-matching、id-length、new-cap 等&#10;- 为测试目录添加特定的 eslint 覆盖规则&#10;- 更新 .nycrc 覆盖率配置文件&#10;- 添加 package-lock.json 文件锁定依赖版本- 引入 codemirror 相关依赖用于代码编辑器功能&#10;- 更新 vue 和相关编译器核心依赖到最新版本&#10;- 添加 element-plus 图标库支持- 升级 axios 到 1.13.1 版本&#10;- 引入 proxy-from-env 处理代理环境变量- 添加 call-bind-apply-helpers 等底层工具库- 更新 es-define-property、dunder-proto 等 es-* 系列包&#10;- 锁定 @babel/parser、@babel/types 等解析器版本&#10;- 添加 @codemirror/lang-sql 支持 SQL 语法高亮&#10;- 更新 rollup 和 esbuild 构建工具依赖&#10;- 添加 @vue/devtools-api 开发者工具支持&#10;- 引入 csstype 类型定义文件&#10;- 添加 crelt 虚拟 DOM 工具库&#10;- 更新 source-map-js 和 magic-string 工具库版本">
       <option name="closed" value="true" />
@@ -176,7 +175,15 @@
       <option name="project" value="LOCAL" />
       <updated>1761932180900</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="3">
+      <option name="closed" value="true" />
+      <created>1761932860727</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1761932860727</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -217,6 +224,7 @@
     <MESSAGE value="feat(ai): 添加AI SQL助手功能&#10;&#10;- 新增AI配置管理界面和相关API接口&#10;- 实现SQL生成、解释和优化核心功能&#10;- 支持多种AI服务商（DeepSeek、心流、OpenAI等）&#10;- 添加前端聊天界面用于与AI交互- 集成LocalStorage存储AI配置信息&#10;- 提供AI模型参数配置和测试连接功能- 支持数据库表结构引用和快速操作按钮&#10;- 实现消息历史记录和SQL执行结果展示" />
     <MESSAGE value="1" />
     <MESSAGE value="2" />
-    <option name="LAST_COMMIT_MESSAGE" value="2" />
+    <MESSAGE value="3" />
+    <option name="LAST_COMMIT_MESSAGE" value="3" />
   </component>
 </project>

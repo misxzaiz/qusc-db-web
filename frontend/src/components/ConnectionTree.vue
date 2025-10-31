@@ -1,8 +1,5 @@
 <template>
   <div class="connection-tree">
-    <div class="tree-header">
-      <h3>数据库连接</h3>
-    </div>
 
     <div class="tree-content">
       <!-- 所有连接（已保存的+活跃的） -->

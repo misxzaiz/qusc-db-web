@@ -145,7 +145,7 @@ export default {
   background-color: var(--bg-secondary);
   border-right: 1px solid var(--border-primary);
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   height: 100vh;
   position: relative;
   z-index: 100;
@@ -153,11 +153,12 @@ export default {
 }
 
 .nav-icons {
-  flex: 1;
   display: flex;
   flex-direction: column;
   padding: 10px 0;
   gap: 10px;
+  width: 40px;
+  flex-shrink: 0;
 }
 
 .nav-icon {
@@ -200,18 +201,23 @@ export default {
 }
 
 .popup-panel {
-  position: absolute;
-  left: 40px;
-  top: 0;
-  bottom: 0;
   width: 250px;
   background-color: var(--bg-secondary);
   border-right: 1px solid var(--border-primary);
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+  display: none;
+}
+
+.simple-sidebar:not(.collapsed) .popup-panel {
+  display: block;
 }
 
 .panel-content {
   height: 100%;
   overflow: auto;
+}
+
+.simple-sidebar.collapsed .popup-panel {
+  display: none;
 }
 </style>

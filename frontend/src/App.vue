@@ -124,12 +124,13 @@ export default {
 }
 
 .main {
-  height: calc(100vh - 56px);
+  flex: 1;
   overflow: hidden;
 }
 
 .app {
   height: 100vh;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 </style>
