@@ -46,18 +46,122 @@
               </span>
               <span class="node-label">{{ database }}</span>
 
-              <!-- 表列表 -->
+              <!-- 数据库对象分类 -->
               <div v-if="isExpanded(item.sessionId, 'database', database)" class="children">
-                <div
-                  v-for="table in item.tables[database] || []"
-                  :key="table"
-                  class="node-item table-node"
-                  @click="selectTable(item, table)"
-                >
-                  <span class="node-icon">
-                    <font-awesome-icon icon="table" />
-                  </span>
-                  <span class="node-label">{{ table }}</span>
+                <!-- 表 -->
+                <div class="object-category">
+                  <div
+                    class="node-item category-node"
+                    @click.stop="toggleExpand(item.sessionId, 'category', `${database}-tables`)"
+                  >
+                    <span class="expand-icon">
+                      {{ isExpanded(item.sessionId, 'category', `${database}-tables`) ? '▼' : '▶' }}
+                    </span>
+                    <span class="node-icon">
+                      <font-awesome-icon icon="table" />
+                    </span>
+                    <span class="node-label">表 ({{ (item.tables[database] || []).length }})</span>
+                  </div>
+                  <div v-if="isExpanded(item.sessionId, 'category', `${database}-tables`)" class="children">
+                    <div
+                      v-for="table in item.tables[database] || []"
+                      :key="table"
+                      class="node-item table-node"
+                      @click="selectTable(item, database, table, 'TABLE')"
+                    >
+                      <span class="node-icon">
+                        <font-awesome-icon icon="table" />
+                      </span>
+                      <span class="node-label">{{ table }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 视图 -->
+                <div class="object-category">
+                  <div
+                    class="node-item category-node"
+                    @click.stop="toggleExpand(item.sessionId, 'category', `${database}-views`)"
+                  >
+                    <span class="expand-icon">
+                      {{ isExpanded(item.sessionId, 'category', `${database}-views`) ? '▼' : '▶' }}
+                    </span>
+                    <span class="node-icon">
+                      <font-awesome-icon icon="eye" />
+                    </span>
+                    <span class="node-label">视图 ({{ (item.views[database] || []).length }})</span>
+                  </div>
+                  <div v-if="isExpanded(item.sessionId, 'category', `${database}-views`)" class="children">
+                    <div
+                      v-for="view in item.views[database] || []"
+                      :key="view"
+                      class="node-item view-node"
+                      @click="selectTable(item, database, view, 'VIEW')"
+                    >
+                      <span class="node-icon">
+                        <font-awesome-icon icon="eye" />
+                      </span>
+                      <span class="node-label">{{ view }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 存储过程 -->
+                <div class="object-category">
+                  <div
+                    class="node-item category-node"
+                    @click.stop="toggleExpand(item.sessionId, 'category', `${database}-procedures`)"
+                  >
+                    <span class="expand-icon">
+                      {{ isExpanded(item.sessionId, 'category', `${database}-procedures`) ? '▼' : '▶' }}
+                    </span>
+                    <span class="node-icon">
+                      <font-awesome-icon icon="cogs" />
+                    </span>
+                    <span class="node-label">存储过程 ({{ (item.procedures[database] || []).length }})</span>
+                  </div>
+                  <div v-if="isExpanded(item.sessionId, 'category', `${database}-procedures`)" class="children">
+                    <div
+                      v-for="procedure in item.procedures[database] || []"
+                      :key="procedure"
+                      class="node-item procedure-node"
+                      @click="selectTable(item, database, procedure, 'PROCEDURE')"
+                    >
+                      <span class="node-icon">
+                        <font-awesome-icon icon="cogs" />
+                      </span>
+                      <span class="node-label">{{ procedure }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 函数 -->
+                <div class="object-category">
+                  <div
+                    class="node-item category-node"
+                    @click.stop="toggleExpand(item.sessionId, 'category', `${database}-functions`)"
+                  >
+                    <span class="expand-icon">
+                      {{ isExpanded(item.sessionId, 'category', `${database}-functions`) ? '▼' : '▶' }}
+                    </span>
+                    <span class="node-icon">
+                      <font-awesome-icon icon="cube" />
+                    </span>
+                    <span class="node-label">函数 ({{ (item.functions[database] || []).length }})</span>
+                  </div>
+                  <div v-if="isExpanded(item.sessionId, 'category', `${database}-functions`)" class="children">
+                    <div
+                      v-for="func in item.functions[database] || []"
+                      :key="func"
+                      class="node-item function-node"
+                      @click="selectTable(item, database, func, 'FUNCTION')"
+                    >
+                      <span class="node-icon">
+                        <font-awesome-icon icon="cube" />
+                      </span>
+                      <span class="node-label">{{ func }}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -210,21 +314,34 @@ export default {
       })
     },
 
-    selectTable(session, table) {
+    selectTable(session, database, name, type) {
       this.$emit('table-selected', {
         session,
-        table
+        database,
+        name,
+        type
       })
     },
 
     async toggleExpand(sessionId, type, value) {
       connectionStore.toggleNode(sessionId, type, value)
 
-      // 如果展开数据库且未加载表，则加载
+      // 如果展开数据库且未加载对象，则加载
       if (type === 'database') {
         const session = connectionStore.getSession(sessionId)
-        if (session && !session.tables[value]) {
-          await connectionStore.loadTables(sessionId, value)
+        if (session) {
+          if (!session.tables[value]) {
+            await connectionStore.loadTables(sessionId, value)
+          }
+          if (!session.views[value]) {
+            await connectionStore.loadViews(sessionId, value)
+          }
+          if (!session.procedures[value]) {
+            await connectionStore.loadProcedures(sessionId, value)
+          }
+          if (!session.functions[value]) {
+            await connectionStore.loadFunctions(sessionId, value)
+          }
         }
       }
     },
@@ -344,7 +461,35 @@ export default {
   margin-left: 24px;
   border-left: 1px solid var(--border-primary);
   padding-left: 8px;
-  margin-left: 24px;
+}
+
+.object-category {
+  margin-bottom: 2px;
+}
+
+.category-node {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.category-node:hover {
+  color: var(--text-primary);
+}
+
+.table-node .node-icon {
+  color: var(--accent-primary);
+}
+
+.view-node .node-icon {
+  color: var(--info);
+}
+
+.procedure-node .node-icon {
+  color: var(--warning);
+}
+
+.function-node .node-icon {
+  color: var(--success);
 }
 
 .empty-state {

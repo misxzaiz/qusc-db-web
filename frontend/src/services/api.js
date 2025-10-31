@@ -37,6 +37,21 @@ export const sqlApi = {
     return api.get(`/sql/tables/${sessionId}${params}`)
   },
 
+  getViews(sessionId, database) {
+    const params = database ? `?database=${encodeURIComponent(database)}` : ''
+    return api.get(`/sql/views/${sessionId}${params}`)
+  },
+
+  getProcedures(sessionId, database) {
+    const params = database ? `?database=${encodeURIComponent(database)}` : ''
+    return api.get(`/sql/procedures/${sessionId}${params}`)
+  },
+
+  getFunctions(sessionId, database) {
+    const params = database ? `?database=${encodeURIComponent(database)}` : ''
+    return api.get(`/sql/functions/${sessionId}${params}`)
+  },
+
   getDatabases(sessionId) {
     return api.get(`/sql/databases/${sessionId}`)
   },

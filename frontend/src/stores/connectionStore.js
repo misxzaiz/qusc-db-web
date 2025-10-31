@@ -50,6 +50,9 @@ export const connectionStore = reactive({
       databases: [],
       currentDatabase: connectionInfo.database || null,
       tables: {}, // database -> [tables]
+      views: {}, // database -> [views]
+      procedures: {}, // database -> [procedures]
+      functions: {}, // database -> [functions]
       expandedNodes: [] // 记录展开的节点
     }
 
@@ -102,6 +105,48 @@ export const connectionStore = reactive({
       }
     } catch (error) {
       console.error('加载表失败', error)
+    }
+  },
+
+  // 加载视图列表
+  async loadViews(sessionId, databaseName) {
+    try {
+      const response = await sqlApi.getViews(sessionId, databaseName)
+      const sessionData = this.sessions.get(sessionId)
+      if (sessionData) {
+        sessionData.views[databaseName] = response.data.views
+        this.refresh()
+      }
+    } catch (error) {
+      console.error('加载视图失败', error)
+    }
+  },
+
+  // 加载存储过程列表
+  async loadProcedures(sessionId, databaseName) {
+    try {
+      const response = await sqlApi.getProcedures(sessionId, databaseName)
+      const sessionData = this.sessions.get(sessionId)
+      if (sessionData) {
+        sessionData.procedures[databaseName] = response.data.procedures
+        this.refresh()
+      }
+    } catch (error) {
+      console.error('加载存储过程失败', error)
+    }
+  },
+
+  // 加载函数列表
+  async loadFunctions(sessionId, databaseName) {
+    try {
+      const response = await sqlApi.getFunctions(sessionId, databaseName)
+      const sessionData = this.sessions.get(sessionId)
+      if (sessionData) {
+        sessionData.functions[databaseName] = response.data.functions
+        this.refresh()
+      }
+    } catch (error) {
+      console.error('加载函数失败', error)
     }
   },
 

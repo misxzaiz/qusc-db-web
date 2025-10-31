@@ -137,4 +137,34 @@ public class SqlController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    @GetMapping("/views/{sessionId}")
+    public ResponseEntity<?> getViews(@PathVariable String sessionId, @RequestParam(required = false) String database) {
+        try {
+            List<String> views = connectionManager.getViews(sessionId, database);
+            return ResponseEntity.ok(Map.of("views", views));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/procedures/{sessionId}")
+    public ResponseEntity<?> getProcedures(@PathVariable String sessionId, @RequestParam(required = false) String database) {
+        try {
+            List<String> procedures = connectionManager.getProcedures(sessionId, database);
+            return ResponseEntity.ok(Map.of("procedures", procedures));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/functions/{sessionId}")
+    public ResponseEntity<?> getFunctions(@PathVariable String sessionId, @RequestParam(required = false) String database) {
+        try {
+            List<String> functions = connectionManager.getFunctions(sessionId, database);
+            return ResponseEntity.ok(Map.of("functions", functions));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }

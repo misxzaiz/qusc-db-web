@@ -80,6 +80,79 @@ public class ConnectionManagerService {
         }
     }
 
+    public List<String> getViews(String sessionId, String database) throws SQLException {
+        Connection conn = activeConnections.get(sessionId);
+        if (conn == null || conn.isClosed()) {
+            throw new SQLException("Connection not found or closed");
+        }
+
+        if (database == null || database.trim().isEmpty()) {
+            ConnectionInfo info = connectionInfoMap.get(sessionId);
+            database = info != null ? info.getDatabase() : null;
+        }
+
+        try {
+            DatabaseMetaData metaData = conn.getMetaData();
+            try (ResultSet rs = metaData.getTables(database, null, "%", new String[]{"VIEW"})) {
+                List<String> views = new ArrayList<>();
+                while (rs.next()) {
+                    views.add(rs.getString("TABLE_NAME"));
+                }
+                return views;
+            }
+        } catch (SQLException e) {
+            throw new SQLException("Failed to get views: " + e.getMessage());
+        }
+    }
+
+    public List<String> getProcedures(String sessionId, String database) throws SQLException {
+        Connection conn = activeConnections.get(sessionId);
+        if (conn == null || conn.isClosed()) {
+            throw new SQLException("Connection not found or closed");
+        }
+
+        if (database == null || database.trim().isEmpty()) {
+            ConnectionInfo info = connectionInfoMap.get(sessionId);
+            database = info != null ? info.getDatabase() : null;
+        }
+
+        try {
+            DatabaseMetaData metaData = conn.getMetaData();
+            try (ResultSet rs = metaData.getProcedures(database, null, "%")) {
+                List<String> procedures = new ArrayList<>();
+                while (rs.next()) {
+                    procedures.add(rs.getString("PROCEDURE_NAME"));
+                }
+                return procedures;
+            }
+        } catch (SQLException e) {
+            throw new SQLException("Failed to get procedures: " + e.getMessage());
+        }
+    }
+
+    public List<String> getFunctions(String sessionId, String database) throws SQLException {
+        Connection conn = activeConnections.get(sessionId);
+        if (conn == null || conn.isClosed()) {
+            throw new SQLException("Connection not found or closed");
+        }
+
+        if (database == null || database.trim().isEmpty()) {
+            ConnectionInfo info = connectionInfoMap.get(sessionId);
+            database = info != null ? info.getDatabase() : null;
+        }
+
+        List<String> functions = new ArrayList<>();
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SHOW FUNCTION STATUS WHERE Db = '" + database + "'")) {
+            while (rs.next()) {
+                functions.add(rs.getString("Name"));
+            }
+        } catch (SQLException e) {
+            throw new SQLException("Failed to get functions: " + e.getMessage());
+        }
+        return functions;
+    }
+
     public List<String> getDatabases(String sessionId) throws SQLException {
         Connection conn = activeConnections.get(sessionId);
         if (conn == null || conn.isClosed()) {
