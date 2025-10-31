@@ -6,7 +6,6 @@
       @table-selected="onTableSelected"
     />
 
-    
     <div class="main-content">
       <div class="editor-section">
         <div class="editor-toolbar">
@@ -16,6 +15,9 @@
             </button>
             <button class="btn btn-secondary" @click="clearEditor">清空</button>
             <button class="btn btn-secondary" @click="formatSql">格式化</button>
+            <button class="btn btn-ai-toggle" @click="toggleAiPanel" :class="{ active: showAiPanel }">
+              <span class="ai-icon">🤖</span> AI助手
+            </button>
           </div>
           <div class="toolbar-right">
             <div v-if="currentSession" class="connection-info">
@@ -97,20 +99,113 @@
         </li>
       </ul>
     </div>
+
+    <!-- AI助手侧边栏 -->
+    <div v-if="showAiPanel" class="ai-sidebar">
+      <AiChat @execute-sql="handleAiExecuteSql" />
+    </div>
+
+    <!-- AI生成对话框 -->
+    <div v-if="showAiGenerate" class="dialog-overlay" @click="showAiGenerate = false">
+      <div class="dialog ai-dialog" @click.stop>
+        <div class="dialog-header">
+          <h2>AI生成SQL</h2>
+          <button class="close-btn" @click="showAiGenerate = false">×</button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-group">
+            <label>描述你的需求</label>
+            <textarea
+              v-model="aiInput"
+              placeholder="例如：查询所有用户的订单信息，包含用户姓名和订单金额"
+              rows="4"
+            ></textarea>
+          </div>
+          <div v-if="aiConfig" class="ai-config-info">
+            <span class="ai-provider">使用: {{ aiConfig.name }}</span>
+            <button class="btn btn-small" @click="showAiSettings = true">更换</button>
+          </div>
+          <div v-else class="ai-no-config">
+            <p>未配置AI服务</p>
+            <button class="btn btn-primary" @click="showAiSettings = true">去配置</button>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn btn-secondary" @click="showAiGenerate = false">取消</button>
+          <button class="btn btn-primary" @click="generateSql" :disabled="!aiInput.trim() || aiGenerating || !aiConfig">
+            <span v-if="aiGenerating" class="loading-spinner"></span>
+            {{ aiGenerating ? '生成中...' : '生成' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI解释/优化结果对话框 -->
+    <div v-if="showAiResult" class="dialog-overlay" @click="showAiResult = false">
+      <div class="dialog ai-dialog" @click.stop>
+        <div class="dialog-header">
+          <h2>{{ aiResultTitle }}</h2>
+          <button class="close-btn" @click="showAiResult = false">×</button>
+        </div>
+        <div class="dialog-body">
+          <div class="ai-result-content">
+            <pre>{{ aiResultContent }}</pre>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn btn-secondary" @click="showAiResult = false">关闭</button>
+          <button v-if="aiResultType === 'optimize'" class="btn btn-primary" @click="applyOptimizedSql">应用优化</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI设置对话框 -->
+    <div v-if="showAiSettings" class="dialog-overlay" @click="showAiSettings = false">
+      <div class="dialog ai-settings-dialog" @click.stop>
+        <div class="dialog-header">
+          <h2>AI服务设置</h2>
+          <button class="close-btn" @click="showAiSettings = false">×</button>
+        </div>
+        <div class="dialog-body">
+          <div class="ai-configs">
+            <div v-if="aiConfigs.length === 0" class="no-configs">
+              <p>暂无AI配置</p>
+              <button class="btn btn-primary" @click="openAiConfigManager">管理配置</button>
+            </div>
+            <div v-else>
+              <div v-for="config in aiConfigs" :key="config.id"
+                   class="config-item"
+                   :class="{ active: selectedAiConfig === config.id }"
+                   @click="selectedAiConfig = config.id">
+                <div class="config-name">{{ config.name }}</div>
+                <div class="config-provider">{{ config.provider }} - {{ config.model }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn btn-secondary" @click="showAiSettings = false">取消</button>
+          <button class="btn btn-primary" @click="saveAiConfigSelection" :disabled="!selectedAiConfig">确定</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import { sqlApi } from '../services/api'
+import { aiApi } from '../services/aiApi'
 import { connectionStore } from '../stores/connectionStore'
 import SqlCodeEditor from '../components/SqlCodeEditor.vue'
 import ConnectionTree from '../components/ConnectionTree.vue'
+import AiChat from './AiChat.vue'
 
 export default {
   name: 'SqlEditor',
   components: {
     SqlCodeEditor,
-    ConnectionTree
+    ConnectionTree,
+    AiChat
   },
 
   data() {
@@ -121,12 +216,29 @@ export default {
       queryResult: null,
       error: null,
       columns: [],
-      queryHistory: []
+      queryHistory: [],
+      executing: false,
+
+      // AI相关
+      showAiPanel: false,
+      showAiGenerate: false,
+      showAiResult: false,
+      showAiSettings: false,
+      aiInput: '',
+      aiGenerating: false,
+      aiResultTitle: '',
+      aiResultContent: '',
+      aiResultType: '',
+      aiConfigs: [],
+      aiConfig: null,
+      selectedAiConfig: null,
+      optimizedSql: ''
     }
   },
 
   mounted() {
     this.loadQueryHistory()
+    this.loadAiConfigs()
   },
 
   methods: {
@@ -338,6 +450,122 @@ export default {
       if (value === null) return 'NULL'
       if (value === undefined) return ''
       return String(value)
+    },
+
+    // AI相关方法
+    async loadAiConfigs() {
+      try {
+        const response = await aiApi.getConfigs()
+        this.aiConfigs = response.data
+        // 加载已保存的AI配置选择
+        const savedConfigId = localStorage.getItem('selected_ai_config')
+        if (savedConfigId) {
+          this.aiConfig = this.aiConfigs.find(c => c.id === savedConfigId)
+        } else if (this.aiConfigs.length > 0) {
+          // 默认选择第一个启用的配置
+          this.aiConfig = this.aiConfigs.find(c => c.enabled) || this.aiConfigs[0]
+        }
+      } catch (error) {
+        console.error('加载AI配置失败', error)
+      }
+    },
+
+    async generateSql() {
+      if (!this.aiInput.trim() || !this.aiConfig) return
+
+      this.aiGenerating = true
+      try {
+        const response = await aiApi.generateSql(this.aiInput, this.aiConfig.id)
+        const generatedSql = response.data.sql
+        this.sqlText = generatedSql
+        this.showAiGenerate = false
+        this.aiInput = ''
+      } catch (error) {
+        alert('生成失败: ' + (error.response?.data?.error || error.message))
+      } finally {
+        this.aiGenerating = false
+      }
+    },
+
+    async explainSql() {
+      if (!this.sqlText.trim() || !this.aiConfig) return
+
+      this.aiGenerating = true
+      try {
+        const response = await aiApi.explainSql(this.sqlText, this.aiConfig.id)
+        this.aiResultTitle = 'SQL解释'
+        this.aiResultContent = response.data.explanation
+        this.aiResultType = 'explain'
+        this.showAiResult = true
+      } catch (error) {
+        alert('解释失败: ' + (error.response?.data?.error || error.message))
+      } finally {
+        this.aiGenerating = false
+      }
+    },
+
+    async optimizeSql() {
+      if (!this.sqlText.trim() || !this.aiConfig) return
+
+      this.aiGenerating = true
+      try {
+        const response = await aiApi.optimizeSql(this.sqlText, this.aiConfig.id)
+        this.aiResultTitle = 'SQL优化建议'
+        this.aiResultContent = response.data.optimized
+        this.aiResultType = 'optimize'
+        this.optimizedSql = this.extractSqlFromOptimization(response.data.optimized)
+        this.showAiResult = true
+      } catch (error) {
+        alert('优化失败: ' + (error.response?.data?.error || error.message))
+      } finally {
+        this.aiGenerating = false
+      }
+    },
+
+    extractSqlFromOptimization(optimizedText) {
+      // 从优化文本中提取SQL语句
+      const sqlMatch = optimizedText.match(/```sql\n([\s\S]*?)\n```/);
+      if (sqlMatch) {
+        return sqlMatch[1].trim();
+      }
+      // 如果没有找到代码块，尝试提取第一行看起来像SQL的内容
+      const lines = optimizedText.split('\n');
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.match(/^(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP)/i)) {
+          return trimmed;
+        }
+      }
+      return optimizedText;
+    },
+
+    applyOptimizedSql() {
+      if (this.optimizedSql) {
+        this.sqlText = this.optimizedSql
+        this.showAiResult = false
+      }
+    },
+
+    saveAiConfigSelection() {
+      if (this.selectedAiConfig) {
+        this.aiConfig = this.aiConfigs.find(c => c.id === this.selectedAiConfig)
+        localStorage.setItem('selected_ai_config', this.selectedAiConfig)
+        this.showAiSettings = false
+      }
+    },
+
+    openAiConfigManager() {
+      // 打开AI配置管理页面（可以创建新路由或窗口）
+      window.open('#/ai-settings', '_blank')
+    },
+
+    toggleAiPanel() {
+      this.showAiPanel = !this.showAiPanel
+    },
+
+    handleAiExecuteSql(sql) {
+      this.sqlText = sql
+      this.executeSql()
     }
   }
 }
@@ -441,6 +669,38 @@ export default {
 .btn-small {
   padding: 6px 12px;
   font-size: 12px;
+}
+
+.ai-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-left: var(--spacing-lg);
+  padding-left: var(--spacing-lg);
+  border-left: 1px solid var(--border-secondary);
+}
+
+.btn-ai {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: white;
+  font-size: 12px;
+  padding: 6px 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-ai:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--accent-primary-hover), var(--accent-secondary-hover));
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-ai:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ai-icon {
+  margin-right: 4px;
 }
 
 .result-info {
@@ -608,6 +868,149 @@ export default {
 
 .history-duration {
   color: var(--accent-primary);
+}
+
+/* AI侧边栏 */
+.ai-sidebar {
+  width: 400px;
+  background-color: var(--bg-secondary);
+  border-left: 1px solid var(--border-primary);
+  display: flex;
+  flex-direction: column;
+}
+
+.btn-ai-toggle {
+  background-color: var(--btn-secondary-bg);
+  color: var(--btn-secondary-text);
+  position: relative;
+}
+
+.btn-ai-toggle.active {
+  background-color: var(--accent-primary);
+  color: white;
+}
+
+.btn-ai-toggle:hover:not(:disabled) {
+  background-color: var(--btn-secondary-hover);
+}
+
+.btn-ai-toggle.active:hover:not(:disabled) {
+  background-color: var(--accent-primary-hover);
+}
+
+/* AI相关样式 */
+.ai-dialog {
+  width: 600px;
+  max-width: 90%;
+}
+
+.ai-settings-dialog {
+  width: 500px;
+  max-width: 90%;
+}
+
+.ai-config-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  margin-top: var(--spacing-md);
+}
+
+.ai-provider {
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.ai-no-config {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--text-secondary);
+}
+
+.ai-result-content {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: var(--spacing-md);
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+}
+
+.ai-result-content pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: var(--font-family-mono);
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.ai-configs {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.no-configs {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--text-secondary);
+}
+
+.config-item {
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.config-item:hover {
+  background-color: var(--bg-highlight);
+}
+
+.config-item.active {
+  background-color: var(--accent-primary);
+  color: white;
+}
+
+.config-name {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.config-provider {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.form-group textarea {
+  width: 100%;
+  padding: 8px 12px;
+  background-color: var(--bg-highlight);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: var(--font-family-mono);
+  resize: vertical;
+}
+
+/* 加载动画 */
+.loading-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* 对话框样式 */

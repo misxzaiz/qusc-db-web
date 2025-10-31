@@ -4,7 +4,11 @@
       "Bash(mkdir -p backend/src/main/java/com/dbadmin)",
       "Bash(mkdir -p backend/src/main/resources)",
       "Bash(mkdir -p backend/src/test/java)",
-      "Bash(mkdir -p frontend)"
+      "Bash(mkdir -p frontend)",
+      "Bash(mvn clean spring-boot:run)",
+      "Bash(mvn spring-boot:run)",
+      "Bash(java -version)",
+      "Bash(curl -s http://localhost:8080/api/ai/providers)"
     ],
     "deny": [],
     "ask": []
