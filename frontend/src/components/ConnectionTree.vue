@@ -24,7 +24,7 @@
               {{ item.sessionId && isExpanded(item.sessionId, 'connection', item.connectionInfo.name) ? '▼' : '▶' }}
             </span>
             <span class="node-icon">
-              {{ item.sessionId ? '🔗' : '💾' }}
+              <font-awesome-icon :icon="item.sessionId ? 'plug' : 'database'" />
             </span>
             <span class="node-label">{{ item.name || item.connectionInfo.name }}</span>
             <span class="node-status" :class="{ connected: item.sessionId }">
@@ -44,7 +44,9 @@
               <span class="expand-icon" @click.stop="toggleExpand(item.sessionId, 'database', database)">
                 {{ isExpanded(item.sessionId, 'database', database) ? '▼' : '▶' }}
               </span>
-              <span class="node-icon">📁</span>
+              <span class="node-icon">
+                <font-awesome-icon icon="folder" />
+              </span>
               <span class="node-label">{{ database }}</span>
 
               <!-- 表列表 -->
@@ -55,7 +57,9 @@
                   class="node-item table-node"
                   @click="selectTable(item, table)"
                 >
-                  <span class="node-icon">📊</span>
+                  <span class="node-icon">
+                    <font-awesome-icon icon="table" />
+                  </span>
                   <span class="node-label">{{ table }}</span>
                 </div>
               </div>

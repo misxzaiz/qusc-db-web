@@ -4,12 +4,23 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(connection):优化连接树合并逻辑和点击处理&#10;&#10;- 保持已保存连接的原始顺序- 活跃会话优先使用实时数据&#10;- 分离无对应保存">
+    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(ai): 添加AI SQL助手功能&#10;&#10;- 新增AI配置管理界面和相关API接口&#10;- 实现SQL生成、解释和优化核心功能&#10;- 支持多种AI服务商（DeepSeek、心流、OpenAI等）&#10;- 添加前端聊天界面用于与AI交互- 集成LocalStorage存储AI配置信息&#10;- 提供AI模型参数配置和测试连接功能- 支持数据库表结构引用和快速操作按钮&#10;- 实现消息历史记录和SQL执行结果展示">
       <change beforePath="$PROJECT_DIR$/.claude/settings.local.json" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/settings.local.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/DbAdminApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/DbAdminApplication.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/target/classes/com/dbadmin/DbAdminApplication.class" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/com/dbadmin/DbAdminApplication.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/controller/SqlController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/controller/SqlController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/target/classes/com/dbadmin/controller/SqlController.class" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/com/dbadmin/controller/SqlController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/node_modules/.package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/node_modules/.package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/node_modules/.vite/deps/_metadata.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/node_modules/.vite/deps/_metadata.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/ConnectionTree.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/ConnectionTree.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/main.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/services/aiApi.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/aiApi.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/styles/theme.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/styles/theme.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/views/AiChat.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/AiChat.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/views/AiSettings.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/AiSettings.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/views/ConnectionManager.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/ConnectionManager.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -78,7 +89,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1761843015910</updated>
-      <workItem from="1761843018540" duration="10600000" />
+      <workItem from="1761843018540" duration="14172000" />
     </task>
     <task id="LOCAL-00001" summary="chore(deps): 更新前端依赖配置- 为多个依赖包添加或更新 .eslintrc 配置文件- 统一配置 eslint 规则，包括 func-name-matching、id-length、new-cap 等&#10;- 为测试目录添加特定的 eslint 覆盖规则&#10;- 更新 .nycrc 覆盖率配置文件&#10;- 添加 package-lock.json 文件锁定依赖版本- 引入 codemirror 相关依赖用于代码编辑器功能&#10;- 更新 vue 和相关编译器核心依赖到最新版本&#10;- 添加 element-plus 图标库支持- 升级 axios 到 1.13.1 版本&#10;- 引入 proxy-from-env 处理代理环境变量- 添加 call-bind-apply-helpers 等底层工具库- 更新 es-define-property、dunder-proto 等 es-* 系列包&#10;- 锁定 @babel/parser、@babel/types 等解析器版本&#10;- 添加 @codemirror/lang-sql 支持 SQL 语法高亮&#10;- 更新 rollup 和 esbuild 构建工具依赖&#10;- 添加 @vue/devtools-api 开发者工具支持&#10;- 引入 csstype 类型定义文件&#10;- 添加 crelt 虚拟 DOM 工具库&#10;- 更新 source-map-js 和 magic-string 工具库版本">
       <option name="closed" value="true" />
@@ -144,7 +155,23 @@
       <option name="project" value="LOCAL" />
       <updated>1761922893874</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="feat(ai): 集成AI助手功能支持SQL生成和优化- 后端添加RestTemplate Bean支持HTTP请求- 前端新增AI设置和聊天页面路由&#10;- SQL编辑器集成AI助手侧边栏和相关功能按钮&#10;- 实现AI SQL生成、解释和优化功能&#10;- 添加AI配置管理对话框和本地存储支持&#10;- 新增AI助手相关UI组件和样式&#10;- Claude配置添加AI服务测试命令">
+      <option name="closed" value="true" />
+      <created>1761927616046</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1761927616046</updated>
+    </task>
+    <task id="LOCAL-00010" summary="feat(ai): 添加AI SQL助手功能&#10;&#10;- 新增AI配置管理界面和相关API接口&#10;- 实现SQL生成、解释和优化核心功能&#10;- 支持多种AI服务商（DeepSeek、心流、OpenAI等）&#10;- 添加前端聊天界面用于与AI交互- 集成LocalStorage存储AI配置信息&#10;- 提供AI模型参数配置和测试连接功能- 支持数据库表结构引用和快速操作按钮&#10;- 实现消息历史记录和SQL执行结果展示">
+      <option name="closed" value="true" />
+      <created>1761928121416</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1761928121416</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -181,17 +208,8 @@
     <MESSAGE value="feat(connection):重构连接树组件支持已保存连接管理&#10;&#10;- 新增已保存连接列表展示功能&#10;- 实现连接状态标识和连接按钮- 添加跨标签页同步连接列表功能-优化空状态提示信息&#10;- 移除新建连接对话框相关代码- 调整组件样式和布局结构&#10;- 完善连接选择和会话管理逻辑" />
     <MESSAGE value="feat(connection):重构连接树组件支持已保存连接管理&#10;&#10;- 合并已保存连接和活跃会话到统一列表&#10;- 实现连接状态标识和自动展开功能&#10;-优化空状态提示信息和样式布局&#10;- 完善连接点击处理和会话选择逻辑&#10;- 移除旧的连接管理样式和结构&#10;- 调整组件数据结构和计算属性&#10;- 改进数据库和表节点的展示逻辑" />
     <MESSAGE value="feat(connection):优化连接树合并逻辑和点击处理&#10;&#10;- 保持已保存连接的原始顺序- 活跃会话优先使用实时数据&#10;- 分离无对应保存" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(connection):优化连接树合并逻辑和点击处理&#10;&#10;- 保持已保存连接的原始顺序- 活跃会话优先使用实时数据&#10;- 分离无对应保存" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/backend/src/main/java/com/dbadmin/service/AiService.java</url>
-          <line>108</line>
-          <option name="timeStamp" value="6" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
+    <MESSAGE value="feat(ai): 集成AI助手功能支持SQL生成和优化- 后端添加RestTemplate Bean支持HTTP请求- 前端新增AI设置和聊天页面路由&#10;- SQL编辑器集成AI助手侧边栏和相关功能按钮&#10;- 实现AI SQL生成、解释和优化功能&#10;- 添加AI配置管理对话框和本地存储支持&#10;- 新增AI助手相关UI组件和样式&#10;- Claude配置添加AI服务测试命令" />
+    <MESSAGE value="feat(ai): 添加AI SQL助手功能&#10;&#10;- 新增AI配置管理界面和相关API接口&#10;- 实现SQL生成、解释和优化核心功能&#10;- 支持多种AI服务商（DeepSeek、心流、OpenAI等）&#10;- 添加前端聊天界面用于与AI交互- 集成LocalStorage存储AI配置信息&#10;- 提供AI模型参数配置和测试连接功能- 支持数据库表结构引用和快速操作按钮&#10;- 实现消息历史记录和SQL执行结果展示" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(ai): 添加AI SQL助手功能&#10;&#10;- 新增AI配置管理界面和相关API接口&#10;- 实现SQL生成、解释和优化核心功能&#10;- 支持多种AI服务商（DeepSeek、心流、OpenAI等）&#10;- 添加前端聊天界面用于与AI交互- 集成LocalStorage存储AI配置信息&#10;- 提供AI模型参数配置和测试连接功能- 支持数据库表结构引用和快速操作按钮&#10;- 实现消息历史记录和SQL执行结果展示" />
   </component>
 </project>

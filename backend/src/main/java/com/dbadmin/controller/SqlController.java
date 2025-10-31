@@ -5,8 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/api/sql")
@@ -34,7 +34,7 @@ public class SqlController {
     }
 
     @PostMapping("/execute")
-    public ResponseEntity<?> executeUpdate(@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> executeSql(@RequestBody Map<String, String> request) {
         String sessionId = request.get("sessionId");
         String sql = request.get("sql");
 
@@ -43,11 +43,54 @@ public class SqlController {
         }
 
         try {
-            int affectedRows = connectionManager.executeUpdate(sessionId, sql);
-            return ResponseEntity.ok(Map.of("affectedRows", affectedRows));
+            // 清理SQL字符串
+            String cleanSql = sql.trim();
+
+            // 判断SQL类型
+            if (isSelectQuery(cleanSql)) {
+                // 执行查询语句（返回结果集）
+                List<Map<String, Object>> result = connectionManager.executeQuery(sessionId, cleanSql);
+
+                // 构建响应
+                Map<String, Object> response = new HashMap<>();
+                response.put("data", result);
+
+                // 获取列名
+                if (!result.isEmpty()) {
+                    response.put("columns", new ArrayList<>(result.get(0).keySet()));
+                }
+
+                return ResponseEntity.ok(response);
+            } else {
+                // 执行更新语句（不返回结果集）
+                int affectedRows = connectionManager.executeUpdate(sessionId, cleanSql);
+                return ResponseEntity.ok(Map.of("affectedRows", affectedRows));
+            }
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    /**
+     * 判断是否为SELECT查询
+     */
+    private boolean isSelectQuery(String sql) {
+        // 使用正则表达式匹配以SELECT开头的语句（排除WITH子句）
+        String normalized = sql.toUpperCase().replaceAll("\\s+", " ");
+
+        // 检查是否是SHOW、DESCRIBE、EXPLAIN等也返回结果集的语句
+        Pattern showPattern = Pattern.compile("^(SHOW|DESCRIBE|DESC|EXPLAIN)\\b");
+        if (showPattern.matcher(normalized).find()) {
+            return true;
+        }
+
+        // 检查是否是WITH开头的CTE查询
+        if (normalized.startsWith("WITH ")) {
+            return true;
+        }
+
+        // 检查是否是SELECT查询
+        return normalized.startsWith("SELECT ");
     }
 
     @GetMapping("/tables/{sessionId}")

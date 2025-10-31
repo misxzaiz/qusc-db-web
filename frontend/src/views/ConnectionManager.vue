@@ -12,6 +12,11 @@
         <p class="empty-hint">点击"新建连接"添加您的第一个数据库连接</p>
       </div>
 
+      <div class="browser-notice">
+        <font-awesome-icon icon="info-circle" />
+        <span>提示：连接信息仅保存在当前浏览器本地，其他浏览器或设备无法访问</span>
+      </div>
+
       <div v-for="conn in connections" :key="conn.id" class="connection-card">
         <div class="card-header">
           <h3>{{ conn.name }}</h3>
@@ -224,6 +229,23 @@ export default {
 
 .toolbar {
   margin-bottom: var(--spacing-xl);
+}
+
+.browser-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--spacing-lg);
+  padding: 10px 15px;
+  background-color: var(--info-bg);
+  border: 1px solid var(--info-border);
+  border-radius: var(--radius-sm);
+  color: var(--info);
+  font-size: 13px;
+}
+
+.browser-notice svg {
+  flex-shrink: 0;
 }
 
 .btn {

@@ -8,7 +8,11 @@
       "Bash(mvn clean spring-boot:run)",
       "Bash(mvn spring-boot:run)",
       "Bash(java -version)",
-      "Bash(curl -s http://localhost:8080/api/ai/providers)"
+      "Bash(curl -s http://localhost:8080/api/ai/providers)",
+      "Bash(npm install @fortawesome/fontawesome-free @fortawesome/vue-fontawesome@latest-3)",
+      "Bash(npm run dev)",
+      "Bash(npm install @fortawesome/free-solid-svg-icons)",
+      "Bash(./mvnw spring-boot:run)"
     ],
     "deny": [],
     "ask": []

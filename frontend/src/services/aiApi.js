@@ -58,17 +58,26 @@ const storage = {
 export const aiApi = {
   // 生成SQL
   generateSql(input, configId) {
-    return api.post('/generate-sql', { input, configId })
+    // 先确保配置已同步到后端
+    return this.ensureSyncedToBackend().then(() => {
+      return api.post('/generate-sql', { input, configId })
+    })
   },
 
   // 解释SQL
   explainSql(sql, configId) {
-    return api.post('/explain-sql', { sql, configId })
+    // 先确保配置已同步到后端
+    return this.ensureSyncedToBackend().then(() => {
+      return api.post('/explain-sql', { sql, configId })
+    })
   },
 
   // 优化SQL
   optimizeSql(sql, configId) {
-    return api.post('/optimize-sql', { sql, configId })
+    // 先确保配置已同步到后端
+    return this.ensureSyncedToBackend().then(() => {
+      return api.post('/optimize-sql', { sql, configId })
+    })
   },
 
   // 获取AI提供商列表
@@ -107,6 +116,22 @@ export const aiApi = {
       console.warn('后端删除配置失败，但本地已删除:', error)
       return { data: { success: true } }
     })
+  },
+
+  // 确保配置同步到后端（在使用前调用）
+  ensureSyncedToBackend() {
+    const configs = storage.getConfigs()
+    if (configs.length === 0) {
+      return Promise.resolve()
+    }
+
+    // 批量同步所有配置到后端
+    const promises = configs.map(config =>
+      api.post('/config', config).catch(error => {
+        console.warn(`同步配置 ${config.id} 失败:`, error)
+      })
+    )
+    return Promise.all(promises)
   },
 
   // 测试AI配置（需要后端支持）

@@ -2,11 +2,31 @@
   <div class="app">
     <header class="header">
       <div class="header-left">
-        <h1 class="logo">DB Admin</h1>
+        <h1 class="logo">
+          <font-awesome-icon icon="database" />
+          DB Admin
+        </h1>
         <nav class="nav">
-          <router-link to="/connections" class="nav-link">连接管理</router-link>
-          <router-link to="/editor" class="nav-link">SQL编辑器</router-link>
+          <router-link to="/connections" class="nav-link">
+            <font-awesome-icon icon="plug" />
+            连接管理
+          </router-link>
+          <router-link to="/editor" class="nav-link">
+            <font-awesome-icon icon="code" />
+            SQL编辑器
+          </router-link>
+          <router-link to="/ai-settings" class="nav-link">
+            <font-awesome-icon icon="gear" />
+            AI设置
+          </router-link>
+          <router-link to="/ai-chat" class="nav-link">
+            <font-awesome-icon icon="comments" />
+            AI聊天
+          </router-link>
         </nav>
+      </div>
+      <div class="header-right">
+        <span class="version">v1.0.0</span>
       </div>
     </header>
 
@@ -26,38 +46,51 @@ export default {
 @import './styles/theme.css';
 
 .header {
-  height: 48px;
+  height: 56px;
   background-color: var(--bg-tertiary);
   border-bottom: 1px solid var(--border-primary);
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 0 var(--spacing-xl);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: 40px;
 }
 
 .logo {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--accent-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo svg {
+  width: 24px;
+  height: 24px;
 }
 
 .nav {
   display: flex;
-  gap: 20px;
+  gap: 5px;
 }
 
 .nav-link {
   color: var(--text-secondary);
   text-decoration: none;
   font-size: 14px;
-  padding: 5px 10px;
+  padding: 8px 16px;
   border-radius: var(--radius-sm);
   transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .nav-link:hover {
@@ -68,10 +101,30 @@ export default {
 .nav-link.router-link-active {
   color: var(--accent-primary);
   background-color: var(--bg-quaternary);
+  font-weight: 500;
+}
+
+.nav-link svg {
+  width: 14px;
+  height: 14px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.version {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  padding: 4px 8px;
+  background-color: var(--bg-quaternary);
+  border-radius: var(--radius-sm);
 }
 
 .main {
-  height: calc(100vh - 48px);
+  height: calc(100vh - 56px);
   overflow: hidden;
 }
 

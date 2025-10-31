@@ -3,6 +3,10 @@
     <div class="header">
       <h1>AI服务设置</h1>
       <p>配置AI服务以使用SQL生成、解释和优化功能</p>
+      <div class="browser-notice">
+        <font-awesome-icon icon="info-circle" />
+        <span>注意：所有配置仅保存在当前浏览器本地，其他浏览器或设备无法访问</span>
+      </div>
     </div>
 
     <div class="content">
@@ -21,7 +25,7 @@
                 <option value="">选择提供商</option>
                 <option value="deepseek">DeepSeek</option>
                                 <option value="Iflow">心流</option>
-                <option value="openai">OpenAI</option>
+<!--                <option value="openai">OpenAI</option>-->
                 <option value="custom">自定义</option>
               </select>
             </div>
@@ -228,17 +232,12 @@ export default {
   methods: {
     async loadConfigs() {
       try {
+        // 先确保配置同步到后端
+        await aiApi.ensureSyncedToBackend()
+        console.log('AI配置已同步到后端')
+
         const response = await aiApi.getConfigs()
         this.configs = response.data
-
-        // 如果localStorage中有配置，同步到后端
-        if (this.configs.length > 0) {
-          aiApi.syncConfigsToBackend().then(() => {
-            console.log('AI配置已同步到后端')
-          }).catch(error => {
-            console.warn('同步AI配置到后端时出现错误:', error)
-          })
-        }
       } catch (error) {
         console.error('加载配置失败', error)
       }
@@ -387,6 +386,23 @@ export default {
 .header p {
   margin: 0;
   color: var(--text-secondary);
+}
+
+.browser-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 15px;
+  padding: 10px 15px;
+  background-color: var(--info-bg);
+  border: 1px solid var(--info-border);
+  border-radius: var(--radius-sm);
+  color: var(--info);
+  font-size: 13px;
+}
+
+.browser-notice svg {
+  flex-shrink: 0;
 }
 
 .content {

@@ -17,7 +17,7 @@
       <!-- 表结构引用栏 -->
       <div v-if="tables.length > 0" class="table-reference">
         <div class="reference-header">
-          <span>📊 数据库表（点击引用）</span>
+          <font-awesome-icon icon="table" /> 数据库表（点击引用）
           <button class="btn btn-small" @click="toggleTableList">
             {{ showTableList ? '收起' : '展开' }}
           </button>
@@ -50,8 +50,8 @@
 
         <div v-for="(message, index) in messages" :key="index" class="message" :class="message.role">
           <div class="message-avatar">
-            <span v-if="message.role === 'user'">👤</span>
-            <span v-else>🤖</span>
+            <font-awesome-icon v-if="message.role === 'user'" icon="user" />
+            <font-awesome-icon v-else icon="robot" />
           </div>
           <div class="message-content">
             <div class="message-text" v-html="formatMessage(message.content)"></div>
@@ -65,7 +65,7 @@
 
         <div v-if="loading" class="message assistant">
           <div class="message-avatar">
-            <span>🤖</span>
+            <font-awesome-icon icon="robot" />
           </div>
           <div class="message-content">
             <div class="typing-indicator">
@@ -81,16 +81,16 @@
     <div class="chat-input">
       <div class="quick-actions">
         <button class="quick-btn" @click="quickAction('generate')">
-          <span class="icon">✨</span> 生成SQL
+          <font-awesome-icon icon="star" class="icon" /> 生成SQL
         </button>
         <button class="quick-btn" @click="quickAction('explain')">
-          <span class="icon">💡</span> 解释SQL
+          <font-awesome-icon icon="lightbulb" class="icon" /> 解释SQL
         </button>
         <button class="quick-btn" @click="quickAction('optimize')">
-          <span class="icon">⚡</span> 优化SQL
+          <font-awesome-icon icon="bolt" class="icon" /> 优化SQL
         </button>
         <button class="quick-btn" @click="quickAction('analyze')">
-          <span class="icon">📊</span> 分析表
+          <font-awesome-icon icon="table" class="icon" /> 分析表
         </button>
       </div>
 
@@ -155,6 +155,9 @@ export default {
   methods: {
     async loadAiConfigs() {
       try {
+        // 先确保配置同步到后端
+        await aiApi.ensureSyncedToBackend()
+
         const response = await aiApi.getConfigs()
         this.aiConfigs = response.data
         if (this.aiConfigs.length > 0) {
@@ -389,6 +392,25 @@ export default {
         this.addAssistantMessage('获取表结构失败: ' + error.message, 'error')
       } finally {
         this.loading = false
+      }
+    }
+  },
+
+  watch: {
+    // 监听AI配置变化，自动同步到后端
+    selectedConfig: {
+      handler(newConfigId) {
+        if (newConfigId) {
+          // 保存选择的配置ID
+          localStorage.setItem('selected_ai_config', newConfigId)
+
+          // 确保配置同步到后端
+          aiApi.ensureSyncedToBackend().then(() => {
+            console.log('AI配置已同步到后端')
+          }).catch(error => {
+            console.warn('同步AI配置到后端时出现错误:', error)
+          })
+        }
       }
     }
   }
