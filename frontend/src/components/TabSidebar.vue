@@ -146,7 +146,7 @@ export default {
   border-right: 1px solid var(--border-primary);
   display: flex;
   flex-direction: row;
-  height: 100vh;
+  height: 100%;
   position: relative;
   z-index: 100;
   flex-shrink: 0;

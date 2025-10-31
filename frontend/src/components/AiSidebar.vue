@@ -209,7 +209,7 @@ export default {
   border-left: 1px solid var(--border-primary);
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   transition: width 0.3s ease;
   flex-shrink: 0;
   overflow: hidden;

@@ -407,7 +407,7 @@ export default {
 <style scoped>
 .app-layout {
   display: flex;
-  height: 100vh;
+  height: 100%;
   position: relative;
   overflow: hidden;
 }
