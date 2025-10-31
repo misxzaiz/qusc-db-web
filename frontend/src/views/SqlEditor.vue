@@ -11,7 +11,7 @@
     />
 
     <!-- 主内容区 -->
-    <div class="main-area" :style="{ marginLeft: sidebarWidth + 'px' }">
+    <div class="main-area" :style="{ marginLeft: sidebarWidth + 'px', marginRight: aiWidth + 'px' }">
       <div class="editor-section">
         <div class="editor-toolbar">
           <div class="toolbar-left">
@@ -128,7 +128,7 @@
     </div>
 
     <!-- 右侧AI边栏 -->
-    <AiSidebar @use-sql="onUseAiSql" />
+    <AiSidebar @use-sql="onUseAiSql" @resize="handleAiResize" />
   </div>
 </template>
 
@@ -162,6 +162,7 @@ export default {
 
     // 侧边栏宽度
     const sidebarWidth = ref(40)
+    const aiWidth = ref(40)
 
     // QueryHistory组件引用
     const queryHistoryRef = ref(null)
@@ -312,6 +313,10 @@ export default {
       sidebarWidth.value = width
     }
 
+    const handleAiResize = (width) => {
+      aiWidth.value = width
+    }
+
     // 查询历史处理方法
     const onHistorySelect = (sql) => {
       sqlText.value = sql
@@ -376,6 +381,7 @@ export default {
       sortColumn,
       sortOrder,
       sidebarWidth,
+      aiWidth,
       queryHistoryRef,
       executeSql,
       clearEditor,
@@ -386,6 +392,7 @@ export default {
       nextPage,
       exportResult,
       handleSidebarResize,
+      handleAiResize,
       onHistorySelect,
       onHistoryCopy,
       onHistoryExecute,
@@ -402,6 +409,7 @@ export default {
   display: flex;
   height: 100vh;
   position: relative;
+  overflow: hidden;
 }
 
 .main-area {

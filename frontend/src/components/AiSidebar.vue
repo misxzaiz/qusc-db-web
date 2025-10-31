@@ -99,7 +99,7 @@ import { aiApi } from '../services/aiApi'
 export default {
   name: 'AiSidebar',
 
-  emits: ['use-sql'],
+  emits: ['use-sql', 'resize'],
 
   setup(props, { emit }) {
     const isCollapsed = ref(true)
@@ -128,6 +128,7 @@ export default {
     const toggleCollapse = () => {
       isCollapsed.value = !isCollapsed.value
       sidebarWidth.value = isCollapsed.value ? 40 : 350
+      emit('resize', sidebarWidth.value)
     }
 
     // 生成SQL
@@ -181,6 +182,9 @@ export default {
     // 初始化
     loadConfigs()
 
+    // 发出初始宽度
+    emit('resize', sidebarWidth.value)
+
     return {
       isCollapsed,
       sidebarWidth,
@@ -208,10 +212,7 @@ export default {
   flex-direction: column;
   height: 100vh;
   transition: width 0.3s ease;
-  position: fixed;
-  right: 0;
-  top: 0;
-  z-index: 90;
+  flex-shrink: 0;
 }
 
 .sidebar-header {
