@@ -11,11 +11,8 @@
       <div class="editor-section">
         <div class="editor-toolbar">
           <div class="toolbar-left">
-            <button class="btn btn-primary" @click="executeQuery" :disabled="!currentSession || !sqlText.trim()">
-              执行查询 (F5)
-            </button>
-            <button class="btn btn-secondary" @click="executeUpdate" :disabled="!currentSession || !sqlText.trim()">
-              执行更新
+            <button class="btn btn-primary" @click="executeSql" :disabled="!currentSession || !sqlText.trim()">
+              执行 (F5)
             </button>
             <button class="btn btn-secondary" @click="clearEditor">清空</button>
             <button class="btn btn-secondary" @click="formatSql">格式化</button>
@@ -41,7 +38,7 @@
           <SqlCodeEditor
             ref="codeEditor"
             v-model="sqlText"
-            @execute="executeQuery"
+            @execute="executeSql"
           />
         </div>
       </div>
@@ -158,7 +155,36 @@ export default {
     },
 
     
-    async executeQuery() {
+    // 检测SQL类型
+    getSqlType(sql) {
+      const trimmedSql = sql.trim().toUpperCase()
+
+      // USE 语句
+      if (trimmedSql.startsWith('USE ')) {
+        return 'USE'
+      }
+
+      // 查询语句
+      const queryKeywords = ['SELECT', 'SHOW', 'DESCRIBE', 'DESC', 'EXPLAIN', 'WITH']
+      for (const keyword of queryKeywords) {
+        if (trimmedSql.startsWith(keyword + ' ') || trimmedSql === keyword) {
+          return 'QUERY'
+        }
+      }
+
+      // 更新语句
+      const updateKeywords = ['INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER', 'TRUNCATE', 'REPLACE']
+      for (const keyword of updateKeywords) {
+        if (trimmedSql.startsWith(keyword + ' ')) {
+          return 'UPDATE'
+        }
+      }
+
+      // 默认作为更新语句处理
+      return 'UPDATE'
+    },
+
+    async executeSql() {
       if (!this.currentSession || !this.sqlText.trim()) return
 
       this.error = null
@@ -166,11 +192,16 @@ export default {
       const startTime = Date.now()
 
       const sqlText = this.sqlText.trim()
+      const sqlType = this.getSqlType(sqlText)
+
+      // 对于更新语句，添加确认提示
+      if (sqlType === 'UPDATE' && !confirm('确定要执行此更新语句吗？')) {
+        return
+      }
 
       try {
-        // 检查是否是 USE 语句
-        if (sqlText.toUpperCase().startsWith('USE ')) {
-          // 执行 USE 语句（使用 execute 方法）
+        if (sqlType === 'USE') {
+          // 执行 USE 语句
           const response = await sqlApi.execute(this.currentSession.sessionId, sqlText)
 
           // 更新当前数据库
@@ -190,40 +221,29 @@ export default {
             }
           }
 
-          this.queryResult = { affectedRows: response.data.affectedRows }
-        } else {
-          // 普通查询
+          this.queryResult = {
+            affectedRows: response.data.affectedRows,
+            message: `已切换到数据库: ${this.currentDatabase || '未知'}`
+          }
+          this.addToHistory(sqlText, 'use', Date.now() - startTime)
+        } else if (sqlType === 'QUERY') {
+          // 执行查询语句
           const response = await sqlApi.query(this.currentSession.sessionId, sqlText)
           this.queryResult = response.data
 
           if (this.queryResult.data && this.queryResult.data.length > 0) {
             this.columns = Object.keys(this.queryResult.data[0])
           }
+          this.addToHistory(sqlText, 'query', Date.now() - startTime)
+        } else {
+          // 执行更新语句
+          const response = await sqlApi.execute(this.currentSession.sessionId, sqlText)
+          this.queryResult = response.data
+          this.addToHistory(sqlText, 'update', Date.now() - startTime)
         }
-
-        this.addToHistory(sqlText, 'query', Date.now() - startTime)
       } catch (error) {
         this.error = error.response?.data?.error || error.message
         this.addToHistory(sqlText, 'error', Date.now() - startTime, this.error)
-      }
-    },
-
-    async executeUpdate() {
-      if (!this.currentSession || !this.sqlText.trim()) return
-
-      if (!confirm('确定要执行此更新语句吗？')) return
-
-      this.error = null
-      this.queryResult = null
-      const startTime = Date.now()
-
-      try {
-        const response = await sqlApi.execute(this.currentSession.sessionId, this.sqlText.trim())
-        this.queryResult = response.data
-        this.addToHistory(this.sqlText.trim(), 'update', Date.now() - startTime)
-      } catch (error) {
-        this.error = error.response?.data?.error || error.message
-        this.addToHistory(this.sqlText.trim(), 'error', Date.now() - startTime, this.error)
       }
     },
 
