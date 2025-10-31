@@ -12,7 +12,8 @@
       "Bash(npm install @fortawesome/fontawesome-free @fortawesome/vue-fontawesome@latest-3)",
       "Bash(npm run dev)",
       "Bash(npm install @fortawesome/free-solid-svg-icons)",
-      "Bash(./mvnw spring-boot:run)"
+      "Bash(./mvnw spring-boot:run)",
+      "Bash(cat -A index.html)"
     ],
     "deny": [],
     "ask": []

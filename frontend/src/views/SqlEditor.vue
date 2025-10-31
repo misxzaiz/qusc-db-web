@@ -11,7 +11,7 @@
     />
 
     <!-- 主内容区 -->
-    <div class="main-area" :style="{ marginLeft: sidebarWidth + 'px', marginRight: aiWidth + 'px' }">
+    <div class="main-content">
       <div class="editor-section">
         <div class="editor-toolbar">
           <div class="toolbar-left">
@@ -412,13 +412,10 @@ export default {
   overflow: hidden;
 }
 
-.main-area {
+.main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  transition: margin-left 0.3s ease, margin-right 0.3s ease;
-  margin-left: 40px;
-  margin-right: 40px;
   min-width: 0;
   overflow: hidden;
 }
@@ -505,9 +502,11 @@ export default {
 .result-section {
   background-color: var(--bg-secondary);
   border-top: 1px solid var(--border-primary);
-  max-height: 400px;
+  flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .result-header {

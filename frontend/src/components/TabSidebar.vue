@@ -149,6 +149,7 @@ export default {
   height: 100vh;
   position: relative;
   z-index: 100;
+  flex-shrink: 0;
 }
 
 .nav-icons {
@@ -156,6 +157,7 @@ export default {
   display: flex;
   flex-direction: column;
   padding: 10px 0;
+  gap: 10px;
 }
 
 .nav-icon {

@@ -8,7 +8,6 @@
     <div class="sidebar-header" @click="toggleCollapse">
       <div class="header-left">
         <font-awesome-icon icon="robot" class="ai-icon" />
-        <h3 v-if="!isCollapsed">AI助手</h3>
       </div>
       <div class="header-actions">
         <select v-model="selectedConfig" class="config-select" v-if="!isCollapsed" @click.stop>
@@ -213,6 +212,7 @@ export default {
   height: 100vh;
   transition: width 0.3s ease;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .sidebar-header {
