@@ -38,13 +38,15 @@
               :class="{ active: item.currentDatabase === database }"
               @click="selectDatabase(item, database)"
             >
-              <span class="expand-icon" @click.stop="toggleExpand(item.sessionId, 'database', database)">
-                {{ isExpanded(item.sessionId, 'database', database) ? '▼' : '▶' }}
-              </span>
-              <span class="node-icon">
-                <font-awesome-icon icon="folder" />
-              </span>
-              <span class="node-label">{{ database }}</span>
+              <div>
+                  <span class="expand-icon" @click.stop="toggleExpand(item.sessionId, 'database', database)">
+                    {{ isExpanded(item.sessionId, 'database', database) ? '▼' : '▶' }}
+                  </span>
+                  <span class="node-icon">
+                    <font-awesome-icon icon="folder" />
+                  </span>
+                  <span class="node-label">{{ database }}</span>
+              </div>
 
               <!-- 数据库对象分类 -->
               <div v-if="isExpanded(item.sessionId, 'database', database)" class="children">
@@ -415,6 +417,16 @@ export default {
   font-size: 13px;
 }
 
+.database-node {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.database-node > span {
+  display: inline-flex;
+  align-items: center;
+}
+
 .node-item:hover {
   background-color: var(--bg-highlight);
 }
@@ -458,9 +470,9 @@ export default {
 }
 
 .children {
-  margin-left: 24px;
-  border-left: 1px solid var(--border-primary);
-  padding-left: 8px;
+  margin-top: 4px;
+  padding-left: 20px;
+  width: 100%;
 }
 
 .object-category {
