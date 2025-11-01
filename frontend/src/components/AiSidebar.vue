@@ -30,16 +30,82 @@
           v-model="aiInput"
           placeholder="输入您的需求..."
           class="ai-input"
-          @keydown.ctrl.enter="generateSql"
+          @keydown.ctrl.enter="generateContent"
         ></textarea>
         <button
           class="btn btn-primary btn-generate"
-          @click="generateSql"
-          :disabled="!aiInput.trim() || !selectedConfig || generating"
+          @click="generateContent"
+          :disabled="!canGenerate() || !selectedConfig || generating"
         >
           <font-awesome-icon icon="paper-plane" />
           生成
         </button>
+      </div>
+
+      <!-- 功能选择 -->
+      <div class="ai-functions">
+        <button
+          v-for="func in aiFunctions"
+          :key="func.key"
+          :class="['btn', 'function-btn', { active: selectedFunction === func.key }]"
+          @click="selectedFunction = func.key"
+          :title="func.description"
+        >
+          <font-awesome-icon :icon="func.icon" />
+          {{ func.name }}
+        </button>
+      </div>
+
+      <!-- 特殊输入 -->
+      <div v-if="selectedFunction === 'crud'" class="crud-inputs">
+        <input
+          v-model="crudInputs.tableName"
+          placeholder="表名"
+          class="input-field"
+        />
+        <textarea
+          v-model="crudInputs.columns"
+          placeholder="表结构（如：id INT PRIMARY KEY, name VARCHAR(100), age INT）"
+          class="input-field"
+          rows="3"
+        ></textarea>
+      </div>
+
+      <div v-if="selectedFunction === 'testData'" class="test-inputs">
+        <input
+          v-model="testInputs.tableName"
+          placeholder="表名"
+          class="input-field"
+        />
+        <textarea
+          v-model="testInputs.columns"
+          placeholder="表结构"
+          class="input-field"
+          rows="3"
+        ></textarea>
+        <input
+          v-model.number="testInputs.rowCount"
+          type="number"
+          placeholder="行数（默认10）"
+          class="input-field"
+          min="1"
+          max="1000"
+        />
+      </div>
+
+      <div v-if="selectedFunction === 'explainPlan'" class="plan-inputs">
+        <textarea
+          v-model="planInputs.sql"
+          placeholder="SQL语句"
+          class="input-field"
+          rows="3"
+        ></textarea>
+        <textarea
+          v-model="planInputs.explainResult"
+          placeholder="EXPLAIN结果"
+          class="input-field"
+          rows="5"
+        ></textarea>
       </div>
 
       <!-- 生成结果 -->
@@ -48,19 +114,24 @@
         <span>正在生成...</span>
       </div>
 
-      <div v-if="generatedSql" class="ai-result">
+      <div v-if="generatedResult" class="ai-result">
         <div class="result-header">
-          <h4>生成的SQL</h4>
+          <h4>{{ getResultTitle() }}</h4>
           <div class="result-actions">
-            <button class="btn btn-small" @click="copySql" title="复制">
+            <button class="btn btn-small" @click="copyResult" title="复制">
               <font-awesome-icon icon="copy" />
             </button>
-            <button class="btn btn-small" @click="useSql" title="使用">
+            <button
+              v-if="selectedFunction === 'sql'"
+              class="btn btn-small"
+              @click="useSql"
+              title="使用"
+            >
               <font-awesome-icon icon="play" />
             </button>
           </div>
         </div>
-        <pre class="sql-content">{{ generatedSql }}</pre>
+        <pre class="sql-content">{{ generatedResult }}</pre>
       </div>
 
       <!-- 聊天历史 -->
@@ -106,9 +177,39 @@ export default {
     const configs = ref([])
     const selectedConfig = ref(null)
     const aiInput = ref('')
-    const generatedSql = ref('')
+    const generatedResult = ref('')
     const generating = ref(false)
     const chatHistory = ref([])
+    const selectedFunction = ref('sql')
+
+    // AI功能列表
+    const aiFunctions = ref([
+      { key: 'sql', name: '生成SQL', icon: 'code', description: '根据描述生成SQL' },
+      { key: 'explain', name: '解释SQL', icon: 'question-circle', description: '解释SQL语句' },
+      { key: 'optimize', name: '优化SQL', icon: 'rocket', description: '优化SQL性能' },
+      { key: 'crud', name: '生成CRUD', icon: 'tasks', description: '生成增删改查语句' },
+      { key: 'testData', name: '测试数据', icon: 'database', description: '生成测试数据' },
+      { key: 'explainPlan', name: '执行计划', icon: 'sitemap', description: '分析执行计划' }
+    ])
+
+    // CRUD输入
+    const crudInputs = ref({
+      tableName: '',
+      columns: ''
+    })
+
+    // 测试数据输入
+    const testInputs = ref({
+      tableName: '',
+      columns: '',
+      rowCount: 10
+    })
+
+    // 执行计划输入
+    const planInputs = ref({
+      sql: '',
+      explainResult: ''
+    })
 
     // 加载AI配置
     const loadConfigs = async () => {
@@ -130,40 +231,121 @@ export default {
       emit('resize', sidebarWidth.value)
     }
 
-    // 生成SQL
-    const generateSql = async () => {
-      if (!aiInput.value.trim() || !selectedConfig.value) return
+    // 生成内容
+    const generateContent = async () => {
+      if (!selectedConfig.value) return
 
       generating.value = true
       try {
-        const response = await aiApi.generateSql(aiInput.value, selectedConfig.value.id)
-        generatedSql.value = response.data.sql
+        let response
 
-        // 添加到聊天历史
-        chatHistory.value.unshift({
-          question: aiInput.value,
-          answer: generatedSql.value
-        })
+        switch (selectedFunction.value) {
+          case 'sql':
+            if (!aiInput.value.trim()) return
+            response = await aiApi.generateSql(aiInput.value, selectedConfig.value.id)
+            generatedResult.value = response.data.sql
+            // 添加到聊天历史
+            chatHistory.value.unshift({
+              question: aiInput.value,
+              answer: generatedResult.value
+            })
+            break
+
+          case 'explain':
+            if (!aiInput.value.trim()) return
+            response = await aiApi.explainSql(aiInput.value, selectedConfig.value.id)
+            generatedResult.value = response.data.explanation
+            break
+
+          case 'optimize':
+            if (!aiInput.value.trim()) return
+            response = await aiApi.optimizeSql(aiInput.value, selectedConfig.value.id)
+            generatedResult.value = response.data.optimized
+            break
+
+          case 'crud':
+            if (!crudInputs.value.tableName || !crudInputs.value.columns) return
+            response = await aiApi.generateCrud(
+              crudInputs.value.tableName,
+              crudInputs.value.columns,
+              selectedConfig.value.id
+            )
+            generatedResult.value = response.data.crud
+            break
+
+          case 'testData':
+            if (!testInputs.value.tableName || !testInputs.value.columns) return
+            response = await aiApi.generateTestData(
+              testInputs.value.tableName,
+              testInputs.value.columns,
+              testInputs.value.rowCount || 10,
+              selectedConfig.value.id
+            )
+            generatedResult.value = response.data.testData
+            break
+
+          case 'explainPlan':
+            if (!planInputs.value.sql || !planInputs.value.explainResult) return
+            response = await aiApi.explainQueryPlan(
+              planInputs.value.sql,
+              planInputs.value.explainResult,
+              selectedConfig.value.id
+            )
+            generatedResult.value = response.data.explanation
+            break
+        }
 
         // 限制历史记录数量
         if (chatHistory.value.length > 20) {
           chatHistory.value = chatHistory.value.slice(0, 20)
         }
       } catch (error) {
-        console.error('生成SQL失败:', error)
+        console.error('生成失败:', error)
+        alert('生成失败: ' + (error.response?.data?.error || error.message))
       } finally {
         generating.value = false
       }
     }
 
-    // 复制SQL
-    const copySql = () => {
-      navigator.clipboard.writeText(generatedSql.value)
+    // 复制结果
+    const copyResult = () => {
+      navigator.clipboard.writeText(generatedResult.value)
     }
 
     // 使用SQL
     const useSql = () => {
-      emit('use-sql', generatedSql.value)
+      emit('use-sql', generatedResult.value)
+    }
+
+    // 获取结果标题
+    const getResultTitle = () => {
+      const titles = {
+        sql: '生成的SQL',
+        explain: 'SQL解释',
+        optimize: '优化后的SQL',
+        crud: 'CRUD语句',
+        testData: '测试数据',
+        explainPlan: '执行计划分析'
+      }
+      return titles[selectedFunction.value] || '结果'
+    }
+
+    // 检查是否可以生成
+    const canGenerate = () => {
+      switch (selectedFunction.value) {
+        case 'sql':
+        case 'explain':
+        case 'optimize':
+          return aiInput.value.trim()
+        case 'crud':
+          return crudInputs.value.tableName.trim() && crudInputs.value.columns.trim()
+        case 'testData':
+          return testInputs.value.tableName.trim() && testInputs.value.columns.trim()
+        case 'explainPlan':
+          return planInputs.value.sql.trim() && planInputs.value.explainResult.trim()
+        default:
+          return false
+      }
     }
 
     // 清空历史
@@ -190,13 +372,20 @@ export default {
       configs,
       selectedConfig,
       aiInput,
-      generatedSql,
+      generatedResult,
       generating,
       chatHistory,
+      selectedFunction,
+      aiFunctions,
+      crudInputs,
+      testInputs,
+      planInputs,
       toggleCollapse,
-      generateSql,
-      copySql,
+      generateContent,
+      copyResult,
       useSql,
+      canGenerate,
+      getResultTitle,
       clearHistory
     }
   }
@@ -323,6 +512,66 @@ export default {
 .result-actions {
   display: flex;
   gap: 4px;
+}
+
+.ai-functions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 5px;
+  padding: 10px;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.function-btn {
+  padding: 8px 5px;
+  font-size: 11px;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.function-btn:hover {
+  background-color: var(--bg-highlight);
+  color: var(--text-primary);
+}
+
+.function-btn.active {
+  background-color: var(--accent-primary);
+  color: white;
+  border-color: var(--accent-primary);
+}
+
+.crud-inputs,
+.test-inputs,
+.plan-inputs {
+  padding: 10px;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.input-field {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 8px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-family-mono);
+  font-size: 12px;
+  resize: vertical;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.input-field::placeholder {
+  color: var(--text-tertiary);
 }
 
 .sql-content {

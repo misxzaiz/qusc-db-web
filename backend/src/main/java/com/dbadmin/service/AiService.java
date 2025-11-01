@@ -331,6 +331,195 @@ public class AiService {
         }
     }
 
+    public String generateCrud(String tableName, String columns, AiConfig config) throws Exception {
+        if (!config.getEnabled() || config.getApiKey() == null || config.getApiKey().isEmpty()) {
+            throw new Exception("AI服务未配置或已禁用");
+        }
+
+        String prompt = String.format(
+            "请为表 %s 生成完整的CRUD SQL语句。表结构如下：\n%s\n\n" +
+            "请生成以下SQL语句：\n" +
+            "1. CREATE TABLE (建表语句)\n" +
+            "2. INSERT (插入语句)\n" +
+            "3. SELECT (查询语句，支持条件查询)\n" +
+            "4. UPDATE (更新语句)\n" +
+            "5. DELETE (删除语句)\n\n" +
+            "请使用markdown代码块格式返回，并添加必要的注释。",
+            tableName, columns
+        );
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", config.getModel());
+
+        List<Map<String, String>> messages = new ArrayList<>();
+        messages.add(Map.of("role", "system", "content", "你是一个SQL专家，请根据表结构生成完整的CRUD SQL语句。"));
+        messages.add(Map.of("role", "user", "content", prompt));
+        requestBody.put("messages", messages);
+
+        if (config.getTemperature() != null) {
+            requestBody.put("temperature", config.getTemperature());
+        }
+        if (config.getMaxTokens() != null) {
+            requestBody.put("max_tokens", config.getMaxTokens());
+        }
+
+        String url = config.getBaseUrl() + "/chat/completions";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(config.getApiKey());
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                url,
+                HttpMethod.POST,
+                entity,
+                String.class
+            );
+
+            if (response.getStatusCode() == HttpStatus.OK) {
+                JsonNode root = objectMapper.readTree(response.getBody());
+                JsonNode choices = root.path("choices");
+                if (choices.isArray() && choices.size() > 0) {
+                    JsonNode message = choices.get(0).path("message");
+                    return message.path("content").asText();
+                }
+                throw new Exception("AI服务返回格式异常");
+            } else {
+                throw new Exception("AI服务返回错误: " + response.getStatusCode());
+            }
+        } catch (Exception e) {
+            throw new Exception("调用AI服务失败: " + e.getMessage());
+        }
+    }
+
+    public String generateTestData(String tableName, String columns, int rowCount, AiConfig config) throws Exception {
+        if (!config.getEnabled() || config.getApiKey() == null || config.getApiKey().isEmpty()) {
+            throw new Exception("AI服务未配置或已禁用");
+        }
+
+        String prompt = String.format(
+            "请为表 %s 生成 %d 行测试数据。表结构如下：\n%s\n\n" +
+            "要求：\n" +
+            "1. 生成INSERT语句\n" +
+            "2. 数据要真实、合理\n" +
+            "3. 支持批量插入（一条INSERT插入多行）\n" +
+            "4. 注意外键约束\n" +
+            "5. 日期数据要使用MySQL支持的格式",
+            tableName, rowCount, columns
+        );
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", config.getModel());
+
+        List<Map<String, String>> messages = new ArrayList<>();
+        messages.add(Map.of("role", "system", "content", "你是一个数据生成专家，请根据表结构生成真实的测试数据。"));
+        messages.add(Map.of("role", "user", "content", prompt));
+        requestBody.put("messages", messages);
+
+        if (config.getTemperature() != null) {
+            requestBody.put("temperature", config.getTemperature());
+        }
+        if (config.getMaxTokens() != null) {
+            requestBody.put("max_tokens", config.getMaxTokens());
+        }
+
+        String url = config.getBaseUrl() + "/chat/completions";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(config.getApiKey());
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                url,
+                HttpMethod.POST,
+                entity,
+                String.class
+            );
+
+            if (response.getStatusCode() == HttpStatus.OK) {
+                JsonNode root = objectMapper.readTree(response.getBody());
+                JsonNode choices = root.path("choices");
+                if (choices.isArray() && choices.size() > 0) {
+                    JsonNode message = choices.get(0).path("message");
+                    return message.path("content").asText();
+                }
+                throw new Exception("AI服务返回格式异常");
+            } else {
+                throw new Exception("AI服务返回错误: " + response.getStatusCode());
+            }
+        } catch (Exception e) {
+            throw new Exception("调用AI服务失败: " + e.getMessage());
+        }
+    }
+
+    public String explainQueryPlan(String sql, String explainResult, AiConfig config) throws Exception {
+        if (!config.getEnabled() || config.getApiKey() == null || config.getApiKey().isEmpty()) {
+            throw new Exception("AI服务未配置或已禁用");
+        }
+
+        String prompt = String.format(
+            "请分析以下SQL语句的执行计划：\n\nSQL语句：\n%s\n\n执行计划：\n%s\n\n" +
+            "请详细分析：\n" +
+            "1. 执行步骤说明\n" +
+            "2. 性能瓶颈识别\n" +
+            "3. 索引使用情况\n" +
+            "4. 优化建议",
+            sql, explainResult
+        );
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", config.getModel());
+
+        List<Map<String, String>> messages = new ArrayList<>();
+        messages.add(Map.of("role", "system", "content", "你是一个SQL性能分析专家，能够解读执行计划并提供优化建议。"));
+        messages.add(Map.of("role", "user", "content", prompt));
+        requestBody.put("messages", messages);
+
+        if (config.getTemperature() != null) {
+            requestBody.put("temperature", config.getTemperature());
+        }
+        if (config.getMaxTokens() != null) {
+            requestBody.put("max_tokens", config.getMaxTokens());
+        }
+
+        String url = config.getBaseUrl() + "/chat/completions";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(config.getApiKey());
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                url,
+                HttpMethod.POST,
+                entity,
+                String.class
+            );
+
+            if (response.getStatusCode() == HttpStatus.OK) {
+                JsonNode root = objectMapper.readTree(response.getBody());
+                JsonNode choices = root.path("choices");
+                if (choices.isArray() && choices.size() > 0) {
+                    JsonNode message = choices.get(0).path("message");
+                    return message.path("content").asText();
+                }
+                throw new Exception("AI服务返回格式异常");
+            } else {
+                throw new Exception("AI服务返回错误: " + response.getStatusCode());
+            }
+        } catch (Exception e) {
+            throw new Exception("调用AI服务失败: " + e.getMessage());
+        }
+    }
+
     private String buildSqlPrompt(String userInput) {
         return String.format(
             "根据以下需求生成SQL语句：\n%s\n\n注意：\n1. 只返回SQL语句\n2. 使用标准SQL语法\n3. 假设表名和字段名使用英文",
@@ -338,7 +527,7 @@ public class AiService {
         );
     }
 
-    
+
     public static class AiProviderConfig {
         private String baseUrl;
         private String defaultModel;

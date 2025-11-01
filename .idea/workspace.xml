@@ -4,9 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="4">
+    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(connection-tree):优化数据库节点布局和样式&#10;&#10;- 调整数据库节点结构，使用 div 包裹元素以支持更好的布局">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/ConnectionTree.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/ConnectionTree.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/controller/AiController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/controller/AiController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/controller/SqlController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/controller/SqlController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/service/AiService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/service/AiService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/service/ConnectionManagerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/service/ConnectionManagerService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/AiSidebar.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/AiSidebar.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/services/aiApi.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/aiApi.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -196,7 +202,15 @@
       <option name="project" value="LOCAL" />
       <updated>1761933341884</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="feat(connection-tree):优化数据库节点布局和样式&#10;&#10;- 调整数据库节点结构，使用 div 包裹元素以支持更好的布局">
+      <option name="closed" value="true" />
+      <created>1761934719813</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1761934719813</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -240,6 +254,7 @@
     <MESSAGE value="3" />
     <MESSAGE value="refactor(layout):重构应用布局结构以改善响应式设计&#10;&#10;- 调整 App.vue 中的 flexbox 布局属性以增强主区域自适应能力- 移除 ConnectionTree.vue 中冗余的树形标题容器元素&#10;- 将 index.html 中的 flex 布局样式迁移至 App.vue 组件内&#10;- 修改 TabSidebar.vue 导航图标容器方向为横向排列并设定固定宽度-优化侧边栏面板显示逻辑，使用 CSS 类控制展开" />
     <MESSAGE value="4" />
-    <option name="LAST_COMMIT_MESSAGE" value="4" />
+    <MESSAGE value="feat(connection-tree):优化数据库节点布局和样式&#10;&#10;- 调整数据库节点结构，使用 div 包裹元素以支持更好的布局" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(connection-tree):优化数据库节点布局和样式&#10;&#10;- 调整数据库节点结构，使用 div 包裹元素以支持更好的布局" />
   </component>
 </project>

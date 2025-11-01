@@ -122,6 +122,73 @@ public class AiController {
         return ResponseEntity.ok(Map.of("success", true));
     }
 
+    @PostMapping("/generate-crud")
+    public ResponseEntity<?> generateCrud(@RequestBody Map<String, Object> request) {
+        String tableName = (String) request.get("tableName");
+        String columns = (String) request.get("columns");
+        String configId = (String) request.get("configId");
+
+        if (tableName == null || tableName.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "表名不能为空"));
+        }
+        if (columns == null || columns.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "表结构不能为空"));
+        }
+
+        try {
+            AiConfig config = getConfig(configId);
+            String crud = aiService.generateCrud(tableName, columns, config);
+            return ResponseEntity.ok(Map.of("crud", crud));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/generate-test-data")
+    public ResponseEntity<?> generateTestData(@RequestBody Map<String, Object> request) {
+        String tableName = (String) request.get("tableName");
+        String columns = (String) request.get("columns");
+        Integer rowCount = (Integer) request.getOrDefault("rowCount", 10);
+        String configId = (String) request.get("configId");
+
+        if (tableName == null || tableName.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "表名不能为空"));
+        }
+        if (columns == null || columns.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "表结构不能为空"));
+        }
+
+        try {
+            AiConfig config = getConfig(configId);
+            String testData = aiService.generateTestData(tableName, columns, rowCount, config);
+            return ResponseEntity.ok(Map.of("testData", testData));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/explain-query-plan")
+    public ResponseEntity<?> explainQueryPlan(@RequestBody Map<String, Object> request) {
+        String sql = (String) request.get("sql");
+        String explainResult = (String) request.get("explainResult");
+        String configId = (String) request.get("configId");
+
+        if (sql == null || sql.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "SQL语句不能为空"));
+        }
+        if (explainResult == null || explainResult.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "执行计划不能为空"));
+        }
+
+        try {
+            AiConfig config = getConfig(configId);
+            String explanation = aiService.explainQueryPlan(sql, explainResult, config);
+            return ResponseEntity.ok(Map.of("explanation", explanation));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @PostMapping("/config/{id}/test")
     public ResponseEntity<?> testConfig(@PathVariable String id) {
         try {

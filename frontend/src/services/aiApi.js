@@ -80,6 +80,27 @@ export const aiApi = {
     })
   },
 
+  // 生成CRUD
+  generateCrud(tableName, columns, configId) {
+    return this.ensureSyncedToBackend().then(() => {
+      return api.post('/generate-crud', { tableName, columns, configId })
+    })
+  },
+
+  // 生成测试数据
+  generateTestData(tableName, columns, rowCount, configId) {
+    return this.ensureSyncedToBackend().then(() => {
+      return api.post('/generate-test-data', { tableName, columns, rowCount, configId })
+    })
+  },
+
+  // 解释执行计划
+  explainQueryPlan(sql, explainResult, configId) {
+    return this.ensureSyncedToBackend().then(() => {
+      return api.post('/explain-query-plan', { sql, explainResult, configId })
+    })
+  },
+
   // 获取AI提供商列表
   getProviders() {
     return api.get('/providers')

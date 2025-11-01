@@ -1,6 +1,7 @@
 package com.dbadmin.service;
 
 import com.dbadmin.model.ConnectionInfo;
+import com.dbadmin.model.QueryResult;
 import org.springframework.stereotype.Service;
 
 import java.sql.*;
@@ -43,6 +44,63 @@ public class ConnectionManagerService {
         }
     }
 
+    public QueryResult executeQuery(String sessionId, String sql, Integer page, Integer pageSize) throws SQLException {
+        Connection conn = activeConnections.get(sessionId);
+        if (conn == null || conn.isClosed()) {
+            throw new SQLException("Connection not found or closed");
+        }
+
+        // 添加分页逻辑
+        String paginatedSql = sql;
+        boolean needsCount = true;
+        Long totalCount = 0L;
+
+        // 检查是否已有LIMIT子句
+        String upperSql = sql.toUpperCase().trim();
+        if (!upperSql.contains(" LIMIT ")) {
+            // 先查询总数
+            String countSql = "SELECT COUNT(*) FROM (" + sql + ") AS total_count";
+            try (Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery(countSql)) {
+                if (rs.next()) {
+                    totalCount = rs.getLong(1);
+                }
+            }
+
+            // 添加LIMIT子句
+            if (page != null && pageSize != null && pageSize > 0) {
+                int offset = (page - 1) * pageSize;
+                paginatedSql = sql + " LIMIT " + pageSize + " OFFSET " + offset;
+            }
+        } else {
+            // 已有LIMIT，查询实际数据量作为总数
+            needsCount = false;
+        }
+
+        // 执行分页查询
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(paginatedSql)) {
+
+            List<Map<String, Object>> data = resultSetToList(rs);
+            List<String> columns = new ArrayList<>();
+
+            if (!data.isEmpty()) {
+                columns.addAll(data.get(0).keySet());
+            }
+
+            // 如果没有LIMIT子句，使用实际返回的数据量作为总数
+            if (needsCount == false) {
+                totalCount = (long) data.size();
+            }
+
+            QueryResult result = new QueryResult(data, columns, totalCount);
+            if (page != null) result.setCurrentPage(page);
+            if (pageSize != null) result.setPageSize(pageSize);
+
+            return result;
+        }
+    }
+
     public int executeUpdate(String sessionId, String sql) throws SQLException {
         Connection conn = activeConnections.get(sessionId);
         if (conn == null || conn.isClosed()) {
@@ -52,6 +110,45 @@ public class ConnectionManagerService {
         try (Statement stmt = conn.createStatement()) {
             return stmt.executeUpdate(sql);
         }
+    }
+
+    // 事务相关方法
+    public void beginTransaction(String sessionId) throws SQLException {
+        Connection conn = activeConnections.get(sessionId);
+        if (conn == null || conn.isClosed()) {
+            throw new SQLException("Connection not found or closed");
+        }
+
+        conn.setAutoCommit(false);
+    }
+
+    public void commit(String sessionId) throws SQLException {
+        Connection conn = activeConnections.get(sessionId);
+        if (conn == null || conn.isClosed()) {
+            throw new SQLException("Connection not found or closed");
+        }
+
+        conn.commit();
+        conn.setAutoCommit(true);
+    }
+
+    public void rollback(String sessionId) throws SQLException {
+        Connection conn = activeConnections.get(sessionId);
+        if (conn == null || conn.isClosed()) {
+            throw new SQLException("Connection not found or closed");
+        }
+
+        conn.rollback();
+        conn.setAutoCommit(true);
+    }
+
+    public boolean isInTransaction(String sessionId) throws SQLException {
+        Connection conn = activeConnections.get(sessionId);
+        if (conn == null || conn.isClosed()) {
+            throw new SQLException("Connection not found or closed");
+        }
+
+        return !conn.getAutoCommit();
     }
 
     public List<String> getTables(String sessionId, String database) throws SQLException {

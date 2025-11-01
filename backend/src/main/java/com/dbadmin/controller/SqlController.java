@@ -34,9 +34,11 @@ public class SqlController {
     }
 
     @PostMapping("/execute")
-    public ResponseEntity<?> executeSql(@RequestBody Map<String, String> request) {
-        String sessionId = request.get("sessionId");
-        String sql = request.get("sql");
+    public ResponseEntity<?> executeSql(@RequestBody Map<String, Object> request) {
+        String sessionId = (String) request.get("sessionId");
+        String sql = (String) request.get("sql");
+        Integer page = (Integer) request.get("page");
+        Integer pageSize = (Integer) request.get("pageSize");
 
         if (sessionId == null || sql == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "sessionId and sql are required"));
@@ -45,20 +47,30 @@ public class SqlController {
         try {
             // 清理SQL字符串
             String cleanSql = sql.trim();
+            String lowerSql = cleanSql.toLowerCase();
+
+            // 检查事务命令
+            if (lowerSql.startsWith("begin") || lowerSql.startsWith("start transaction")) {
+                connectionManager.beginTransaction(sessionId);
+                return ResponseEntity.ok(Map.of("message", "Transaction started"));
+            } else if (lowerSql.startsWith("commit")) {
+                connectionManager.commit(sessionId);
+                return ResponseEntity.ok(Map.of("message", "Transaction committed"));
+            } else if (lowerSql.startsWith("rollback")) {
+                connectionManager.rollback(sessionId);
+                return ResponseEntity.ok(Map.of("message", "Transaction rolled back"));
+            }
 
             // 判断SQL类型
             if (isSelectQuery(cleanSql)) {
                 // 执行查询语句（返回结果集）
-                List<Map<String, Object>> result = connectionManager.executeQuery(sessionId, cleanSql);
+                QueryResult result = connectionManager.executeQuery(sessionId, cleanSql, page, pageSize);
 
                 // 构建响应
                 Map<String, Object> response = new HashMap<>();
-                response.put("data", result);
-
-                // 获取列名
-                if (!result.isEmpty()) {
-                    response.put("columns", new ArrayList<>(result.get(0).keySet()));
-                }
+                response.put("data", result.getData());
+                response.put("columns", result.getColumns());
+                response.put("totalCount", result.getTotalCount());
 
                 return ResponseEntity.ok(response);
             } else {
@@ -76,21 +88,25 @@ public class SqlController {
      */
     private boolean isSelectQuery(String sql) {
         // 使用正则表达式匹配以SELECT开头的语句（排除WITH子句）
-        String normalized = sql.toUpperCase().replaceAll("\\s+", " ");
+        String normalized = sql.toUpperCase().replaceAll("\\s+", " ").trim();
 
-        // 检查是否是SHOW、DESCRIBE、EXPLAIN等也返回结果集的语句
-        Pattern showPattern = Pattern.compile("^(SHOW|DESCRIBE|DESC|EXPLAIN)\\b");
-        if (showPattern.matcher(normalized).find()) {
+        // 检查是否是返回结果集的语句
+        Pattern resultPattern = Pattern.compile("^(SELECT|SHOW|DESCRIBE|DESC|EXPLAIN|HELP|WITH)\\b");
+        if (resultPattern.matcher(normalized).find()) {
             return true;
         }
 
-        // 检查是否是WITH开头的CTE查询
-        if (normalized.startsWith("WITH ")) {
+        // 检查存储过程调用（可能返回结果集）
+        if (normalized.startsWith("CALL ") || normalized.startsWith("EXEC ")) {
             return true;
         }
 
-        // 检查是否是SELECT查询
-        return normalized.startsWith("SELECT ");
+        // 检查表信息语句
+        if (normalized.startsWith("TABLE ") || normalized.startsWith("COLUMNS ")) {
+            return true;
+        }
+
+        return false;
     }
 
     @GetMapping("/tables/{sessionId}")
