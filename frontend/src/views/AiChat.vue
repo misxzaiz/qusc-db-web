@@ -1,31 +1,62 @@
 <template>
   <div class="ai-chat">
     <div class="chat-header">
-      <h2>AI SQL助手</h2>
-      <div class="header-actions">
+      <div class="header-left">
+        <h2>AI SQL助手</h2>
         <select v-model="selectedConfig" @change="onConfigChange" class="config-select">
           <option v-for="config in aiConfigs" :key="config.id" :value="config.id">
             {{ config.name }}
           </option>
         </select>
-        <button class="btn btn-small" @click="clearChat">清空</button>
-        <button class="btn btn-small" @click="showSettings = true">设置</button>
+      </div>
+      <div class="header-actions">
+        <button class="btn-icon" @click="clearChat" title="清空聊天">
+          <font-awesome-icon icon="trash" />
+        </button>
+        <button class="btn-icon" @click="showSettings = true" title="设置">
+          <font-awesome-icon icon="cog" />
+        </button>
       </div>
     </div>
 
     <div class="chat-body">
-      <!-- 表结构引用栏 -->
-      <div v-if="tables.length > 0" class="table-reference">
-        <div class="reference-header">
-          <font-awesome-icon icon="table" /> 数据库表（点击引用）
-          <button class="btn btn-small" @click="toggleTableList">
-            {{ showTableList ? '收起' : '展开' }}
+      <!-- 快捷工具栏 -->
+      <div class="toolbar">
+        <div class="toolbar-section">
+          <button class="tool-btn" @click="quickAction('generate')" title="生成SQL">
+            <font-awesome-icon icon="star" />
+            <span>生成</span>
+          </button>
+          <button class="tool-btn" @click="quickAction('explain')" title="解释SQL">
+            <font-awesome-icon icon="lightbulb" />
+            <span>解释</span>
+          </button>
+          <button class="tool-btn" @click="quickAction('optimize')" title="优化SQL">
+            <font-awesome-icon icon="bolt" />
+            <span>优化</span>
+          </button>
+          <button class="tool-btn" @click="quickAction('analyze')" title="分析表">
+            <font-awesome-icon icon="table" />
+            <span>分析</span>
           </button>
         </div>
-        <div v-if="showTableList" class="table-list">
-          <div v-for="table in tables" :key="table" class="table-item" @click="referenceTable(table)">
-            <span class="table-name">{{ table }}</span>
-            <button class="btn btn-small" @click.stop="describeTable(table)">查看结构</button>
+        <div v-if="tables.length > 0" class="toolbar-section">
+          <button class="tool-btn" @click="toggleTableList" :class="{ active: showTableList }" title="数据库表">
+            <font-awesome-icon icon="database" />
+            <span>表({{ tables.length }})</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 表引用面板 -->
+      <div v-if="showTableList && tables.length > 0" class="table-panel">
+        <div class="table-grid">
+          <div v-for="table in tables" :key="table" class="table-card" @click="referenceTable(table)">
+            <div class="table-info">
+              <font-awesome-icon icon="table" class="table-icon" />
+              <span class="table-name">{{ table }}</span>
+            </div>
+            <button class="btn-mini" @click.stop="describeTable(table)">结构</button>
           </div>
         </div>
       </div>
@@ -79,33 +110,29 @@
     </div>
 
     <div class="chat-input">
-      <div class="quick-actions">
-        <button class="quick-btn" @click="quickAction('generate')">
-          <font-awesome-icon icon="star" class="icon" /> 生成SQL
-        </button>
-        <button class="quick-btn" @click="quickAction('explain')">
-          <font-awesome-icon icon="lightbulb" class="icon" /> 解释SQL
-        </button>
-        <button class="quick-btn" @click="quickAction('optimize')">
-          <font-awesome-icon icon="bolt" class="icon" /> 优化SQL
-        </button>
-        <button class="quick-btn" @click="quickAction('analyze')">
-          <font-awesome-icon icon="table" class="icon" /> 分析表
-        </button>
-      </div>
-
       <div class="input-container">
         <textarea
           v-model="inputText"
-          placeholder="输入您的问题..."
-          rows="3"
+          placeholder="输入您的问题... (Shift+Enter换行，Enter发送)"
+          rows="2"
           @keydown.enter.prevent="onEnter"
           :disabled="loading"
+          ref="messageInput"
         ></textarea>
-        <button class="send-btn" @click="sendMessage" :disabled="!inputText.trim() || loading">
-          <span v-if="!loading">发送</span>
-          <span v-else>...</span>
-        </button>
+        <div class="input-actions">
+          <button class="btn-attach" title="附加表结构" v-if="tables.length > 0" @click="attachTableContext">
+            <font-awesome-icon icon="paperclip" />
+          </button>
+          <button class="send-btn" @click="sendMessage" :disabled="!inputText.trim() || loading">
+            <font-awesome-icon v-if="!loading" icon="paper-plane" />
+            <font-awesome-icon v-else icon="spinner" spin />
+          </button>
+        </div>
+      </div>
+      <div class="input-status" v-if="currentDatabase">
+        <font-awesome-icon icon="database" />
+        <span>{{ currentDatabase }}</span>
+        <span v-if="tables.length > 0"> · {{ tables.length }} 个表</span>
       </div>
     </div>
 
@@ -289,7 +316,18 @@ export default {
       }
 
       this.inputText = prompt
-      this.$refs.messagesContainer.querySelector('textarea')?.focus()
+      this.$refs.messageInput?.focus()
+    },
+
+    attachTableContext() {
+      if (!this.tables.length) return
+
+      const context = '\n\n数据库上下文：\n' +
+                     '数据库：' + (this.currentDatabase || '未选择') + '\n' +
+                     '可用表：' + this.tables.join(', ') + '\n'
+
+      this.inputText = this.inputText + context
+      this.$refs.messageInput?.focus()
     },
 
     onEnter(event) {
@@ -428,12 +466,20 @@ export default {
 }
 
 .chat-header {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
   border-bottom: 1px solid var(--border-primary);
   display: flex;
   justify-content: space-between;
   align-items: center;
   background-color: var(--bg-secondary);
+  gap: var(--spacing-md);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex: 1;
 }
 
 .chat-header h2 {
@@ -444,17 +490,36 @@ export default {
 
 .header-actions {
   display: flex;
-  gap: var(--spacing-sm);
-  align-items: center;
+  gap: var(--spacing-xs);
 }
 
 .config-select {
-  padding: 6px 12px;
+  padding: 4px 8px;
   background-color: var(--bg-primary);
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 13px;
+  min-width: 120px;
+}
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.btn-icon:hover {
+  background-color: var(--bg-highlight);
+  color: var(--text-primary);
 }
 
 .chat-body {
@@ -464,48 +529,116 @@ export default {
   flex-direction: column;
 }
 
-.table-reference {
-  border-bottom: 1px solid var(--border-primary);
+.toolbar {
+  padding: var(--spacing-sm) var(--spacing-lg);
   background-color: var(--bg-tertiary);
-}
-
-.reference-header {
-  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border-primary);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-primary);
+  gap: var(--spacing-md);
 }
 
-.table-list {
-  max-height: 200px;
-  overflow-y: auto;
-  padding: 0 var(--spacing-md) var(--spacing-md);
-}
-
-.table-item {
+.toolbar-section {
   display: flex;
-  justify-content: space-between;
+  gap: var(--spacing-xs);
+}
+
+.tool-btn {
+  display: flex;
   align-items: center;
-  padding: var(--spacing-sm);
-  background-color: var(--bg-primary);
+  gap: 4px;
+  padding: 6px 12px;
+  background-color: var(--bg-secondary);
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-sm);
-  margin-bottom: var(--spacing-sm);
+  color: var(--text-secondary);
+  font-size: 12px;
   cursor: pointer;
   transition: var(--transition-fast);
 }
 
-.table-item:hover {
+.tool-btn:hover,
+.tool-btn.active {
+  background-color: var(--accent-primary);
+  color: white;
+  border-color: var(--accent-primary);
+}
+
+.tool-btn span {
+  font-weight: 500;
+}
+
+.table-panel {
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-primary);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.table-grid {
+  padding: var(--spacing-sm);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--spacing-sm);
+}
+
+.table-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm);
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.table-card:hover {
   background-color: var(--bg-highlight);
+  border-color: var(--accent-primary);
+}
+
+.table-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex: 1;
+  min-width: 0;
+}
+
+.table-icon {
+  color: var(--text-tertiary);
+  font-size: 14px;
+  flex-shrink: 0;
 }
 
 .table-name {
   color: var(--text-primary);
   font-family: var(--font-family-mono);
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-mini {
+  padding: 2px 8px;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xs);
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.btn-mini:hover {
+  background-color: var(--accent-primary);
+  color: white;
+  border-color: var(--accent-primary);
 }
 
 .messages-container {
@@ -628,69 +761,80 @@ export default {
 .chat-input {
   border-top: 1px solid var(--border-primary);
   background-color: var(--bg-secondary);
-  padding: var(--spacing-lg);
-}
-
-.quick-actions {
-  display: flex;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
-  flex-wrap: wrap;
-}
-
-.quick-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  background-color: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: 12px;
-  cursor: pointer;
-  transition: var(--transition-fast);
-}
-
-.quick-btn:hover {
-  background-color: var(--bg-highlight);
-}
-
-.quick-btn .icon {
-  font-size: 14px;
+  padding: var(--spacing-md) var(--spacing-lg);
 }
 
 .input-container {
   display: flex;
   gap: var(--spacing-sm);
   align-items: flex-end;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm);
+  transition: var(--transition-fast);
+}
+
+.input-container:focus-within {
+  border-color: var(--accent-primary);
 }
 
 .input-container textarea {
   flex: 1;
-  padding: 10px;
-  background-color: var(--bg-primary);
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-sm);
+  background: none;
+  border: none;
   color: var(--text-primary);
   font-size: 14px;
   resize: none;
   font-family: var(--font-family-base);
+  line-height: 1.5;
+  padding: 0;
+}
+
+.input-container textarea::placeholder {
+  color: var(--text-tertiary);
 }
 
 .input-container textarea:focus {
   outline: none;
-  border-color: var(--accent-primary);
+}
+
+.input-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: center;
+}
+
+.btn-attach {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.btn-attach:hover {
+  background-color: var(--bg-highlight);
+  color: var(--text-primary);
 }
 
 .send-btn {
-  padding: 10px 20px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background-color: var(--accent-primary);
   color: white;
   border: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 14px;
   transition: var(--transition-fast);
 }
 
@@ -701,6 +845,16 @@ export default {
 .send-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.input-status {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+  padding: 4px 0;
+  color: var(--text-tertiary);
+  font-size: 12px;
 }
 
 /* 对话框样式 */

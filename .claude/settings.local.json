@@ -13,7 +13,12 @@
       "Bash(npm run dev)",
       "Bash(npm install @fortawesome/free-solid-svg-icons)",
       "Bash(./mvnw spring-boot:run)",
-      "Bash(cat -A index.html)"
+      "Bash(cat -A index.html)",
+      "Read(//c/Users/28409/.m2//**)",
+      "Bash(mvn -N io.takari:maven:wrapper)",
+      "Bash(\"/c/Program Files/apache-maven-3.9.6/bin/mvn\" --version)",
+      "Read(//d/**)",
+      "Bash(curl -s http://localhost:8080/api/sql/tables/test-session?database=test)"
     ],
     "deny": [],
     "ask": []

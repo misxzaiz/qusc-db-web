@@ -7,7 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/connections")
@@ -70,5 +71,12 @@ public class ConnectionController {
                 "username", info.getUsername()
             )
         ));
+    }
+
+    @GetMapping("/sessions")
+    public ResponseEntity<List<Map<String, Object>>> getSessions() {
+        // This would require exposing the active connections from ConnectionManagerService
+        // For now, return empty list as the sessions are managed in frontend
+        return ResponseEntity.ok(Collections.emptyList());
     }
 }
