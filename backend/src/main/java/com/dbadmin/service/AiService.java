@@ -520,6 +520,187 @@ public class AiService {
         }
     }
 
+    public String analyzeQueryResult(String sql, Map<String, Object> result, AiConfig config) throws Exception {
+        if (!config.getEnabled() || config.getApiKey() == null || config.getApiKey().isEmpty()) {
+            throw new Exception("AI服务未配置或已禁用");
+        }
+
+        // 格式化查询结果用于分析
+        String formattedResult = formatQueryResult(result);
+
+        String prompt = String.format(
+            "请分析以下SQL查询结果：\n\nSQL语句：\n%s\n\n查询结果（前10行）：\n%s\n\n" +
+            "请提供以下分析：\n" +
+            "1. 数据概览（总行数、主要统计信息）\n" +
+            "2. 关键指标和趋势\n" +
+            "3. 异常值或特殊模式识别\n" +
+            "4. 数据质量评估\n" +
+            "5. 可视化建议\n" +
+            "6. 后续分析建议\n\n" +
+            "请用markdown格式返回，包含表格和列表。",
+            sql, formattedResult
+        );
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", config.getModel());
+
+        List<Map<String, String>> messages = new ArrayList<>();
+        messages.add(Map.of("role", "system", "content", "你是一个数据分析专家，能够解读SQL查询结果并提供有价值的洞察。"));
+        messages.add(Map.of("role", "user", "content", prompt));
+        requestBody.put("messages", messages);
+
+        if (config.getTemperature() != null) {
+            requestBody.put("temperature", config.getTemperature());
+        }
+        if (config.getMaxTokens() != null) {
+            requestBody.put("max_tokens", config.getMaxTokens());
+        }
+
+        String url = config.getBaseUrl() + "/chat/completions";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(config.getApiKey());
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                url,
+                HttpMethod.POST,
+                entity,
+                String.class
+            );
+
+            if (response.getStatusCode() == HttpStatus.OK) {
+                JsonNode root = objectMapper.readTree(response.getBody());
+                JsonNode choices = root.path("choices");
+                if (choices.isArray() && choices.size() > 0) {
+                    JsonNode message = choices.get(0).path("message");
+                    return message.path("content").asText();
+                }
+                throw new Exception("AI服务返回格式异常");
+            } else {
+                throw new Exception("AI服务返回错误: " + response.getStatusCode());
+            }
+        } catch (Exception e) {
+            throw new Exception("调用AI服务失败: " + e.getMessage());
+        }
+    }
+
+    public String analyzeError(String sql, String error, AiConfig config) throws Exception {
+        if (!config.getEnabled() || config.getApiKey() == null || config.getApiKey().isEmpty()) {
+            throw new Exception("AI服务未配置或已禁用");
+        }
+
+        String prompt = String.format(
+            "请分析以下SQL错误并提供解决方案：\n\nSQL语句：\n%s\n\n错误信息：\n%s\n\n" +
+            "请提供：\n" +
+            "1. 错误原因分析\n" +
+            "2. 具体修复步骤\n" +
+            "3. 修复后的正确代码（用代码块显示）\n" +
+            "4. 预防类似错误的建议\n" +
+            "5. 相关SQL语法要点\n\n" +
+            "请用markdown格式返回，重点突出修复方案。",
+            sql, error
+        );
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", config.getModel());
+
+        List<Map<String, String>> messages = new ArrayList<>();
+        messages.add(Map.of("role", "system", "content", "你是一个SQL专家，能够诊断SQL错误并提供实用的解决方案。"));
+        messages.add(Map.of("role", "user", "content", prompt));
+        requestBody.put("messages", messages);
+
+        if (config.getTemperature() != null) {
+            requestBody.put("temperature", config.getTemperature());
+        }
+        if (config.getMaxTokens() != null) {
+            requestBody.put("max_tokens", config.getMaxTokens());
+        }
+
+        String url = config.getBaseUrl() + "/chat/completions";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(config.getApiKey());
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                url,
+                HttpMethod.POST,
+                entity,
+                String.class
+            );
+
+            if (response.getStatusCode() == HttpStatus.OK) {
+                JsonNode root = objectMapper.readTree(response.getBody());
+                JsonNode choices = root.path("choices");
+                if (choices.isArray() && choices.size() > 0) {
+                    JsonNode message = choices.get(0).path("message");
+                    return message.path("content").asText();
+                }
+                throw new Exception("AI服务返回格式异常");
+            } else {
+                throw new Exception("AI服务返回错误: " + response.getStatusCode());
+            }
+        } catch (Exception e) {
+            throw new Exception("调用AI服务失败: " + e.getMessage());
+        }
+    }
+
+    private String formatQueryResult(Map<String, Object> result) {
+        StringBuilder sb = new StringBuilder();
+
+        // 添加列信息
+        @SuppressWarnings("unchecked")
+        List<String> columns = (List<String>) result.get("columns");
+        if (columns != null) {
+            sb.append("列名：").append(String.join(", ", columns)).append("\n\n");
+        }
+
+        // 添加数据样本（前10行）
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
+        if (data != null && !data.isEmpty()) {
+            sb.append("数据样本（前10行）：\n");
+
+            // 表头
+            sb.append("| ");
+            for (String col : columns) {
+                sb.append(col).append(" | ");
+            }
+            sb.append("\n|");
+            for (int i = 0; i < columns.size(); i++) {
+                sb.append(" --- |");
+            }
+            sb.append("\n");
+
+            // 数据行
+            int rowCount = Math.min(10, data.size());
+            for (int i = 0; i < rowCount; i++) {
+                sb.append("| ");
+                Map<String, Object> row = data.get(i);
+                for (String col : columns) {
+                    Object value = row.get(col);
+                    sb.append(value != null ? value.toString() : "NULL").append(" | ");
+                }
+                sb.append("\n");
+            }
+        }
+
+        // 添加总数信息
+        Object totalCount = result.get("totalCount");
+        if (totalCount != null) {
+            sb.append("\n总行数：").append(totalCount);
+        }
+
+        return sb.toString();
+    }
+
     private String buildSqlPrompt(String userInput) {
         return String.format(
             "根据以下需求生成SQL语句：\n%s\n\n注意：\n1. 只返回SQL语句\n2. 使用标准SQL语法\n3. 假设表名和字段名使用英文",

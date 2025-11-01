@@ -4,14 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(connection-tree):优化数据库节点布局和样式&#10;&#10;- 调整数据库节点结构，使用 div 包裹元素以支持更好的布局">
+    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(ai): 新增AI生成CRUD、测试数据和执行计划分析功能- 在前端AI服务中添加generateCrud、generateTestData和explainQueryPlan方法&#10;- 在后端AiController中实现对应的CRUD、测试数据生成和执行计划解释接口&#10;- 在AiService中增加generateCrud、generateTestData和explainQueryPlan业务逻辑&#10;- 更新前端AiSidebar组件，支持多种AI功能选择和特殊输入字段&#10;- 添加CRUD生成、测试数据生成和执行计划分析的UI界面和交互逻辑&#10;- 在ConnectionManagerService中实现分页查询和事务管理功能- 更新SqlController以支持分页查询和事务控制命令&#10;- 在SqlEditor中实现多标签页和事务状态显示功能">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/controller/AiController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/controller/AiController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/controller/SqlController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/controller/SqlController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/service/AiService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/service/AiService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/service/ConnectionManagerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/service/ConnectionManagerService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/AiSidebar.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/AiSidebar.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/services/aiApi.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/aiApi.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/target/classes/com/dbadmin/DbAdminApplication.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/target/classes/com/dbadmin/controller/SqlController.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/target/classes/com/dbadmin/exception/GlobalExceptionHandler.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/target/classes/com/dbadmin/service/ConnectionManagerService.class" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/com/dbadmin/service/ConnectionManagerService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/SqlCodeEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/SqlCodeEditor.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -210,7 +213,15 @@
       <option name="project" value="LOCAL" />
       <updated>1761934719813</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="feat(ai): 新增AI生成CRUD、测试数据和执行计划分析功能- 在前端AI服务中添加generateCrud、generateTestData和explainQueryPlan方法&#10;- 在后端AiController中实现对应的CRUD、测试数据生成和执行计划解释接口&#10;- 在AiService中增加generateCrud、generateTestData和explainQueryPlan业务逻辑&#10;- 更新前端AiSidebar组件，支持多种AI功能选择和特殊输入字段&#10;- 添加CRUD生成、测试数据生成和执行计划分析的UI界面和交互逻辑&#10;- 在ConnectionManagerService中实现分页查询和事务管理功能- 更新SqlController以支持分页查询和事务控制命令&#10;- 在SqlEditor中实现多标签页和事务状态显示功能">
+      <option name="closed" value="true" />
+      <created>1762000849863</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1762000849863</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -240,6 +251,8 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
+    <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
+    <option name="CHECK_NEW_TODO" value="false" />
     <MESSAGE value="chore(deps): 更新前端依赖配置- 为多个依赖包添加或更新 .eslintrc 配置文件- 统一配置 eslint 规则，包括 func-name-matching、id-length、new-cap 等&#10;- 为测试目录添加特定的 eslint 覆盖规则&#10;- 更新 .nycrc 覆盖率配置文件&#10;- 添加 package-lock.json 文件锁定依赖版本- 引入 codemirror 相关依赖用于代码编辑器功能&#10;- 更新 vue 和相关编译器核心依赖到最新版本&#10;- 添加 element-plus 图标库支持- 升级 axios 到 1.13.1 版本&#10;- 引入 proxy-from-env 处理代理环境变量- 添加 call-bind-apply-helpers 等底层工具库- 更新 es-define-property、dunder-proto 等 es-* 系列包&#10;- 锁定 @babel/parser、@babel/types 等解析器版本&#10;- 添加 @codemirror/lang-sql 支持 SQL 语法高亮&#10;- 更新 rollup 和 esbuild 构建工具依赖&#10;- 添加 @vue/devtools-api 开发者工具支持&#10;- 引入 csstype 类型定义文件&#10;- 添加 crelt 虚拟 DOM 工具库&#10;- 更新 source-map-js 和 magic-string 工具库版本" />
     <MESSAGE value="feat(editor): 引入SQL代码编辑器组件并优化样式系统- 集成 CodeMirror 6 SQL 编辑器，支持语法高亮和自动补全&#10;- 添加 One Dark 主题支持&#10;- 实现SQL格式化功能- 增加查询历史记录功能，支持时间显示和点击加载&#10;- 添加结果导出为 CSV 功能- 统一使用CSS变量重构全局样式系统- 移除内联样式，引入独立主题文件-优化按钮、表单、卡片等UI组件样式&#10;- 改进响应式设计和交互效果- 增强可访问性和用户体验" />
     <MESSAGE value="feat(sql): 实现数据库切换功能&#10;&#10;- 新增获取数据库列表接口&#10;- 新增切换数据库接口&#10;- 新增获取当前数据库接口- 前端支持数据库选择和切换&#10;- 连接时数据库字段改为可选&#10;-优化连接流程，先加载数据库再加载表&#10;- 添加数据库列表刷新功能- 完善错误处理和用户提示" />
@@ -255,6 +268,7 @@
     <MESSAGE value="refactor(layout):重构应用布局结构以改善响应式设计&#10;&#10;- 调整 App.vue 中的 flexbox 布局属性以增强主区域自适应能力- 移除 ConnectionTree.vue 中冗余的树形标题容器元素&#10;- 将 index.html 中的 flex 布局样式迁移至 App.vue 组件内&#10;- 修改 TabSidebar.vue 导航图标容器方向为横向排列并设定固定宽度-优化侧边栏面板显示逻辑，使用 CSS 类控制展开" />
     <MESSAGE value="4" />
     <MESSAGE value="feat(connection-tree):优化数据库节点布局和样式&#10;&#10;- 调整数据库节点结构，使用 div 包裹元素以支持更好的布局" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(connection-tree):优化数据库节点布局和样式&#10;&#10;- 调整数据库节点结构，使用 div 包裹元素以支持更好的布局" />
+    <MESSAGE value="feat(ai): 新增AI生成CRUD、测试数据和执行计划分析功能- 在前端AI服务中添加generateCrud、generateTestData和explainQueryPlan方法&#10;- 在后端AiController中实现对应的CRUD、测试数据生成和执行计划解释接口&#10;- 在AiService中增加generateCrud、generateTestData和explainQueryPlan业务逻辑&#10;- 更新前端AiSidebar组件，支持多种AI功能选择和特殊输入字段&#10;- 添加CRUD生成、测试数据生成和执行计划分析的UI界面和交互逻辑&#10;- 在ConnectionManagerService中实现分页查询和事务管理功能- 更新SqlController以支持分页查询和事务控制命令&#10;- 在SqlEditor中实现多标签页和事务状态显示功能" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(ai): 新增AI生成CRUD、测试数据和执行计划分析功能- 在前端AI服务中添加generateCrud、generateTestData和explainQueryPlan方法&#10;- 在后端AiController中实现对应的CRUD、测试数据生成和执行计划解释接口&#10;- 在AiService中增加generateCrud、generateTestData和explainQueryPlan业务逻辑&#10;- 更新前端AiSidebar组件，支持多种AI功能选择和特殊输入字段&#10;- 添加CRUD生成、测试数据生成和执行计划分析的UI界面和交互逻辑&#10;- 在ConnectionManagerService中实现分页查询和事务管理功能- 更新SqlController以支持分页查询和事务控制命令&#10;- 在SqlEditor中实现多标签页和事务状态显示功能" />
   </component>
 </project>

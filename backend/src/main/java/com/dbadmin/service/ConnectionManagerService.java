@@ -250,6 +250,94 @@ public class ConnectionManagerService {
         return functions;
     }
 
+    public Map<String, Object> getTableSchema(String sessionId, String tableName) throws SQLException {
+        Connection conn = activeConnections.get(sessionId);
+        if (conn == null || conn.isClosed()) {
+            throw new SQLException("Connection not found or closed");
+        }
+
+        Map<String, Object> schema = new HashMap<>();
+        List<Map<String, Object>> columns = new ArrayList<>();
+        List<Map<String, Object>> indexes = new ArrayList<>();
+
+        // 获取表结构信息
+        try (Statement stmt = conn.createStatement()) {
+            // 获取列信息
+            String columnsSql = String.format(
+                "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_DEFAULT, " +
+                "COLUMN_KEY, EXTRA, COLUMN_COMMENT, CHARACTER_MAXIMUM_LENGTH " +
+                "FROM INFORMATION_SCHEMA.COLUMNS " +
+                "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '%s' " +
+                "ORDER BY ORDINAL_POSITION",
+                tableName
+            );
+
+            try (ResultSet rs = stmt.executeQuery(columnsSql)) {
+                while (rs.next()) {
+                    Map<String, Object> column = new HashMap<>();
+                    column.put("name", rs.getString("COLUMN_NAME"));
+                    column.put("type", rs.getString("DATA_TYPE"));
+                    column.put("nullable", "YES".equals(rs.getString("IS_NULLABLE")));
+                    column.put("default", rs.getString("COLUMN_DEFAULT"));
+                    column.put("key", rs.getString("COLUMN_KEY"));
+                    column.put("extra", rs.getString("EXTRA"));
+                    column.put("comment", rs.getString("COLUMN_COMMENT"));
+                    column.put("maxLength", rs.getObject("CHARACTER_MAXIMUM_LENGTH"));
+                    columns.add(column);
+                }
+            }
+
+            // 获取索引信息
+            String indexesSql = String.format(
+                "SHOW INDEX FROM `%s`",
+                tableName
+            );
+
+            Map<String, List<String>> indexMap = new HashMap<>();
+            try (ResultSet rs = stmt.executeQuery(indexesSql)) {
+                while (rs.next()) {
+                    String indexName = rs.getString("Key_name");
+                    String columnName = rs.getString("Column_name");
+
+                    indexMap.computeIfAbsent(indexName, k -> new ArrayList<>()).add(columnName);
+                }
+            }
+
+            for (Map.Entry<String, List<String>> entry : indexMap.entrySet()) {
+                Map<String, Object> index = new HashMap<>();
+                index.put("name", entry.getKey());
+                index.put("columns", entry.getValue());
+                index.put("unique", !entry.getKey().equals("PRIMARY"));
+                indexes.add(index);
+            }
+
+            // 获取表注释
+            String tableCommentSql = String.format(
+                "SELECT TABLE_COMMENT " +
+                "FROM INFORMATION_SCHEMA.TABLES " +
+                "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '%s'",
+                tableName
+            );
+
+            String tableComment = "";
+            try (ResultSet rs = stmt.executeQuery(tableCommentSql)) {
+                if (rs.next()) {
+                    tableComment = rs.getString("TABLE_COMMENT");
+                }
+            }
+
+            schema.put("tableName", tableName);
+            schema.put("comment", tableComment);
+            schema.put("columns", columns);
+            schema.put("indexes", indexes);
+            schema.put("columnCount", columns.size());
+
+            return schema;
+        } catch (SQLException e) {
+            throw new SQLException("Failed to get table schema: " + e.getMessage());
+        }
+    }
+
     public List<String> getDatabases(String sessionId) throws SQLException {
         Connection conn = activeConnections.get(sessionId);
         if (conn == null || conn.isClosed()) {

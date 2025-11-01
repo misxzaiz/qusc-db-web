@@ -4,6 +4,7 @@ import com.dbadmin.service.ConnectionManagerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.dbadmin.model.QueryResult;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -179,6 +180,16 @@ public class SqlController {
         try {
             List<String> functions = connectionManager.getFunctions(sessionId, database);
             return ResponseEntity.ok(Map.of("functions", functions));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/table-schema/{sessionId}")
+    public ResponseEntity<?> getTableSchema(@PathVariable String sessionId, @RequestParam String tableName) {
+        try {
+            Map<String, Object> schema = connectionManager.getTableSchema(sessionId, tableName);
+            return ResponseEntity.ok(schema);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

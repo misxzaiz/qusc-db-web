@@ -87,6 +87,8 @@
               <SqlCodeEditor
                 :ref="`editor-${tab.id}`"
                 v-model="tab.sqlText"
+                :session-id="tab.sessionId"
+                :database="tab.database"
                 @execute="() => executeSql(tab)"
               />
             </div>
@@ -99,6 +101,31 @@
               错误信息
             </h4>
             <pre class="error-message">{{ tab.error }}</pre>
+
+            <!-- AI错误诊断 -->
+            <div class="error-diagnosis">
+              <button
+                class="btn btn-small ai-diagnose-btn"
+                @click="diagnoseError(tab)"
+                :disabled="tab.diagnosing"
+              >
+                <font-awesome-icon icon="stethoscope" />
+                {{ tab.diagnosing ? '诊断中...' : 'AI诊断' }}
+              </button>
+
+              <div v-if="tab.errorDiagnosis" class="diagnosis-result">
+                <div class="diagnosis-header">
+                  <h5>
+                    <font-awesome-icon icon="brain" />
+                    AI诊断结果
+                  </h5>
+                  <button class="btn btn-small" @click="tab.errorDiagnosis = null">
+                    <font-awesome-icon icon="times" />
+                  </button>
+                </div>
+                <div class="diagnosis-content" v-html="formatDiagnosis(tab.errorDiagnosis)"></div>
+              </div>
+            </div>
           </div>
 
           <!-- 查询结果 -->
@@ -110,6 +137,15 @@
                   <span v-if="result.executionTime" class="execution-time">({{ result.executionTime }}ms)</span>
                 </h4>
                 <div class="result-actions">
+                  <button
+                    v-if="result.type === 'select'"
+                    class="btn btn-small ai-analyze-btn"
+                    @click="analyzeResult(tab, result)"
+                    :disabled="result.analyzing"
+                  >
+                    <font-awesome-icon icon="brain" />
+                    {{ result.analyzing ? '分析中...' : 'AI解析' }}
+                  </button>
                   <button class="btn btn-small" @click="exportResult(result)">
                     <font-awesome-icon icon="download" />
                     导出
@@ -230,6 +266,20 @@
               <div v-else class="empty-result">
                 执行成功
               </div>
+
+              <!-- AI分析结果 -->
+              <div v-if="result.aiAnalysis" class="ai-analysis-section">
+                <div class="analysis-header">
+                  <h5>
+                    <font-awesome-icon icon="brain" />
+                    AI分析结果
+                  </h5>
+                  <button class="btn btn-small" @click="result.aiAnalysis = null">
+                    <font-awesome-icon icon="times" />
+                  </button>
+                </div>
+                <div class="analysis-content" v-html="formatAnalysis(result.aiAnalysis)"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -266,6 +316,9 @@ export default {
     // 侧边栏宽度
     const sidebarWidth = ref(40)
     const aiWidth = ref(40)
+
+    // AI配置
+    const selectedAiConfig = ref(null)
 
     // QueryHistory组件引用
     const queryHistoryRef = ref(null)
@@ -550,10 +603,95 @@ export default {
         .replace(/\bLEFT JOIN\b/gi, '\nLEFT JOIN')
         .replace(/\bRIGHT JOIN\b/gi, '\nRIGHT JOIN')
         .replace(/\bINNER JOIN\b/gi, '\nINNER JOIN')
-        .replace(/\bUNION\b/gi, '\nUNION')
-        .trim()
+
       tab.sqlText = formatted
       markTabModified(tab)
+    }
+
+    // AI错误诊断
+    const diagnoseError = async (tab) => {
+      if (!tab.error || !tab.sqlText) return
+
+      tab.diagnosing = true
+      try {
+        const response = await fetch('/api/ai/analyze-error', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            sql: tab.sqlText,
+            error: tab.error,
+            configId: selectedAiConfig.value?.id
+          })
+        })
+
+        const data = await response.json()
+        if (data.analysis) {
+          tab.errorDiagnosis = data.analysis
+        }
+      } catch (error) {
+        console.error('错误诊断失败:', error)
+        alert('诊断失败: ' + (error.response?.data?.error || error.message))
+      } finally {
+        tab.diagnosing = false
+      }
+    }
+
+    // AI分析查询结果
+    const analyzeResult = async (tab, result) => {
+      if (!tab.sqlText || !result.data) return
+
+      result.analyzing = true
+      try {
+        const response = await fetch('/api/ai/analyze-query-result', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            sql: tab.sqlText,
+            result: {
+              columns: result.columns,
+              data: result.data.slice(0, 10), // 只发送前10行
+              totalCount: result.totalCount
+            },
+            configId: selectedAiConfig.value?.id
+          })
+        })
+
+        const data = await response.json()
+        if (data.analysis) {
+          result.aiAnalysis = data.analysis
+        }
+      } catch (error) {
+        console.error('分析失败:', error)
+        alert('分析失败: ' + (error.response?.data?.error || error.message))
+      } finally {
+        result.analyzing = false
+      }
+    }
+
+    // 格式化AI分析结果
+    const formatAnalysis = (analysis) => {
+      // 将markdown转换为HTML（简单处理）
+      return analysis
+        .replace(/\n/g, '<br>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/```(.*?)```/gs, '<pre><code>$1</code></pre>')
+        .replace(/`(.*?)`/g, '<code>$1</code>')
+        .replace(/^#{1,6}\s+(.*?)$/gm, (match, content) => {
+          const level = match.match(/^#/)[0].length
+          return `<h${level}>${content}</h${level}>`
+        })
+        .replace(/^\* (.+)$/gm, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+    }
+
+    // 格式化诊断结果
+    const formatDiagnosis = (diagnosis) => {
+      return formatAnalysis(diagnosis)
     }
 
     // 结果处理方法
@@ -746,6 +884,19 @@ export default {
       queryHistoryRef.value = ref
     }
 
+    // 加载AI配置
+    const loadAiConfig = async () => {
+      try {
+        const response = await fetch('/api/ai/configs')
+        const configs = await response.json()
+        if (configs.length > 0) {
+          selectedAiConfig.value = configs.find(c => c.enabled) || configs[0]
+        }
+      } catch (error) {
+        console.error('加载AI配置失败:', error)
+      }
+    }
+
     // 键盘快捷键
     const handleKeydown = (e) => {
       if (e.ctrlKey && e.key === 'Enter') {
@@ -770,6 +921,7 @@ export default {
       window.addEventListener('keydown', handleKeydown)
       connectionStore.loadConnections()
       loadTabsFromStorage()
+      loadAiConfig()
     })
 
     onUnmounted(() => {
@@ -789,6 +941,7 @@ export default {
       currentTab,
       sidebarWidth,
       aiWidth,
+      selectedAiConfig,
       queryHistoryRef,
       newTab,
       closeTab,
@@ -812,6 +965,10 @@ export default {
       commitTransaction,
       rollbackTransaction,
       exportResult,
+      diagnoseError,
+      analyzeResult,
+      formatAnalysis,
+      formatDiagnosis,
       onUseAiSql,
       handleSidebarResize,
       handleAiResize,
@@ -1006,6 +1163,188 @@ export default {
   font-family: var(--font-family-mono);
   white-space: pre-wrap;
   margin: 0;
+}
+
+.error-diagnosis {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-secondary);
+}
+
+.ai-diagnose-btn {
+  background-color: var(--warning-bg);
+  color: var(--warning);
+  border-color: var(--warning);
+}
+
+.ai-diagnose-btn:hover {
+  background-color: var(--warning);
+  color: white;
+}
+
+.diagnosis-result {
+  margin-top: 10px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.diagnosis-header {
+  padding: 8px 12px;
+  background-color: var(--bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.diagnosis-header h5 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.diagnosis-content {
+  padding: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.diagnosis-content :deep(h1),
+.diagnosis-content :deep(h2),
+.diagnosis-content :deep(h3),
+.diagnosis-content :deep(h4),
+.diagnosis-content :deep(h5),
+.diagnosis-content :deep(h6) {
+  margin: 10px 0 5px 0;
+  color: var(--text-primary);
+}
+
+.diagnosis-content :deep(code) {
+  background-color: var(--bg-tertiary);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: var(--font-family-mono);
+  font-size: 12px;
+}
+
+.diagnosis-content :deep(pre) {
+  background-color: var(--bg-tertiary);
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  margin: 10px 0;
+}
+
+.diagnosis-content :deep(pre code) {
+  background: none;
+  padding: 0;
+}
+
+.diagnosis-content :deep(ul),
+.diagnosis-content :deep(ol) {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.diagnosis-content :deep(li) {
+  margin: 4px 0;
+}
+
+.diagnosis-content :deep(strong) {
+  color: var(--accent-primary);
+}
+
+.ai-analysis-section {
+  margin-top: 10px;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.analysis-header {
+  padding: 8px 12px;
+  background-color: var(--bg-quaternary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.analysis-header h5 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.analysis-content {
+  padding: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.analysis-content :deep(h1),
+.analysis-content :deep(h2),
+.analysis-content :deep(h3),
+.analysis-content :deep(h4),
+.analysis-content :deep(h5),
+.analysis-content :deep(h6) {
+  margin: 10px 0 5px 0;
+  color: var(--text-primary);
+}
+
+.analysis-content :deep(code) {
+  background-color: var(--bg-secondary);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: var(--font-family-mono);
+  font-size: 12px;
+}
+
+.analysis-content :deep(pre) {
+  background-color: var(--bg-secondary);
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  margin: 10px 0;
+}
+
+.analysis-content :deep(pre code) {
+  background: none;
+  padding: 0;
+}
+
+.analysis-content :deep(ul),
+.analysis-content :deep(ol) {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.analysis-content :deep(li) {
+  margin: 4px 0;
+}
+
+.analysis-content :deep(strong) {
+  color: var(--accent-primary);
+}
+
+.ai-analyze-btn {
+  background-color: var(--info-bg);
+  color: var(--info);
+  border-color: var(--info);
+}
+
+.ai-analyze-btn:hover {
+  background-color: var(--info);
+  color: white;
 }
 
 /* 结果容器 */

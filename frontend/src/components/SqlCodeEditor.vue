@@ -1,6 +1,15 @@
 <template>
   <div class="sql-editor-container">
     <div ref="editorRef" class="editor"></div>
+    <!-- @表名自动补全组件 -->
+    <AtMention
+      v-if="showAtMention"
+      :session-id="sessionId"
+      :database="database"
+      :keyword="atKeyword"
+      :position="atPosition"
+      @select-table="handleSelectTable"
+    />
   </div>
 </template>
 
@@ -12,9 +21,13 @@ import { oneDark } from '@codemirror/theme-one-dark'
 import { autocompletion } from '@codemirror/autocomplete'
 import { keymap } from '@codemirror/view'
 import { defaultKeymap, insertTab } from '@codemirror/commands'
+import AtMention from './AtMention.vue'
 
 export default {
   name: 'SqlCodeEditor',
+  components: {
+    AtMention
+  },
   props: {
     modelValue: {
       type: String,
@@ -23,13 +36,19 @@ export default {
     placeholder: {
       type: String,
       default: '输入SQL语句...'
-    }
+    },
+    sessionId: String,
+    database: String
   },
   emits: ['update:modelValue', 'execute'],
 
   data() {
     return {
-      editor: null
+      editor: null,
+      showAtMention: false,
+      atKeyword: '',
+      atPosition: { x: 0, y: 0 },
+      atRange: null
     }
   },
 
@@ -145,6 +164,48 @@ export default {
         }
       }
 
+      const handleAtMention = (view) => {
+        const { state, dispatch } = view
+        const pos = state.selection.main.head
+
+        // 查找@符号的位置
+        const line = state.doc.lineAt(pos)
+        let atPos = -1
+        let keyword = ''
+
+        for (let i = pos - 1; i >= line.from; i--) {
+          const char = state.doc.sliceString(i, i + 1)
+          if (char === '@') {
+            atPos = i
+            keyword = state.doc.sliceString(i + 1, pos)
+            break
+          }
+          // 如果遇到空格或换行，说明不是有效的@引用
+          if (/\s/.test(char)) break
+        }
+
+        if (atPos >= 0) {
+          this.atRange = { from: atPos, to: pos }
+          this.atKeyword = keyword
+
+          // 计算弹出位置
+          const coords = view.coordsAtPos(pos)
+          this.atPosition = {
+            x: coords.left,
+            y: coords.bottom
+          }
+          this.showAtMention = true
+        } else {
+          this.hideAtMention()
+        }
+      }
+
+      const hideAtMention = () => {
+        this.showAtMention = false
+        this.atKeyword = ''
+        this.atRange = null
+      }
+
       const customKeymap = keymap.of([
         ...defaultKeymap,
         {
@@ -160,8 +221,46 @@ export default {
             this.$emit('execute')
             return true
           }
+        },
+        {
+          key: 'Escape',
+          run: (view) => {
+            if (this.showAtMention) {
+              hideAtMention()
+              return true
+            }
+            return false
+          }
         }
       ])
+
+      // 监听输入变化
+      const inputHandler = EditorView.inputHandler.of((view, from, to, text) => {
+        // 检查是否输入了@符号
+        if (text === '@') {
+          setTimeout(() => handleAtMention(view), 0)
+        } else if (this.showAtMention) {
+          // 如果正在显示@补全，更新关键词
+          const pos = view.state.selection.main.head
+          const line = view.state.doc.lineAt(pos)
+          let atPos = -1
+
+          for (let i = pos - 1; i >= line.from; i--) {
+            const char = view.state.doc.sliceString(i, i + 1)
+            if (char === '@') {
+              atPos = i
+              break
+            }
+            if (/\s/.test(char)) break
+          }
+
+          if (atPos >= 0) {
+            this.atKeyword = view.state.doc.sliceString(atPos + 1, pos)
+          } else {
+            hideAtMention()
+          }
+        }
+      })
 
       const startState = EditorState.create({
         doc: this.modelValue,
@@ -172,6 +271,7 @@ export default {
             override: [sqlCompletions]
           }),
           customKeymap,
+          inputHandler,
           EditorView.lineWrapping,
           EditorState.tabSize.of(4),
           EditorView.updateListener.of((update) => {
@@ -187,6 +287,9 @@ export default {
         state: startState,
         parent: this.$refs.editorRef
       })
+
+      // 保存hideAtMention方法到实例
+      this.hideAtMention = hideAtMention
     },
 
     getTableCompletions() {
@@ -220,6 +323,25 @@ export default {
 
     getValue() {
       return this.editor?.state.doc.toString() || ''
+    },
+
+    handleSelectTable(table) {
+      // 替换@后面的内容为选中的表名
+      if (this.atRange && this.editor) {
+        const { state } = this.editor
+        const transaction = state.update({
+          changes: {
+            from: this.atRange.from,
+            to: this.atRange.to,
+            insert: table.name
+          },
+          selection: {
+            anchor: this.atRange.from + table.name.length
+          }
+        })
+        this.editor.dispatch(transaction)
+      }
+      this.hideAtMention()
     }
   }
 }

@@ -189,6 +189,51 @@ public class AiController {
         }
     }
 
+    @PostMapping("/analyze-query-result")
+    public ResponseEntity<?> analyzeQueryResult(@RequestBody Map<String, Object> request) {
+        String sql = (String) request.get("sql");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> result = (Map<String, Object>) request.get("result");
+        String configId = (String) request.get("configId");
+
+        if (sql == null || sql.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "SQL语句不能为空"));
+        }
+        if (result == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "查询结果不能为空"));
+        }
+
+        try {
+            AiConfig config = getConfig(configId);
+            String analysis = aiService.analyzeQueryResult(sql, result, config);
+            return ResponseEntity.ok(Map.of("analysis", analysis));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/analyze-error")
+    public ResponseEntity<?> analyzeError(@RequestBody Map<String, Object> request) {
+        String sql = (String) request.get("sql");
+        String error = (String) request.get("error");
+        String configId = (String) request.get("configId");
+
+        if (sql == null || sql.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "SQL语句不能为空"));
+        }
+        if (error == null || error.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "错误信息不能为空"));
+        }
+
+        try {
+            AiConfig config = getConfig(configId);
+            String analysis = aiService.analyzeError(sql, error, config);
+            return ResponseEntity.ok(Map.of("analysis", analysis));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @PostMapping("/config/{id}/test")
     public ResponseEntity<?> testConfig(@PathVariable String id) {
         try {
