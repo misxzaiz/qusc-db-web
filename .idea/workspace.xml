@@ -4,9 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(ai): 移除旧版AI助手侧边栏组件- 删除了完整的 AiSidebar2.vue 组件文件&#10;- 移除了所有相关的模板、脚本和样式代码&#10;- 清理了与旧版AI助手相关的功能实现- 为新版AI助手功能重构做准备">
+    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="refactor(ai): 切换聊天流式传输实现方式&#10;&#10;- 将Server-Sent Events替换为fetch POST请求处理流式响应- 移除EventSource相关代码逻辑&#10;- 更新SQL编辑器右侧边栏宽度计算逻辑&#10;-修正折叠状态下图标栏宽度设置问题">
+      <change beforePath="$PROJECT_DIR$/.claude/settings.local.json" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/settings.local.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/App.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/components/RightTabSidebar.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/RightTabSidebar.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" afterDir="false" />
     </list>
@@ -326,7 +326,23 @@
       <option name="project" value="LOCAL" />
       <updated>1762065264635</updated>
     </task>
-    <option name="localTasksCounter" value="32" />
+    <task id="LOCAL-00032" summary="feat(ai): 新增流式聊天和普通聊天接口&#10;&#10;- 实现 streamChat 方法用于处理 Server-Sent Events 流式响应&#10;- 添加 freeChat 方法支持普通聊天请求&#10;- 优化右侧边栏宽度控制逻辑，使用 CSS 变量动态调整布局&#10;- 移除旧版 AI 助手侧边栏组件及相关代码&#10;-重构 AI 诊断功能并集成到新侧边栏中">
+      <option name="closed" value="true" />
+      <created>1762065511743</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1762065511743</updated>
+    </task>
+    <task id="LOCAL-00033" summary="refactor(ai): 切换聊天流式传输实现方式&#10;&#10;- 将Server-Sent Events替换为fetch POST请求处理流式响应- 移除EventSource相关代码逻辑&#10;- 更新SQL编辑器右侧边栏宽度计算逻辑&#10;-修正折叠状态下图标栏宽度设置问题">
+      <option name="closed" value="true" />
+      <created>1762065654025</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1762065654025</updated>
+    </task>
+    <option name="localTasksCounter" value="34" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -368,8 +384,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="feat(connection):重构连接树组件支持已保存连接管理&#10;&#10;- 新增已保存连接列表展示功能&#10;- 实现连接状态标识和连接按钮- 添加跨标签页同步连接列表功能-优化空状态提示信息&#10;- 移除新建连接对话框相关代码- 调整组件样式和布局结构&#10;- 完善连接选择和会话管理逻辑" />
-    <MESSAGE value="feat(connection):重构连接树组件支持已保存连接管理&#10;&#10;- 合并已保存连接和活跃会话到统一列表&#10;- 实现连接状态标识和自动展开功能&#10;-优化空状态提示信息和样式布局&#10;- 完善连接点击处理和会话选择逻辑&#10;- 移除旧的连接管理样式和结构&#10;- 调整组件数据结构和计算属性&#10;- 改进数据库和表节点的展示逻辑" />
     <MESSAGE value="feat(connection):优化连接树合并逻辑和点击处理&#10;&#10;- 保持已保存连接的原始顺序- 活跃会话优先使用实时数据&#10;- 分离无对应保存" />
     <MESSAGE value="feat(ai): 集成AI助手功能支持SQL生成和优化- 后端添加RestTemplate Bean支持HTTP请求- 前端新增AI设置和聊天页面路由&#10;- SQL编辑器集成AI助手侧边栏和相关功能按钮&#10;- 实现AI SQL生成、解释和优化功能&#10;- 添加AI配置管理对话框和本地存储支持&#10;- 新增AI助手相关UI组件和样式&#10;- Claude配置添加AI服务测试命令" />
     <MESSAGE value="feat(ai): 添加AI SQL助手功能&#10;&#10;- 新增AI配置管理界面和相关API接口&#10;- 实现SQL生成、解释和优化核心功能&#10;- 支持多种AI服务商（DeepSeek、心流、OpenAI等）&#10;- 添加前端聊天界面用于与AI交互- 集成LocalStorage存储AI配置信息&#10;- 提供AI模型参数配置和测试连接功能- 支持数据库表结构引用和快速操作按钮&#10;- 实现消息历史记录和SQL执行结果展示" />
@@ -393,7 +407,9 @@
     <MESSAGE value="feat(ai):重构AI侧边栏交互并添加右侧固定图标栏&#10;&#10;- 在 AiSidebar2.vue 中添加 visible 控制显示状态&#10;- 默认展开 AI 侧边栏并控制其可见性&#10;- 移除 SqlEditor.vue 中的旧 AI 侧边栏类名控制逻辑- 添加 RightIconBar 组件用于固定右侧图标栏&#10;- 实现通过右侧图标栏控制 AI侧边栏开关&#10;- 调整主内容区域样式以适应新的布局结构&#10;- 更新组件引用和事件处理方法以支持新交互" />
     <MESSAGE value="feat(ai): 移除旧版AI助手侧边栏组件&#10;&#10;- 删除了完整的 AiSidebar2.vue 组件文件&#10;- 移除了所有相关的模板、脚本和样式代码&#10;- 清理了与旧版AI助手相关的功能实现&#10;- 为新版AI助手功能重构做准备" />
     <MESSAGE value="feat(ai): 移除旧版AI助手侧边栏组件- 删除了完整的 AiSidebar2.vue 组件文件&#10;- 移除了所有相关的模板、脚本和样式代码&#10;- 清理了与旧版AI助手相关的功能实现- 为新版AI助手功能重构做准备" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(ai): 移除旧版AI助手侧边栏组件- 删除了完整的 AiSidebar2.vue 组件文件&#10;- 移除了所有相关的模板、脚本和样式代码&#10;- 清理了与旧版AI助手相关的功能实现- 为新版AI助手功能重构做准备" />
+    <MESSAGE value="feat(ai): 新增流式聊天和普通聊天接口&#10;&#10;- 实现 streamChat 方法用于处理 Server-Sent Events 流式响应&#10;- 添加 freeChat 方法支持普通聊天请求&#10;- 优化右侧边栏宽度控制逻辑，使用 CSS 变量动态调整布局&#10;- 移除旧版 AI 助手侧边栏组件及相关代码&#10;-重构 AI 诊断功能并集成到新侧边栏中" />
+    <MESSAGE value="refactor(ai): 切换聊天流式传输实现方式&#10;&#10;- 将Server-Sent Events替换为fetch POST请求处理流式响应- 移除EventSource相关代码逻辑&#10;- 更新SQL编辑器右侧边栏宽度计算逻辑&#10;-修正折叠状态下图标栏宽度设置问题" />
+    <option name="LAST_COMMIT_MESSAGE" value="refactor(ai): 切换聊天流式传输实现方式&#10;&#10;- 将Server-Sent Events替换为fetch POST请求处理流式响应- 移除EventSource相关代码逻辑&#10;- 更新SQL编辑器右侧边栏宽度计算逻辑&#10;-修正折叠状态下图标栏宽度设置问题" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
 </project>

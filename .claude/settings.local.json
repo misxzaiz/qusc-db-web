@@ -40,7 +40,8 @@
       "Bash(curl -X POST http://localhost:8080/api/ai/chat/free -H \"Content-Type: application/json\" -d '{\"\"message\"\": \"\"test\"\", \"\"configId\"\": \"\"test\"\"}' -v)",
       "Bash(findstr :8080)",
       "Bash(curl -X POST http://localhost:8080/api/ai/chat/stream -H \"Content-Type: application/json\" -H \"Accept: text/event-stream\" -d '{\"\"message\"\":\"\"hello\"\",\"\"configId\"\":\"\"test\"\"}' -v)",
-      "Bash(curl -s \"http://localhost:3001\")"
+      "Bash(curl -s \"http://localhost:3001\")",
+      "Bash(curl -X POST \"http://localhost:8080/api/ai/chat/stream\" -H \"Content-Type: application/json\" -H \"Accept: text/event-stream\" -d '{\"\"message\"\":\"\"test\"\",\"\"configId\"\":\"\"test\"\"}' -v)"
     ],
     "deny": [],
     "ask": []

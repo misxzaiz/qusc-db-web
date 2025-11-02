@@ -365,6 +365,14 @@ export default {
       this.saveHistory()
     },
 
+    // 确保侧边栏展开并切换到AI标签
+    ensureAiTabOpen() {
+      if (this.isCollapsed) {
+        this.isCollapsed = false
+      }
+      this.activeTab = 'ai'
+    },
+
     async sendMessage(customMessage = null) {
       const message = customMessage || this.inputText
       if (!message.trim() || this.loading || this.streaming) return
@@ -407,14 +415,22 @@ export default {
 
         this.eventSource.onmessage = (event) => {
           const data = event.data
-          if (data === '[DONE]') {
-            this.streaming = false
-            this.streamContent = ''
-            this.scrollToBottom()
-          } else {
+          // 处理SSE格式数据
+          if (data.startsWith('data: ')) {
+            const jsonStr = data.slice(6) // 移除 'data: ' 前缀
             try {
-              const parsed = JSON.parse(data)
-              if (parsed.content) {
+              const parsed = JSON.parse(jsonStr)
+
+              // 检查是否完成
+              if (parsed.done || parsed.status === 'done') {
+                this.streaming = false
+                // 将最后一条消息标记为非流式
+                const lastMessage = this.messages[this.messages.length - 1]
+                if (lastMessage && lastMessage.role === 'assistant' && lastMessage.streaming) {
+                  lastMessage.streaming = false
+                }
+                this.scrollToBottom()
+              } else if (parsed.content) {
                 this.streamContent += parsed.content
 
                 // 更新或添加消息
@@ -432,7 +448,7 @@ export default {
                 this.scrollToBottom()
               }
             } catch (e) {
-              console.error('解析流数据失败:', e)
+              console.error('解析流数据失败:', e, '原始数据:', data)
             }
           }
         }
@@ -842,8 +858,32 @@ export default {
   max-width: calc(100% - 50px);
 }
 
+/* 用户消息右对齐 */
 .message.user .message-content {
   text-align: right;
+}
+
+/* AI消息左对齐 */
+.message.assistant .message-content {
+  text-align: left;
+}
+
+/* 消息气泡样式 */
+.message.user .message-content {
+  background-color: var(--accent-primary);
+  color: white;
+  padding: 10px 15px;
+  border-radius: 18px 18px 4px 18px;
+  display: inline-block;
+  margin-left: auto;
+}
+
+.message.assistant .message-content {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: 10px 15px;
+  border-radius: 18px 18px 18px 4px;
+  display: inline-block;
 }
 
 .streaming-text {

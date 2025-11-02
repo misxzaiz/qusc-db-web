@@ -703,8 +703,15 @@ ${tab.error}
 3. 修复后的正确SQL`
 
       // 使用AI助手发送消息
-      if (rightSidebarRef.value && rightSidebarRef.value.sendMessage) {
-        rightSidebarRef.value.sendMessage(diagnosticMessage)
+      if (rightSidebarRef.value) {
+        // 先确保侧边栏展开并切换到AI标签
+        if (rightSidebarRef.value.ensureAiTabOpen) {
+          rightSidebarRef.value.ensureAiTabOpen()
+        }
+        // 然后发送消息
+        if (rightSidebarRef.value.sendMessage) {
+          rightSidebarRef.value.sendMessage(diagnosticMessage)
+        }
       }
 
       // 清除之前的诊断结果
@@ -757,8 +764,15 @@ ${JSON.stringify(sampleData, null, 2)}
 4. 数据质量如何？`
 
       // 使用AI助手发送消息
-      if (rightSidebarRef.value && rightSidebarRef.value.sendMessage) {
-        rightSidebarRef.value.sendMessage(analysisMessage)
+      if (rightSidebarRef.value) {
+        // 先确保侧边栏展开并切换到AI标签
+        if (rightSidebarRef.value.ensureAiTabOpen) {
+          rightSidebarRef.value.ensureAiTabOpen()
+        }
+        // 然后发送消息
+        if (rightSidebarRef.value.sendMessage) {
+          rightSidebarRef.value.sendMessage(analysisMessage)
+        }
       }
 
       // 清除之前的分析结果
