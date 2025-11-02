@@ -287,7 +287,7 @@
     </div>
 
     <!-- 右侧AI边栏 -->
-    <AiSidebar @use-sql="onUseAiSql" @resize="handleAiResize" />
+    <AiSidebar @execute-sql="onExecuteAiSql" @resize="handleAiResize" />
   </div>
 </template>
 
@@ -296,7 +296,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { connectionStore } from '../stores/connectionStore'
 import SqlCodeEditor from '../components/SqlCodeEditor.vue'
 import TabSidebar from '../components/TabSidebar.vue'
-import AiSidebar from '../components/AiSidebar.vue'
+import AiSidebar from '../components/AiSidebar2.vue'
 
 export default {
   name: 'SqlEditor',
@@ -839,11 +839,17 @@ export default {
     }
 
     // AI相关方法
-    const onUseAiSql = (sql) => {
+    const onExecuteAiSql = (sql) => {
       const tab = currentTab.value
       if (tab) {
+        // 将SQL插入到当前tab
         tab.sqlText = sql
         markTabModified(tab)
+
+        // 自动执行SQL
+        nextTick(() => {
+          executeQuery()
+        })
       }
     }
 
@@ -969,7 +975,7 @@ export default {
       analyzeResult,
       formatAnalysis,
       formatDiagnosis,
-      onUseAiSql,
+      onExecuteAiSql,
       handleSidebarResize,
       handleAiResize,
       onHistorySelect,

@@ -18,7 +18,21 @@
       "Bash(mvn -N io.takari:maven:wrapper)",
       "Bash(\"/c/Program Files/apache-maven-3.9.6/bin/mvn\" --version)",
       "Read(//d/**)",
-      "Bash(curl -s http://localhost:8080/api/sql/tables/test-session?database=test)"
+      "Bash(curl -s http://localhost:8080/api/sql/tables/test-session?database=test)",
+      "Bash(npm install marked highlight.js vue-marked-render)",
+      "Bash(npm install marked highlight.js)",
+      "Bash(curl -s http://localhost:8080/api/ai/configs)",
+      "Bash(curl -X POST http://localhost:8080/api/ai/configs -H \"Content-Type: application/json\" -d '{\"\"id\"\": \"\"test\"\", \"\"name\"\": \"\"Test Config\"\", \"\"provider\"\": \"\"openai\"\", \"\"baseUrl\"\": \"\"https://api.deepseek.com\"\", \"\"model\"\": \"\"deepseek-chat\"\", \"\"apiKey\"\": \"\"sk-test\"\", \"\"enabled\"\": true}')",
+      "Bash(curl -X POST http://localhost:8080/api/ai/config -H \"Content-Type: application/json\" -d '{\"\"id\"\": \"\"test\"\", \"\"name\"\": \"\"DeepSeek测试\"\", \"\"provider\"\": \"\"openai\"\", \"\"baseUrl\"\": \"\"https://api.deepseek.com\"\", \"\"model\"\": \"\"deepseek-chat\"\", \"\"apiKey\"\": \"\"sk-test\"\", \"\"enabled\"\": true}')",
+      "Bash(curl -X POST http://localhost:8080/api/ai/config -H \"Content-Type: application/json; charset=UTF-8\" -d \"{\"\"id\"\": \"\"test\"\", \"\"name\"\": \"\"DeepSeek\\u6d4b\\u8bd5\"\", \"\"provider\"\": \"\"openai\"\", \"\"baseUrl\"\": \"\"https://api.deepseek.com\"\", \"\"model\"\": \"\"deepseek-chat\"\", \"\"apiKey\"\": \"\"sk-test\"\", \"\"enabled\"\": true}\")",
+      "Bash(curl -X PUT http://localhost:8080/api/ai/config/test -H \"Content-Type: application/json; charset=UTF-8\" -d \"{\"\"id\"\": \"\"test\"\", \"\"name\"\": \"\"DeepSeek\\u6d4b\\u8bd5\"\", \"\"provider\"\": \"\"openai\"\", \"\"baseUrl\"\": \"\"https://api.deepseek.com\"\", \"\"model\"\": \"\"deepseek-chat\"\", \"\"apiKey\"\": \"\"sk-your-real-api-key\"\", \"\"enabled\"\": true}\")",
+      "Bash(curl -s \"http://localhost:8080/api/ai/chat/stream?message=hello\")",
+      "Bash(curl -X POST http://localhost:8080/api/ai/config -H \"Content-Type: application/json; charset=UTF-8\" -d \"{\"\"id\"\": \"\"test\"\", \"\"name\"\": \"\"DeepSeek\\u6d4b\\u8bd5\"\", \"\"provider\"\": \"\"openai\"\", \"\"baseUrl\"\": \"\"https://api.deepseek.com\"\", \"\"model\"\": \"\"deepseek-chat\"\", \"\"apiKey\"\": \"\"sk-5a4f48c19a4f48c19a4f48c19a4f48c1\"\", \"\"enabled\"\": true}\")",
+      "Bash(curl -s \"http://localhost:8080/api/ai/chat/stream?message=hello&configId=test\")",
+      "Bash(java -cp \"target/classes;C:/Users/28409/.m2/repository/org/springframework/boot/spring-boot-starter-web/3.2.0/spring-boot-starter-web-3.2.0.jar;C:/Users/28409/.m2/repository/org/springframework/boot/spring-boot/3.2.0/spring-boot-3.2.0.jar;C:/Users/28409/.m2/repository/org/springframework/boot/spring-boot-autoconfigure/3.2.0/spring-boot-autoconfigure-3.2.0.jar\" com.dbadmin.DbAdminApplication)",
+      "Bash(netstat -ano)",
+      "Bash(curl -v \"http://localhost:8080/api/ai/chat/stream?message=hello&configId=test\")",
+      "Bash(timeout 5 curl \"http://localhost:8080/api/ai/chat/stream?message=hello&configId=test\")"
     ],
     "deny": [],
     "ask": []

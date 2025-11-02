@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
+import java.io.IOException;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Service
 public class AiService {
@@ -23,6 +25,9 @@ public class AiService {
     private RestTemplate restTemplate;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    // 添加一个专用的流式RestTemplate
+    private final RestTemplate streamingRestTemplate = new RestTemplate();
 
     // 预定义的AI提供商配置
     private static final Map<String, AiProviderConfig> PROVIDERS = new HashMap<>();
@@ -699,6 +704,430 @@ public class AiService {
         }
 
         return sb.toString();
+    }
+
+    // 流式聊天
+    public void streamChat(String message, AiConfig config, String systemPrompt, SseEmitter emitter) throws Exception {
+        if (!config.getEnabled() || config.getApiKey() == null || config.getApiKey().isEmpty()) {
+            throw new Exception("AI服务未配置或已禁用");
+        }
+
+        log.info("开始流式聊天，消息: {}, 配置: {}", message, config.getName());
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", config.getModel());
+        requestBody.put("stream", true);
+
+        List<Map<String, String>> messages = new ArrayList<>();
+
+        // 添加系统提示
+        if (systemPrompt != null && !systemPrompt.isEmpty()) {
+            messages.add(Map.of("role", "system", "content", systemPrompt));
+        } else {
+            messages.add(Map.of("role", "system", "content", "你是一个友好的AI助手，能够回答各种问题。"));
+        }
+
+        messages.add(Map.of("role", "user", "content", message));
+        requestBody.put("messages", messages);
+
+        if (config.getTemperature() != null) {
+            requestBody.put("temperature", config.getTemperature());
+        }
+        if (config.getMaxTokens() != null) {
+            requestBody.put("max_tokens", config.getMaxTokens());
+        }
+
+        String url = config.getBaseUrl() + "/chat/completions";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(config.getApiKey());
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        // 先发送一个初始事件，确保连接建立
+        try {
+            emitter.send(SseEmitter.event()
+                .name("connected")
+                .data("{\"status\": \"connected\"}"));
+        } catch (Exception e) {
+            log.error("发送初始连接事件失败", e);
+            return;
+        }
+
+        // 使用新线程处理流式请求
+        new Thread(() -> {
+            boolean isCompleted = false;
+            try {
+                log.info("发送流式请求到: {}", url);
+                log.debug("请求体: {}", objectMapper.writeValueAsString(requestBody));
+
+                // 直接使用流式处理
+                ResponseEntity<String> response = streamingRestTemplate.exchange(
+                    url,
+                    HttpMethod.POST,
+                    entity,
+                    String.class
+                );
+
+                log.debug("AI流式响应状态: {}", response.getStatusCode());
+
+                if (response.getStatusCode() == HttpStatus.OK) {
+                    String responseBody = response.getBody();
+
+                    if (responseBody != null && !responseBody.isEmpty()) {
+                        // 实时处理流式数据
+                        isCompleted = processStreamingResponseRealTime(responseBody, emitter);
+                    } else {
+                        try {
+                            emitter.send(SseEmitter.event()
+                                .name("error")
+                                .data("{\"error\": \"响应为空\"}"));
+                        } catch (Exception e) {
+                            log.debug("发送错误失败", e);
+                        }
+                    }
+                } else {
+                    try {
+                        emitter.send(SseEmitter.event()
+                            .name("error")
+                            .data("{\"error\": \"AI服务返回错误: " + response.getStatusCode() + "\"}"));
+                    } catch (Exception e) {
+                        log.debug("发送错误失败", e);
+                    }
+                }
+            } catch (Exception e) {
+                log.error("流式聊天失败", e);
+                try {
+                    emitter.send(SseEmitter.event()
+                        .name("error")
+                        .data("{\"error\": \"" + e.getMessage().replace("\"", "\\\"") + "\"}"));
+                } catch (IOException ioException) {
+                    log.error("发送错误失败", ioException);
+                }
+            } finally {
+                // 延迟完成，确保所有数据都已发送
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                if (!isCompleted) {
+                    try {
+                        emitter.complete();
+                    } catch (Exception e) {
+                        log.debug("完成emitter失败，可能已经完成", e);
+                    }
+                }
+            }
+        }).start();
+    }
+
+    private boolean processStreamingResponseRealTime(String responseBody, SseEmitter emitter) {
+        try {
+            log.debug("处理流式响应，长度: {}", responseBody.length());
+
+            // 按行处理SSE流
+            String[] lines = responseBody.split("\n");
+            boolean isCompleted = false;
+
+            for (String line : lines) {
+                line = line.trim();
+
+                if (line.isEmpty()) {
+                    continue;
+                }
+
+                // 只处理data:开头的行
+                if (line.startsWith("data: ")) {
+                    String data = line.substring(6).trim();
+
+                    // 检查结束标记
+                    if (data.equals("[DONE]")) {
+                        log.debug("收到流式结束标记");
+                        try {
+                            emitter.send(SseEmitter.event()
+                                .name("end")
+                                .data("{\"done\": true}"));
+                            isCompleted = true;
+                        } catch (Exception e) {
+                            log.debug("发送结束标记失败，可能已关闭: {}", e.getMessage());
+                        }
+                        return true;
+                    }
+
+                    // 尝试解析JSON
+                    try {
+                        JsonNode jsonNode = objectMapper.readTree(data);
+                        JsonNode choices = jsonNode.path("choices");
+
+                        if (choices.isArray() && choices.size() > 0) {
+                            JsonNode delta = choices.get(0).path("delta");
+                            JsonNode content = delta.path("content");
+
+                            String contentText = content.asText();
+                            if (!contentText.isEmpty()) {
+                                log.debug("发送内容: {}", contentText);
+                                try {
+                                    emitter.send(SseEmitter.event()
+                                        .name("message")
+                                        .data("{\"content\": \"" + escapeJson(contentText) + "\"}"));
+                                    // 添加小延迟，确保前端能接收
+                                    Thread.sleep(10);
+                                } catch (IllegalStateException e) {
+                                    log.debug("Emitter已关闭，停止发送: {}", e.getMessage());
+                                    isCompleted = true;
+                                    break;
+                                } catch (Exception e) {
+                                    log.error("发送内容失败", e);
+                                    // 发送失败也继续尝试，可能是临时问题
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.debug("解析JSON失败: {} - {}", data, e.getMessage());
+                    }
+                }
+            }
+
+            // 如果没有提前结束，发送结束信号
+            if (!isCompleted) {
+                try {
+                    emitter.send(SseEmitter.event()
+                        .name("end")
+                        .data("{\"done\": true}"));
+                } catch (Exception e) {
+                    log.debug("发送最终结束标记失败: {}", e.getMessage());
+                }
+            }
+
+            return isCompleted;
+
+        } catch (Exception e) {
+            log.error("处理流式响应失败", e);
+            try {
+                emitter.send(SseEmitter.event()
+                    .name("error")
+                    .data("{\"error\": \"处理响应失败: " + e.getMessage() + "\"}"));
+            } catch (IOException ioException) {
+                log.error("发送错误失败", ioException);
+            }
+            return true; // 出错时也返回true，避免重复完成
+        }
+    }
+
+    private void processStreamingResponse(String responseBody, SseEmitter emitter) {
+        try {
+            // SSE响应是逐行发送的，需要按行处理
+            String[] lines = responseBody.split("\n");
+
+            for (String line : lines) {
+                line = line.trim();
+
+                // 跳过空行
+                if (line.isEmpty()) continue;
+
+                // 处理SSE格式的数据
+                if (line.startsWith("data: ")) {
+                    String data = line.substring(6);
+
+                    // 检查结束标记
+                    if (data.equals("[DONE]")) {
+                        emitter.send(SseEmitter.event()
+                            .name("end")
+                            .data("{\"done\": true}"));
+                        return;
+                    }
+
+                    // 解析JSON数据
+                    try {
+                        JsonNode jsonNode = objectMapper.readTree(data);
+                        JsonNode choices = jsonNode.path("choices");
+
+                        if (choices.isArray() && choices.size() > 0) {
+                            JsonNode delta = choices.get(0).path("delta");
+                            JsonNode content = delta.path("content");
+
+                            if (!content.asText().isEmpty()) {
+                                // 立即发送内容
+                                emitter.send(SseEmitter.event()
+                                    .name("message")
+                                    .data("{\"content\": \"" + escapeJson(content.asText()) + "\"}"));
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.debug("解析SSE数据失败: " + data, e);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("处理流式响应失败", e);
+        }
+    }
+
+    private void parseSseAndSend(String sseResponse, SseEmitter emitter) throws IOException {
+        String[] lines = sseResponse.split("\n");
+        StringBuilder contentBuffer = new StringBuilder();
+
+        for (String line : lines) {
+            line = line.trim();
+            if (line.startsWith("data: ")) {
+                String data = line.substring(6);
+
+                // 检查是否是结束标志
+                if (data.equals("[DONE]")) {
+                    // 发送完整内容
+                    if (contentBuffer.length() > 0) {
+                        String fullContent = contentBuffer.toString();
+                        // 模拟逐字符发送
+                        new Thread(() -> {
+                            try {
+                                for (int i = 0; i < fullContent.length(); i++) {
+                                    emitter.send(SseEmitter.event()
+                                        .name("message")
+                                        .data("{\"content\": \"" + escapeJson(fullContent.charAt(i)) + "\"}"));
+                                    Thread.sleep(10); // 10ms延迟模拟流式效果
+                                }
+                                emitter.send(SseEmitter.event()
+                                    .name("end")
+                                    .data("{\"done\": true}"));
+                            } catch (Exception e) {
+                                // 忽略
+                            }
+                        }).start();
+                    }
+                    return;
+                }
+
+                // 解析JSON数据
+                try {
+                    JsonNode jsonNode = objectMapper.readTree(data);
+                    JsonNode choices = jsonNode.path("choices");
+                    if (choices.isArray() && choices.size() > 0) {
+                        JsonNode delta = choices.get(0).path("delta");
+                        JsonNode content = delta.path("content");
+                        if (!content.asText().isEmpty()) {
+                            contentBuffer.append(content.asText());
+                        }
+                    }
+                } catch (Exception e) {
+                    // 忽略解析错误，继续处理下一行
+                    log.debug("解析SSE数据失败: " + data, e);
+                }
+            }
+        }
+
+        // 如果没有找到[DONE]标记，直接发送累积的内容
+        if (contentBuffer.length() > 0) {
+            String fullContent = contentBuffer.toString();
+            new Thread(() -> {
+                try {
+                    for (int i = 0; i < fullContent.length(); i++) {
+                        emitter.send(SseEmitter.event()
+                            .name("message")
+                            .data("{\"content\": \"" + escapeJson(fullContent.charAt(i)) + "\"}"));
+                        Thread.sleep(10);
+                    }
+                    emitter.send(SseEmitter.event()
+                        .name("end")
+                        .data("{\"done\": true}"));
+                } catch (Exception e) {
+                    // 忽略
+                }
+            }).start();
+        }
+    }
+
+    // 自由聊天
+    public String freeChat(String message, AiConfig config, String systemPrompt, List<Map<String, String>> history) throws Exception {
+        if (!config.getEnabled() || config.getApiKey() == null || config.getApiKey().isEmpty()) {
+            throw new Exception("AI服务未配置或已禁用");
+        }
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", config.getModel());
+
+        List<Map<String, String>> messages = new ArrayList<>();
+
+        // 添加系统提示
+        if (systemPrompt != null && !systemPrompt.isEmpty()) {
+            messages.add(Map.of("role", "system", "content", systemPrompt));
+        }
+
+        // 添加历史记录
+        if (history != null) {
+            messages.addAll(history);
+        }
+
+        // 添加当前消息
+        messages.add(Map.of("role", "user", "content", message));
+        requestBody.put("messages", messages);
+
+        if (config.getTemperature() != null) {
+            requestBody.put("temperature", config.getTemperature());
+        }
+        if (config.getMaxTokens() != null) {
+            requestBody.put("max_tokens", config.getMaxTokens());
+        }
+
+        String url = config.getBaseUrl() + "/chat/completions";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(config.getApiKey());
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                url,
+                HttpMethod.POST,
+                entity,
+                String.class
+            );
+
+            if (response.getStatusCode() == HttpStatus.OK) {
+                JsonNode root = objectMapper.readTree(response.getBody());
+                JsonNode choices = root.path("choices");
+                if (choices.isArray() && choices.size() > 0) {
+                    JsonNode messageNode = choices.get(0).path("message");
+                    return messageNode.path("content").asText();
+                }
+                throw new Exception("AI服务返回格式异常");
+            } else {
+                throw new Exception("AI服务返回错误: " + response.getStatusCode());
+            }
+        } catch (Exception e) {
+            throw new Exception("调用AI服务失败: " + e.getMessage());
+        }
+    }
+
+    private String extractContentFromResponse(String responseBody) throws Exception {
+        JsonNode root = objectMapper.readTree(responseBody);
+        JsonNode choices = root.path("choices");
+        if (choices.isArray() && choices.size() > 0) {
+            JsonNode message = choices.get(0).path("message");
+            return message.path("content").asText();
+        }
+        throw new Exception("无法提取响应内容");
+    }
+
+    private String escapeJson(String str) {
+        if (str == null) return "";
+        return str.replace("\\", "\\\\")
+                  .replace("\"", "\\\"")
+                  .replace("\n", "\\n")
+                  .replace("\r", "\\r")
+                  .replace("\t", "\\t");
+    }
+
+    private String escapeJson(char c) {
+        if (c == '"') return "\\\"";
+        if (c == '\\') return "\\\\";
+        if (c == '\n') return "\\n";
+        if (c == '\r') return "\\r";
+        if (c == '\t') return "\\t";
+        return String.valueOf(c);
     }
 
     private String buildSqlPrompt(String userInput) {

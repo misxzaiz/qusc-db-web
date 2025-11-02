@@ -1,0 +1,85 @@
+/* Highlight.js dark theme for DB Admin */
+.hljs {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: var(--text-tertiary) !important;
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-subst {
+  color: var(--accent-primary) !important;
+  font-weight: bold;
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag .hljs-attr {
+  color: #d19a66 !important;
+}
+
+.hljs-string,
+.hljs-doctag {
+  color: #98c379 !important;
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-selector-id {
+  color: #61afef !important;
+  font-weight: bold;
+}
+
+.hljs-type,
+.hljs-class .hljs-title {
+  color: #e5c07b !important;
+}
+
+.hljs-tag,
+.hljs-name,
+.hljs-attribute {
+  color: var(--text-secondary) !important;
+  font-weight: normal;
+}
+
+.hljs-regexp,
+.hljs-link {
+  color: #56b6c2 !important;
+}
+
+.hljs-symbol,
+.hljs-bullet {
+  color: #c678dd !important;
+}
+
+.hljs-built_in,
+.hljs-builtin-name {
+  color: #e6c07b !important;
+}
+
+.hljs-meta {
+  color: #abb2bf !important;
+}
+
+.hljs-deletion {
+  background-color: #ffeef0 !important;
+}
+
+.hljs-addition {
+  background-color: #f0fff4 !important;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}

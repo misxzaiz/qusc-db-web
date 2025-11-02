@@ -58,14 +58,38 @@ import {
   faBolt,
   faStar,
   faUser,
-  faSpinner
+  faSpinner,
+  faUserFriends,
+  faStream,
+  faChartBar,
+  faTrashAlt,
+  faCaretDown,
+  faCaretUp,
+  faCaretLeft,
+  faCaretRight,
+  faHashtag,
+  faClock,
+  faBookmark,
+  faFileExport,
+  faFileImport,
+  faPlusCircle,
+  faMinusCircle,
+  faSync,
+  faPause,
+  faStop,
+  faForward,
+  faBackward,
+  faStepForward,
+  faStepBackward,
+  faFastForward,
+  faFastBackward
 } from '@fortawesome/free-solid-svg-icons'
 import App from './App.vue'
 import ConnectionManager from './views/ConnectionManager.vue'
 import SqlEditor from './views/SqlEditor.vue'
 import AiSettings from './views/AiSettings.vue'
-import AiChat from './views/AiChat.vue'
 import './styles/theme.css'
+import './styles/highlight.css'
 
 // 添加图标到库
 library.add(
@@ -124,15 +148,38 @@ library.add(
   faBolt,
   faStar,
   faUser,
-  faSpinner
+  faSpinner,
+  faUserFriends,
+  faStream,
+  faChartBar,
+  faTrashAlt,
+  faCaretDown,
+  faCaretUp,
+  faCaretLeft,
+  faCaretRight,
+  faHashtag,
+  faClock,
+  faBookmark,
+  faFileExport,
+  faFileImport,
+  faPlusCircle,
+  faMinusCircle,
+  faSync,
+  faPause,
+  faStop,
+  faForward,
+  faBackward,
+  faStepForward,
+  faStepBackward,
+  faFastForward,
+  faFastBackward
 )
 
 const routes = [
   { path: '/', redirect: '/connections' },
   { path: '/connections', component: ConnectionManager },
   { path: '/editor', component: SqlEditor },
-  { path: '/ai-settings', component: AiSettings },
-  { path: '/ai-chat', component: AiChat }
+  { path: '/ai-settings', component: AiSettings }
 ]
 
 const router = createRouter({

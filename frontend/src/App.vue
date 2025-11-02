@@ -19,11 +19,7 @@
             <font-awesome-icon icon="gear" />
             AI设置
           </router-link>
-          <router-link to="/ai-chat" class="nav-link">
-            <font-awesome-icon icon="comments" />
-            AI聊天
-          </router-link>
-        </nav>
+                  </nav>
       </div>
       <div class="header-right">
         <span class="version">v1.0.0</span>

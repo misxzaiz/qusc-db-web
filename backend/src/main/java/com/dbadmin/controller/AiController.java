@@ -3,22 +3,93 @@ package com.dbadmin.controller;
 import com.dbadmin.service.AiService;
 import com.dbadmin.model.AiConfig;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 @RequestMapping("/api/ai")
 @CrossOrigin(origins = "http://localhost:3000")
 public class AiController {
 
+    private static final Logger log = LoggerFactory.getLogger(AiController.class);
+
     @Autowired
     private AiService aiService;
 
     // 临时存储配置（实际应该使用数据库）
     private Map<String, AiConfig> configs = new HashMap<>();
+
+    // AI角色预设
+    private Map<String, Map<String, Object>> aiRoles = new ConcurrentHashMap<>();
+
+    public AiController() {
+        // 初始化默认角色
+        initDefaultRoles();
+
+        // 初始化默认测试配置
+        initDefaultConfig();
+    }
+
+    private void initDefaultConfig() {
+        AiConfig testConfig = new AiConfig();
+        testConfig.setId("test");
+        testConfig.setName("DeepSeek测试");
+        testConfig.setProvider("openai");
+        testConfig.setBaseUrl("https://api.deepseek.com");
+        testConfig.setModel("deepseek-chat");
+        testConfig.setApiKey("sk-your-api-key-here");
+        testConfig.setEnabled(false); // 默认禁用，需要用户设置真实的API key
+        configs.put("test", testConfig);
+    }
+
+    private void initDefaultRoles() {
+        // SQL专家
+        Map<String, Object> sqlExpert = new HashMap<>();
+        sqlExpert.put("id", "sql-expert");
+        sqlExpert.put("name", "SQL专家");
+        sqlExpert.put("description", "专业的SQL开发和优化专家");
+        sqlExpert.put("systemPrompt", "你是一位资深的SQL专家，拥有丰富的数据库设计和优化经验。");
+        sqlExpert.put("avatar", "👨‍💻");
+        aiRoles.put("sql-expert", sqlExpert);
+
+        // 数据分析师
+        Map<String, Object> dataAnalyst = new HashMap<>();
+        dataAnalyst.put("id", "data-analyst");
+        dataAnalyst.put("name", "数据分析师");
+        dataAnalyst.put("description", "专业的数据分析和报告专家");
+        dataAnalyst.put("systemPrompt", "你是一位专业的数据分析师，擅长从数据中发现洞察和模式。");
+        dataAnalyst.put("avatar", "📊");
+        aiRoles.put("data-analyst", dataAnalyst);
+
+        // 助理
+        Map<String, Object> assistant = new HashMap<>();
+        assistant.put("id", "assistant");
+        assistant.put("name", "智能助理");
+        assistant.put("description", "友好的全能AI助理");
+        assistant.put("systemPrompt", "你是一个友好、乐于助人的AI助理，能够回答各种问题。");
+        assistant.put("avatar", "🤖");
+        aiRoles.put("assistant", assistant);
+
+        // 代码生成器
+        Map<String, Object> codeGenerator = new HashMap<>();
+        codeGenerator.put("id", "code-generator");
+        codeGenerator.put("name", "代码生成器");
+        codeGenerator.put("description", "专业的代码生成和优化专家");
+        codeGenerator.put("systemPrompt", "你是一位专业的程序员，擅长生成高质量的代码和解决方案。");
+        codeGenerator.put("avatar", "💻");
+        aiRoles.put("code-generator", codeGenerator);
+    }
 
     @PostMapping("/generate-sql")
     public ResponseEntity<?> generateSql(@RequestBody Map<String, String> request) {
@@ -114,6 +185,13 @@ public class AiController {
     @GetMapping("/configs")
     public ResponseEntity<?> getConfigs() {
         return ResponseEntity.ok(configs.values());
+    }
+
+    @PutMapping("/config/{id}")
+    public ResponseEntity<?> updateConfig(@PathVariable String id, @RequestBody AiConfig config) {
+        config.setId(id);
+        configs.put(id, config);
+        return ResponseEntity.ok(Map.of("success", true));
     }
 
     @DeleteMapping("/config/{id}")
@@ -246,6 +324,141 @@ public class AiController {
             return ResponseEntity.ok(Map.of("success", true, "message", "连接成功"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "连接失败: " + e.getMessage()));
+        }
+    }
+
+    // 流式聊天API
+    @GetMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamChat(@RequestParam String message,
+                                 @RequestParam(required = false) String configId,
+                                 @RequestParam(required = false) String roleId) {
+        log.info("收到流式聊天请求: message={}, configId={}, roleId={}", message, configId, roleId);
+
+        SseEmitter emitter = new SseEmitter(60000L); // 增加超时时间到60秒
+
+        // 设置超时和完成回调
+        emitter.onTimeout(() -> {
+            log.info("SSE连接超时");
+            emitter.complete();
+        });
+
+        emitter.onCompletion(() -> {
+            log.info("SSE连接完成");
+        });
+
+        // 在新线程中处理
+        new Thread(() -> {
+            try {
+                // 获取AI配置
+                AiConfig config = getConfig(configId);
+                log.info("使用AI配置: {}", config.getName());
+
+                // 获取角色信息
+                String systemPrompt = null;
+                if (roleId != null && aiRoles.containsKey(roleId)) {
+                    systemPrompt = (String) aiRoles.get(roleId).get("systemPrompt");
+                    log.info("使用角色: {}", roleId);
+                }
+
+                // 流式生成响应
+                aiService.streamChat(message, config, systemPrompt, emitter);
+
+            } catch (Exception e) {
+                log.error("流式聊天处理失败", e);
+                try {
+                    emitter.send(SseEmitter.event()
+                        .name("error")
+                        .data("{\"error\": \"" + e.getMessage() + "\"}"));
+                } catch (IOException ioException) {
+                    log.error("发送错误事件失败", ioException);
+                }
+            }
+        }).start();
+
+        return emitter;
+    }
+
+    // 获取所有角色
+    @GetMapping("/roles")
+    public ResponseEntity<?> getRoles() {
+        return ResponseEntity.ok(aiRoles.values());
+    }
+
+    // 创建自定义角色
+    @PostMapping("/roles")
+    public ResponseEntity<?> createRole(@RequestBody Map<String, Object> role) {
+        if (!role.containsKey("name") || !role.containsKey("systemPrompt")) {
+            return ResponseEntity.badRequest().body(Map.of("error", "角色名称和系统提示不能为空"));
+        }
+
+        String id = (String) role.get("id");
+        if (id == null || id.isEmpty()) {
+            id = "custom-" + System.currentTimeMillis();
+            role.put("id", id);
+        }
+
+        role.put("isCustom", true);
+        aiRoles.put(id, role);
+
+        return ResponseEntity.ok(Map.of("success", true, "id", id));
+    }
+
+    // 更新角色
+    @PutMapping("/roles/{id}")
+    public ResponseEntity<?> updateRole(@PathVariable String id, @RequestBody Map<String, Object> role) {
+        if (!aiRoles.containsKey(id)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        role.put("id", id);
+        aiRoles.put(id, role);
+
+        return ResponseEntity.ok(Map.of("success", true));
+    }
+
+    // 删除角色（仅允许删除自定义角色）
+    @DeleteMapping("/roles/{id}")
+    public ResponseEntity<?> deleteRole(@PathVariable String id) {
+        Map<String, Object> role = aiRoles.get(id);
+        if (role == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Boolean isCustom = (Boolean) role.getOrDefault("isCustom", false);
+        if (!isCustom) {
+            return ResponseEntity.badRequest().body(Map.of("error", "不能删除系统预设角色"));
+        }
+
+        aiRoles.remove(id);
+        return ResponseEntity.ok(Map.of("success", true));
+    }
+
+    // 自由聊天（不限制内容）
+    @PostMapping("/chat/free")
+    public ResponseEntity<?> freeChat(@RequestBody Map<String, Object> request) {
+        String message = (String) request.get("message");
+        String configId = (String) request.get("configId");
+        String roleId = (String) request.get("roleId");
+        @SuppressWarnings("unchecked")
+        List<Map<String, String>> history = (List<Map<String, String>>) request.get("history");
+
+        if (message == null || message.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "消息不能为空"));
+        }
+
+        try {
+            AiConfig config = getConfig(configId);
+
+            // 获取角色信息
+            String systemPrompt = null;
+            if (roleId != null && aiRoles.containsKey(roleId)) {
+                systemPrompt = (String) aiRoles.get(roleId).get("systemPrompt");
+            }
+
+            String response = aiService.freeChat(message, config, systemPrompt, history);
+            return ResponseEntity.ok(Map.of("response", response));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
