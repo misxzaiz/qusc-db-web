@@ -36,6 +36,15 @@
         </button>
       </div>
 
+      <!-- 无角色提示 -->
+      <div v-else class="no-role-hint">
+        <span class="hint-icon">💡</span>
+        <span class="hint-text">请先创建一个AI角色</span>
+        <button class="btn-icon small" @click="showCreateRole = true" title="创建角色">
+          <font-awesome-icon icon="plus" />
+        </button>
+      </div>
+
       <!-- 工具栏 -->
       <div class="toolbar">
         <button class="tool-btn" @click="useStream = !useStream" :class="{ active: useStream }" title="流式输出">
@@ -189,9 +198,25 @@
 
           <!-- AI生成模式 -->
           <div v-else>
+            <!-- 标签选择 -->
+            <div class="tag-selector">
+              <label class="tag-label">选择角色类型（可选）：</label>
+              <div class="tag-list">
+                <span
+                  v-for="tag in roleTags"
+                  :key="tag"
+                  class="tag"
+                  :class="{ active: selectedTags.includes(tag) }"
+                  @click="toggleTag(tag)"
+                >
+                  {{ tag }}
+                </span>
+              </div>
+            </div>
+
             <textarea
               v-model="roleDescription"
-              placeholder="用一句话描述你想要的角色，例如：一个专业的SQL优化专家"
+              placeholder="用一句话描述你想要的角色，例如：一个温柔体贴的小姐姐"
               rows="2"
               class="dialog-input"
             ></textarea>
@@ -276,7 +301,16 @@ export default {
       aiGenerateMode: false,
       roleDescription: '',
       generatingRole: false,
-      generatedRole: null
+      generatedRole: null,
+      selectedTags: [],
+      roleTags: [
+        '温柔', '严肃', '活泼', '成熟', '幽默', '冷静',
+        '专业', '亲切', '高冷', '可爱', '稳重', '热情',
+        '理性', '感性', '细心', '大方', '害羞', '自信'
+      ],
+      // 角色管理
+      defaultRoles: [],
+      customRoles: []
     }
   },
   computed: {
@@ -319,31 +353,70 @@ export default {
     },
 
     async loadRoles() {
-      try {
-        const response = await fetch('/api/ai/roles')
-        this.roles = await response.json()
-        const savedRoleId = localStorage.getItem('selected_ai_role')
-        if (savedRoleId) {
-          this.selectedRole = this.roles.find(r => r.id === savedRoleId) || null
-        }
-      } catch (error) {
-        console.error('加载角色失败', error)
+      // 不再有默认角色
+      this.defaultRoles = []
+
+      // 加载自定义角色
+      this.loadCustomRoles()
+
+      // 角色列表只包含自定义角色
+      this.roles = [...this.customRoles]
+
+      // 恢复选中的角色
+      const savedRoleId = localStorage.getItem('selected_ai_role')
+      if (savedRoleId) {
+        this.selectedRole = this.roles.find(r => r.id === savedRoleId) || null
+      }
+
+      // 如果没有角色，显示创建引导
+      if (this.roles.length === 0) {
+        this.showCreateRole = true
+        this.aiGenerateMode = true
       }
     },
 
     loadHistory() {
-      const saved = localStorage.getItem('ai_sidebar_history')
+      const saved = localStorage.getItem('ai_chat_history')
       if (saved) {
         try {
-          this.messages = JSON.parse(saved).slice(-30)
+          const historyByRole = JSON.parse(saved)
+          const roleId = this.selectedRole?.id || 'default'
+          this.messages = historyByRole[roleId] || []
+          // 限制历史长度
+          if (this.messages.length > 30) {
+            this.messages = this.messages.slice(-30)
+          }
         } catch (e) {
           console.error('加载历史失败', e)
+          this.messages = []
         }
       }
     },
 
     saveHistory() {
-      localStorage.setItem('ai_sidebar_history', JSON.stringify(this.messages))
+      const saved = localStorage.getItem('ai_chat_history')
+      const historyByRole = saved ? JSON.parse(saved) : {}
+      const roleId = this.selectedRole?.id || 'default'
+      historyByRole[roleId] = this.messages
+      localStorage.setItem('ai_chat_history', JSON.stringify(historyByRole))
+    },
+
+    // 加载自定义角色
+    loadCustomRoles() {
+      const saved = localStorage.getItem('ai_custom_roles')
+      if (saved) {
+        try {
+          this.customRoles = JSON.parse(saved)
+        } catch (e) {
+          console.error('加载自定义角色失败', e)
+          this.customRoles = []
+        }
+      }
+    },
+
+    // 保存自定义角色
+    saveCustomRoles() {
+      localStorage.setItem('ai_custom_roles', JSON.stringify(this.customRoles))
     },
 
     onConfigChange() {
@@ -351,8 +424,16 @@ export default {
     },
 
     selectRole(role) {
+      // 保存当前角色的历史
+      this.saveHistory()
+
+      // 切换角色
       this.selectedRole = role
       localStorage.setItem('selected_ai_role', role.id)
+
+      // 加载新角色的历史
+      this.messages = []
+      this.loadHistory()
     },
 
     async createRole() {
@@ -361,38 +442,42 @@ export default {
         return
       }
 
-      try {
-        const response = await fetch('/api/ai/roles', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(this.newRole)
-        })
-
-        if (response.ok) {
-          await this.loadRoles()
-          this.showCreateRole = false
-          this.newRole = { name: '', avatar: '', description: '', systemPrompt: '' }
-        }
-      } catch (error) {
-        console.error('创建角色失败', error)
+      // 创建自定义角色
+      const customRole = {
+        ...this.newRole,
+        id: 'custom-' + Date.now(),
+        isCustom: true
       }
+
+      this.customRoles.push(customRole)
+      this.saveCustomRoles()
+
+      // 合并默认角色和自定义角色
+      this.roles = [...this.defaultRoles, ...this.customRoles]
+
+      this.showCreateRole = false
+      this.newRole = { name: '', avatar: '', description: '', systemPrompt: '' }
     },
 
     async deleteRole(role) {
       if (!confirm(`删除角色 ${role.name}?`)) return
+      if (!role.isCustom) {
+        alert('不能删除系统默认角色')
+        return
+      }
 
-      try {
-        const response = await fetch(`/api/ai/roles/${role.id}`, {
-          method: 'DELETE'
-        })
-        if (response.ok) {
-          await this.loadRoles()
-          if (this.selectedRole?.id === role.id) {
-            this.selectedRole = null
-          }
-        }
-      } catch (error) {
-        console.error('删除角色失败', error)
+      // 从自定义角色中删除
+      this.customRoles = this.customRoles.filter(r => r.id !== role.id)
+      this.saveCustomRoles()
+
+      // 更新角色列表
+      this.roles = [...this.defaultRoles, ...this.customRoles]
+
+      // 如果删除的是当前角色，清空选择
+      if (this.selectedRole?.id === role.id) {
+        this.selectedRole = null
+        localStorage.removeItem('selected_ai_role')
+        this.messages = []
       }
     },
 
@@ -407,8 +492,13 @@ export default {
       this.generatedRole = null
 
       try {
-        const prompt = `请根据以下描述生成一个AI角色，返回JSON格式：
-描述：${this.roleDescription}
+        let tagText = ''
+      if (this.selectedTags.length > 0) {
+        tagText = `\n角色特征：${this.selectedTags.join('、')}`
+      }
+
+      const prompt = `请根据以下描述生成一个AI角色，返回JSON格式：
+描述：${this.roleDescription}${tagText}
 
 请生成包含以下字段的JSON：
 {
@@ -421,7 +511,7 @@ export default {
 要求：
 1. 角色名称要简洁明了
 2. 描述要准确概括角色特点
-3. 系统提示词要详细，包含角色的专业背景、沟通风格、回答方式等
+3. 系统提示词要详细，充分体现角色的性格特征和沟通风格
 4. emoji要符合角色特征
 
 只返回JSON，不要其他内容。`
@@ -485,7 +575,18 @@ export default {
       this.newRole = { ...this.generatedRole }
       this.generatedRole = null
       this.roleDescription = ''
+      this.selectedTags = []
       this.aiGenerateMode = false
+    },
+
+    // 切换标签
+    toggleTag(tag) {
+      const index = this.selectedTags.indexOf(tag)
+      if (index > -1) {
+        this.selectedTags.splice(index, 1)
+      } else {
+        this.selectedTags.push(tag)
+      }
     },
 
     quickAction(type) {
@@ -525,11 +626,18 @@ export default {
       this.streamContent = ''
 
       try {
+        // 准备历史记录和系统提示词
+        const history = this.getFilteredHistory()
+        const systemPrompt = this.selectedRole ? this.selectedRole.systemPrompt : null
+
         let url = `/api/ai/chat/stream?message=${encodeURIComponent(message)}`
         if (this.selectedConfig) url += `&configId=${this.selectedConfig}`
-        if (this.selectedRole) url += `&roleId=${this.selectedRole.id}`
+        if (systemPrompt) url += `&systemPrompt=${encodeURIComponent(systemPrompt)}`
+        if (history.length > 0) url += `&history=${encodeURIComponent(JSON.stringify(history))}`
 
         console.log('发起流式请求:', url)
+        console.log('历史记录条数:', history.length)
+        console.log('使用角色:', this.selectedRole?.name)
 
         if (this.eventSource) this.eventSource.close()
         this.eventSource = new EventSource(url)
@@ -595,10 +703,9 @@ export default {
       this.loading = true
 
       try {
-        const history = this.messages.slice(-10).map(msg => ({
-          role: msg.role,
-          content: msg.content
-        }))
+        // 准备历史记录和系统提示词
+        const history = this.getFilteredHistory()
+        const systemPrompt = this.selectedRole ? this.selectedRole.systemPrompt : null
 
         const response = await fetch('/api/ai/chat/free', {
           method: 'POST',
@@ -606,7 +713,7 @@ export default {
           body: JSON.stringify({
             message,
             configId: this.selectedConfig,
-            roleId: this.selectedRole?.id,
+            systemPrompt,
             history
           })
         })
@@ -658,6 +765,21 @@ export default {
 
     executeSql(sql) {
       this.$emit('execute-sql', sql)
+    },
+
+    // 获取过滤后的历史记录
+    getFilteredHistory() {
+      // 获取最近的有效对话（不包括错误消息）
+      const validMessages = this.messages.filter(msg =>
+        msg.role === 'user' ||
+        (msg.role === 'assistant' && !msg.content.includes('❌ 错误：'))
+      )
+
+      // 转换格式并限制数量
+      return validMessages.slice(-15).map(msg => ({
+        role: msg.role === 'user' ? 'user' : 'assistant',
+        content: msg.content
+      }))
     },
 
     scrollToBottom() {
@@ -1238,5 +1360,67 @@ export default {
 
 .btn-secondary:hover {
   background-color: var(--bg-highlight);
+}
+
+/* 标签选择器样式 */
+.tag-selector {
+  margin-bottom: 10px;
+}
+
+.tag-label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.tag {
+  padding: 4px 10px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 11px;
+  transition: var(--transition-fast);
+  user-select: none;
+}
+
+.tag:hover {
+  background-color: var(--bg-highlight);
+  color: var(--text-primary);
+}
+
+.tag.active {
+  background-color: var(--accent-primary);
+  color: white;
+  border-color: var(--accent-primary);
+}
+
+/* 无角色提示样式 */
+.no-role-hint {
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--warning-bg);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.hint-icon {
+  font-size: 16px;
+}
+
+.hint-text {
+  flex: 1;
+  font-size: 12px;
+  color: var(--warning);
 }
 </style>

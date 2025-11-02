@@ -2,6 +2,7 @@ package com.dbadmin.controller;
 
 import com.dbadmin.service.AiService;
 import com.dbadmin.model.AiConfig;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -322,12 +323,13 @@ public class AiController {
         }
     }
 
-    // 流式聊天API
+    // 流式聊天API（支持历史）
     @GetMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamChat(@RequestParam String message,
                                  @RequestParam(required = false) String configId,
-                                 @RequestParam(required = false) String roleId) {
-        log.info("收到流式聊天请求: message={}, configId={}, roleId={}", message, configId, roleId);
+                                 @RequestParam(required = false) String systemPrompt,
+                                 @RequestParam(required = false) String history) {
+        log.info("收到流式聊天请求: message={}, configId={}", message, configId);
 
         SseEmitter emitter = new SseEmitter(60000L); // 增加超时时间到60秒
 
@@ -348,15 +350,29 @@ public class AiController {
                 AiConfig config = getConfig(configId);
                 log.info("使用AI配置: {}", config.getName());
 
-                // 获取角色信息
-                String systemPrompt = null;
-                if (roleId != null && aiRoles.containsKey(roleId)) {
-                    systemPrompt = (String) aiRoles.get(roleId).get("systemPrompt");
-                    log.info("使用角色: {}", roleId);
+                // 解析历史记录
+                @SuppressWarnings("unchecked")
+                List<Map<String, String>> historyList = new ArrayList<>();
+                if (history != null && !history.isEmpty()) {
+                    try {
+                        // 前端传递的是JSON字符串，需要解析
+                        ObjectMapper mapper = new ObjectMapper();
+                        List<Map<String, Object>> historyData = mapper.readValue(history,
+                            mapper.getTypeFactory().constructCollectionType(List.class, Map.class));
+
+                        for (Map<String, Object> item : historyData) {
+                            historyList.add(Map.of(
+                                "role", (String) item.get("role"),
+                                "content", (String) item.get("content")
+                            ));
+                        }
+                    } catch (Exception e) {
+                        log.warn("解析历史记录失败", e);
+                    }
                 }
 
                 // 流式生成响应
-                aiService.streamChat(message, config, systemPrompt, emitter);
+                aiService.streamChat(message, config, systemPrompt, historyList, emitter);
 
             } catch (Exception e) {
                 log.error("流式聊天处理失败", e);
@@ -373,59 +389,11 @@ public class AiController {
         return emitter;
     }
 
-    // 获取所有角色
+    // 获取所有角色（返回空列表，不再有默认角色）
     @GetMapping("/roles")
     public ResponseEntity<?> getRoles() {
-        return ResponseEntity.ok(aiRoles.values());
-    }
-
-    // 创建自定义角色
-    @PostMapping("/roles")
-    public ResponseEntity<?> createRole(@RequestBody Map<String, Object> role) {
-        if (!role.containsKey("name") || !role.containsKey("systemPrompt")) {
-            return ResponseEntity.badRequest().body(Map.of("error", "角色名称和系统提示不能为空"));
-        }
-
-        String id = (String) role.get("id");
-        if (id == null || id.isEmpty()) {
-            id = "custom-" + System.currentTimeMillis();
-            role.put("id", id);
-        }
-
-        role.put("isCustom", true);
-        aiRoles.put(id, role);
-
-        return ResponseEntity.ok(Map.of("success", true, "id", id));
-    }
-
-    // 更新角色
-    @PutMapping("/roles/{id}")
-    public ResponseEntity<?> updateRole(@PathVariable String id, @RequestBody Map<String, Object> role) {
-        if (!aiRoles.containsKey(id)) {
-            return ResponseEntity.notFound().build();
-        }
-
-        role.put("id", id);
-        aiRoles.put(id, role);
-
-        return ResponseEntity.ok(Map.of("success", true));
-    }
-
-    // 删除角色（仅允许删除自定义角色）
-    @DeleteMapping("/roles/{id}")
-    public ResponseEntity<?> deleteRole(@PathVariable String id) {
-        Map<String, Object> role = aiRoles.get(id);
-        if (role == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Boolean isCustom = (Boolean) role.getOrDefault("isCustom", false);
-        if (!isCustom) {
-            return ResponseEntity.badRequest().body(Map.of("error", "不能删除系统预设角色"));
-        }
-
-        aiRoles.remove(id);
-        return ResponseEntity.ok(Map.of("success", true));
+        // 不再提供默认角色
+        return ResponseEntity.ok(List.of());
     }
 
     // 自由聊天（不限制内容）
@@ -433,7 +401,7 @@ public class AiController {
     public ResponseEntity<?> freeChat(@RequestBody Map<String, Object> request) {
         String message = (String) request.get("message");
         String configId = (String) request.get("configId");
-        String roleId = (String) request.get("roleId");
+        String systemPrompt = (String) request.get("systemPrompt");
         @SuppressWarnings("unchecked")
         List<Map<String, String>> history = (List<Map<String, String>>) request.get("history");
 
@@ -443,12 +411,6 @@ public class AiController {
 
         try {
             AiConfig config = getConfig(configId);
-
-            // 获取角色信息
-            String systemPrompt = null;
-            if (roleId != null && aiRoles.containsKey(roleId)) {
-                systemPrompt = (String) aiRoles.get(roleId).get("systemPrompt");
-            }
 
             String response = aiService.freeChat(message, config, systemPrompt, history);
             return ResponseEntity.ok(Map.of("response", response));

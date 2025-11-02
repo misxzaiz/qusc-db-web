@@ -711,7 +711,7 @@ public class AiService {
     }
 
     // 流式聊天
-    public void streamChat(String message, AiConfig config, String systemPrompt, SseEmitter emitter) throws Exception {
+    public void streamChat(String message, AiConfig config, String systemPrompt, List<Map<String, String>> history, SseEmitter emitter) throws Exception {
         if (!config.getEnabled() || config.getApiKey() == null || config.getApiKey().isEmpty()) {
             throw new Exception("AI服务未配置或已禁用");
         }
@@ -731,6 +731,13 @@ public class AiService {
             messages.add(Map.of("role", "system", "content", "你是一个友好的AI助手，能够回答各种问题。"));
         }
 
+        // 添加历史记录
+        if (history != null && !history.isEmpty()) {
+            messages.addAll(history);
+            log.info("添加历史记录: {} 条", history.size());
+        }
+
+        // 添加当前消息
         messages.add(Map.of("role", "user", "content", message));
         requestBody.put("messages", messages);
 
