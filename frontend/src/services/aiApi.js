@@ -180,6 +180,101 @@ export const aiApi = {
     return Promise.resolve({ data: config })
   },
 
+  // 流式聊天
+  streamChat(message, configId, systemPrompt = '', history = [], tableContexts = []) {
+    // 先确保配置同步到后端
+    return this.ensureSyncedToBackend().then(() => {
+      // 使用Server-Sent Events
+      const url = `/api/ai/chat/stream`
+      const data = {
+        message,
+        configId,
+        systemPrompt,
+        history,
+        tableContexts
+      }
+
+      // 创建EventSource
+      const eventSource = new EventSource()
+
+      // 使用fetch发送POST请求并处理流式响应
+      return fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream'
+        },
+        body: JSON.stringify(data)
+      }).then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+
+        // 创建一个模拟EventSource的对象
+        const mockEventSource = {
+          onmessage: null,
+          onerror: null,
+          close: () => {
+            reader.cancel()
+          }
+        }
+
+        // 读取流
+        const readStream = async () => {
+          try {
+            while (true) {
+              const { done, value } = await reader.read()
+              if (done) {
+                if (mockEventSource.onmessage) {
+                  mockEventSource.onmessage({ data: '[DONE]' })
+                }
+                break
+              }
+
+              const chunk = decoder.decode(value, { stream: true })
+              const lines = chunk.split('\n')
+
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  const data = line.slice(6)
+                  if (data && data !== '[DONE]') {
+                    if (mockEventSource.onmessage) {
+                      mockEventSource.onmessage({ data })
+                    }
+                  }
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Stream error:', error)
+            if (mockEventSource.onerror) {
+              mockEventSource.onerror(error)
+            }
+          }
+        }
+
+        readStream()
+        return mockEventSource
+      })
+    })
+  },
+
+  // 普通聊天
+  freeChat(message, configId, systemPrompt = '', history = [], tableContexts = []) {
+    return this.ensureSyncedToBackend().then(() => {
+      return api.post('/chat/free', {
+        message,
+        configId,
+        systemPrompt,
+        history,
+        tableContexts
+      })
+    })
+  },
+
   // 同步配置到后端（可选，用于将所有本地配置同步到后端）
   syncConfigsToBackend() {
     const configs = storage.getConfigs()
