@@ -103,54 +103,6 @@
                 @copy-sql="handleCopySql"
                 @open-in-new-tab="handleOpenInNewTab"
               />
-
-              <!-- SQL执行结果 -->
-              <div v-if="msg.sqlResult" class="sql-result-section">
-                <div class="sql-result-header" @click="toggleSqlResult(msg)">
-                  <font-awesome-icon icon="database" />
-                  <span>SQL执行结果</span>
-                  <font-awesome-icon :icon="msg.showSqlResult ? 'chevron-up' : 'chevron-down'" />
-                </div>
-                <div v-if="msg.showSqlResult" class="sql-result-content">
-                  <div v-if="msg.sqlResult.success" class="result-success">
-                    <div class="result-summary">
-                      <span class="success-badge">✓ 执行成功</span>
-                      <span v-if="msg.sqlResult.executionTime" class="execution-time">
-                        耗时: {{ msg.sqlResult.executionTime }}ms
-                      </span>
-                      <span v-if="msg.sqlResult.affectedRows" class="affected-rows">
-                        影响行数: {{ formatNumber(msg.sqlResult.affectedRows) }}
-                      </span>
-                    </div>
-                    <div v-if="msg.sqlResult.data && msg.sqlResult.data.length > 0" class="result-preview">
-                      <table class="result-table">
-                        <thead>
-                          <tr>
-                            <th v-for="col in msg.sqlResult.columns" :key="col">{{ col }}</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr v-for="(row, idx) in msg.sqlResult.data.slice(0, 5)" :key="idx">
-                            <td v-for="col in msg.sqlResult.columns" :key="col">
-                              {{ formatCellValue(row[col]) }}
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                      <div v-if="msg.sqlResult.data.length > 5" class="more-results">
-                        还有 {{ msg.sqlResult.data.length - 5 }} 行结果...
-                      </div>
-                    </div>
-                  </div>
-                  <div v-else class="result-error">
-                    <div class="error-header">
-                      <font-awesome-icon icon="exclamation-triangle" />
-                      <span>执行失败</span>
-                    </div>
-                    <pre class="error-message">{{ msg.sqlResult.error }}</pre>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -972,53 +924,16 @@ export default {
           return
         }
 
-        // 添加执行状态到消息
-        message.sqlResult = {
-          executing: true,
-          success: false,
-          error: null,
-          data: null,
-          columns: [],
-          affectedRows: null,
-          executionTime: null
-        }
-
         // 执行SQL
-        const startTime = Date.now()
-        const response = await sqlApi.execute(tabInfo.sessionId, sql)
-        const executionTime = Date.now() - startTime
+        await sqlApi.execute(tabInfo.sessionId, sql)
 
-        // 更新结果
-        message.sqlResult = {
-          executing: false,
-          success: !response.data.error,
-          error: response.data.error,
-          data: response.data.data || [],
-          columns: response.data.columns || [],
-          affectedRows: response.data.affectedRows,
-          executionTime,
-          showSqlResult: true
-        }
+        // 通知父组件刷新结果
+        this.$emit('execute-sql', sql)
 
-        // 如果成功，通知父组件刷新结果
-        if (message.sqlResult.success) {
-          this.$emit('execute-sql', sql)
-          this.showToast('SQL执行成功', 'success')
-        } else {
-          this.showToast('SQL执行失败: ' + message.sqlResult.error, 'error')
-        }
+        this.showToast('SQL执行成功', 'success')
       } catch (error) {
-        message.sqlResult = {
-          executing: false,
-          success: false,
-          error: error.message || '执行失败',
-          data: null,
-          columns: [],
-          affectedRows: null,
-          executionTime: null,
-          showSqlResult: true
-        }
-        this.showToast('SQL执行失败: ' + error.message, 'error')
+        const errorMsg = error.response?.data?.error || error.message || '执行失败'
+        this.showToast('SQL执行失败: ' + errorMsg, 'error')
       }
     },
 
@@ -1030,13 +945,6 @@ export default {
     handleOpenInNewTab(sql) {
       // 通知父组件在新Tab中打开SQL
       this.$emit('open-in-new-tab', sql)
-    },
-
-    toggleSqlResult(message) {
-      // 切换SQL结果显示状态
-      if (message.sqlResult) {
-        message.sqlResult.showSqlResult = !message.sqlResult.showSqlResult
-      }
     },
 
     formatNumber(num) {

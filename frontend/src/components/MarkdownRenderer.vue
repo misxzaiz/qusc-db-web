@@ -73,7 +73,8 @@ export default {
       showConfirmDialog: false,
       sqlToExecute: '',
       sqlRiskLevel: 'LOW',
-      uniqueId: Math.random().toString(36).substr(2, 9)
+      uniqueId: Math.random().toString(36).substr(2, 9),
+      tempConfirmCallback: null
     }
   },
   computed: {
@@ -354,17 +355,115 @@ export default {
     },
 
     executeSql(sql) {
-      const riskLevel = this.analyzeSqlRisk(sql)
+      // 检测是否包含多条SQL
+      const sqlStatements = this.splitSqlStatements(sql)
 
-      if (riskLevel === 'LOW') {
-        // 低风险直接执行
-        this.$emit('execute-sql', sql)
+      if (sqlStatements.length > 1) {
+        // 多条SQL，逐条执行
+        this.executeMultipleSql(sqlStatements)
       } else {
-        // 中高风险需要确认
+        // 单条SQL，正常执行
+        const riskLevel = this.analyzeSqlRisk(sql)
+
+        if (riskLevel === 'LOW') {
+          // 低风险直接执行
+          this.$emit('execute-sql', sql)
+        } else {
+          // 中高风险需要确认
+          this.sqlToExecute = sql
+          this.sqlRiskLevel = riskLevel
+          this.showConfirmDialog = true
+        }
+      }
+    },
+
+    async executeMultipleSql(sqlStatements) {
+      this.showToast(`开始执行${sqlStatements.length}条SQL语句`, 'info')
+      let successCount = 0
+      let errorCount = 0
+
+      for (let i = 0; i < sqlStatements.length; i++) {
+        const sql = sqlStatements[i]
+
+        try {
+          // 分析每条SQL的风险
+          const riskLevel = this.analyzeSqlRisk(sql)
+
+          if (riskLevel !== 'LOW') {
+            // 中高风险需要确认
+            const confirmed = await this.confirmSqlExecution(sql, riskLevel, `第${i + 1}/${sqlStatements.length}条SQL`)
+            if (!confirmed) {
+              this.showToast(`第${i + 1}条SQL执行已取消`, 'info')
+              break
+            }
+          }
+
+          // 直接发出执行事件，不等待结果
+          this.$emit('execute-sql', sql)
+          successCount++
+
+          // 添加延迟避免过快执行
+          if (i < sqlStatements.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 500))
+          }
+        } catch (error) {
+          errorCount++
+          console.error(`第${i + 1}条SQL执行失败:`, error)
+          // 继续执行下一条，而不是中断
+        }
+      }
+
+      // 显示执行结果统计
+      if (errorCount === 0) {
+        this.showToast(`已提交执行所有${successCount}条SQL语句`, 'success')
+      } else {
+        this.showToast(`执行完成：成功${successCount}条，失败${errorCount}条`, 'warning')
+      }
+    },
+
+    confirmSqlExecution(sql, riskLevel, prefix = '') {
+      return new Promise((resolve) => {
         this.sqlToExecute = sql
         this.sqlRiskLevel = riskLevel
         this.showConfirmDialog = true
+
+        // 临时保存确认回调
+        this.tempConfirmCallback = (confirmed) => {
+          this.tempConfirmCallback = null
+          resolve(confirmed)
+        }
+      })
+    },
+
+    splitSqlStatements(sql) {
+      // 分割SQL语句，以分号结尾的为完整语句
+      const statements = []
+      const lines = sql.split('\n')
+      let currentStatement = ''
+
+      for (const line of lines) {
+        const trimmedLine = line.trim()
+
+        // 跳过空行和注释
+        if (!trimmedLine || trimmedLine.startsWith('--')) {
+          continue
+        }
+
+        currentStatement += line + '\n'
+
+        // 如果行以分号结尾，说明是一个完整的SQL语句
+        if (trimmedLine.endsWith(';')) {
+          statements.push(currentStatement.trim())
+          currentStatement = ''
+        }
       }
+
+      // 如果还有未添加的内容（不以分号结尾的情况）
+      if (currentStatement.trim()) {
+        statements.push(currentStatement.trim())
+      }
+
+      return statements.filter(s => s)
     },
 
     openSqlInNewTab(sql) {
@@ -396,12 +495,23 @@ export default {
 
     handleSqlConfirm() {
       this.$emit('execute-sql', this.sqlToExecute)
+
+      // 如果有临时回调（用于批量执行确认），调用它
+      if (this.tempConfirmCallback) {
+        this.tempConfirmCallback(true)
+      }
+
       this.showConfirmDialog = false
       this.sqlToExecute = ''
       this.sqlRiskLevel = 'LOW'
     },
 
     handleSqlCancel() {
+      // 如果有临时回调（用于批量执行确认），调用它
+      if (this.tempConfirmCallback) {
+        this.tempConfirmCallback(false)
+      }
+
       this.showConfirmDialog = false
       this.sqlToExecute = ''
       this.sqlRiskLevel = 'LOW'
