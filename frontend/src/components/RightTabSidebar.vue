@@ -103,6 +103,8 @@
                 @copy-sql="handleCopySql"
                 @open-in-new-tab="handleOpenInNewTab"
                 @execute-batch-sql="$emit('execute-batch-sql', $event)"
+                @execute-sql-in-tab="$emit('execute-sql-in-tab', $event)"
+                @cancel-sql-in-tab="$emit('cancel-sql-in-tab', $event)"
                 @batch-sql-execute="$emit('batch-sql-execute', $event)"
                 @batch-sql-cancelled="$emit('batch-sql-cancelled', $event)"
                 @batch-sql-completed="$emit('batch-sql-completed', $event)"
@@ -331,7 +333,7 @@ export default {
     }
   },
 
-  emits: ['execute-sql', 'resize', 'toggle'],
+  emits: ['execute-sql', 'resize', 'toggle', 'execute-batch-sql', 'execute-sql-in-tab', 'cancel-sql-in-tab', 'batch-sql-execute', 'batch-sql-cancelled', 'batch-sql-completed'],
 
   data() {
     return {

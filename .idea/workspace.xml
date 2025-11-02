@@ -5,7 +5,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(markdown): 支持多条SQL语句批量执行- 在 MarkdownRenderer.vue 中新增批量SQL执行事件发射器&#10;- 实现 executeMultipleSql 方法支持多条SQL逐条执行&#10;- 添加批量执行确认对话框和风险提示机制- 创建新Tab页来展示批量执行结果和状态&#10;- 在 RightTabSidebar.vue 中传递批量执行相关事件&#10;- SqlEditor.vue 中新增批量执行Tab管理和状态跟踪&#10;- 支持批量执行过程中的取消操作和结果统计&#10;- 添加批量执行结果的详细状态显示（成功/失败/取消）">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/components/MarkdownRenderer.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/MarkdownRenderer.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/components/RightTabSidebar.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/RightTabSidebar.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" afterDir="false" />
@@ -77,14 +76,6 @@
       <option name="presentableId" value="Default" />
       <updated>1761843015910</updated>
       <workItem from="1761843018540" duration="15714000" />
-    </task>
-    <task id="LOCAL-00002" summary="feat(editor): 引入SQL代码编辑器组件并优化样式系统- 集成 CodeMirror 6 SQL 编辑器，支持语法高亮和自动补全&#10;- 添加 One Dark 主题支持&#10;- 实现SQL格式化功能- 增加查询历史记录功能，支持时间显示和点击加载&#10;- 添加结果导出为 CSV 功能- 统一使用CSS变量重构全局样式系统- 移除内联样式，引入独立主题文件-优化按钮、表单、卡片等UI组件样式&#10;- 改进响应式设计和交互效果- 增强可访问性和用户体验">
-      <option name="closed" value="true" />
-      <created>1761846237314</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1761846237314</updated>
     </task>
     <task id="LOCAL-00003" summary="feat(sql): 实现数据库切换功能&#10;&#10;- 新增获取数据库列表接口&#10;- 新增切换数据库接口&#10;- 新增获取当前数据库接口- 前端支持数据库选择和切换&#10;- 连接时数据库字段改为可选&#10;-优化连接流程，先加载数据库再加载表&#10;- 添加数据库列表刷新功能- 完善错误处理和用户提示">
       <option name="closed" value="true" />
@@ -470,7 +461,15 @@
       <option name="project" value="LOCAL" />
       <updated>1762095036987</updated>
     </task>
-    <option name="localTasksCounter" value="51" />
+    <task id="LOCAL-00051" summary="feat(markdown): 支持多条SQL语句批量执行- 在 MarkdownRenderer.vue 中新增批量SQL执行事件发射器&#10;- 实现 executeMultipleSql 方法支持多条SQL逐条执行&#10;- 添加批量执行确认对话框和风险提示机制- 创建新Tab页来展示批量执行结果和状态&#10;- 在 RightTabSidebar.vue 中传递批量执行相关事件&#10;- SqlEditor.vue 中新增批量执行Tab管理和状态跟踪&#10;- 支持批量执行过程中的取消操作和结果统计&#10;- 添加批量执行结果的详细状态显示（成功/失败/取消）">
+      <option name="closed" value="true" />
+      <created>1762096036802</created>
+      <option name="number" value="00051" />
+      <option name="presentableId" value="LOCAL-00051" />
+      <option name="project" value="LOCAL" />
+      <updated>1762096036802</updated>
+    </task>
+    <option name="localTasksCounter" value="52" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

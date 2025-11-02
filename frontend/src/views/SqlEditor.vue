@@ -146,6 +146,8 @@
       @execute-sql="onExecuteAiSql"
       @open-in-new-tab="onOpenAiSqlInNewTab"
       @execute-batch-sql="onExecuteBatchSql"
+      @execute-sql-in-tab="onExecuteSqlInTab"
+      @cancel-sql-in-tab="onCancelSqlInTab"
       @batch-sql-execute="onBatchSqlExecute"
       @batch-sql-cancelled="onBatchSqlCancelled"
       @batch-sql-completed="onBatchSqlCompleted"
@@ -764,10 +766,13 @@ ${tab.sqlText}
 
     // 批量执行处理
     const onExecuteBatchSql = (batchData) => {
-      // 创建批量执行Tab
+      // 根据是否为单条执行设置不同的标题
+      const title = batchData.isSingleExecution ? 'SQL执行' : `批量执行 (${batchData.total}条)`
+
+      // 创建执行Tab
       const batchTab = {
         id: batchData.id,
-        title: `批量执行 (${batchData.total}条)`,
+        title: title,
         sqlText: batchData.sqlList.join('\n\n'),
         results: [],
         error: null,
@@ -777,8 +782,9 @@ ${tab.sqlText}
         database: tabs.value[activeTabIndex.value]?.database || '',
         inTransaction: false,
         isBatchExecution: true,
-        batchResults: new Array(batchData.total).fill(null).map(() => ({
-          sql: '',
+        isSingleExecution: batchData.isSingleExecution || false,
+        batchResults: new Array(batchData.total).fill(null).map((_, index) => ({
+          sql: batchData.sqlList[index] || '',
           status: 'pending',
           result: null,
           error: null,
@@ -855,7 +861,24 @@ ${tab.sqlText}
       // 更新Tab标题，显示执行统计
       const successCount = tab.batchResults.filter(r => r.status === 'success').length
       const errorCount = tab.batchResults.filter(r => r.status === 'error').length
-      tab.title = `批量执行 (成功: ${successCount}, 失败: ${errorCount})`
+
+      if (tab.isSingleExecution) {
+        // 单条执行，更新标题
+        tab.title = successCount > 0 ? 'SQL执行 (成功)' : 'SQL执行 (失败)'
+      } else {
+        // 批量执行
+        tab.title = `批量执行 (成功: ${successCount}, 失败: ${errorCount})`
+      }
+    }
+
+    // 在Tab中执行SQL（来自单条SQL执行请求）
+    const onExecuteSqlInTab = async (data) => {
+      await onBatchSqlExecute(data)
+    }
+
+    // 取消SQL执行
+    const onCancelSqlInTab = (data) => {
+      onBatchSqlCancelled(data)
     }
 
     // 在Tab中执行单条SQL（用于批量执行）
@@ -1005,6 +1028,8 @@ ${tab.sqlText}
       onExecuteAiSql,
       onOpenAiSqlInNewTab,
       onExecuteBatchSql,
+      onExecuteSqlInTab,
+      onCancelSqlInTab,
       onBatchSqlExecute,
       onBatchSqlCancelled,
       onBatchSqlCompleted,

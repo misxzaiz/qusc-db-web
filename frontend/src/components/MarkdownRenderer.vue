@@ -359,21 +359,47 @@ export default {
       const sqlStatements = this.splitSqlStatements(sql)
 
       if (sqlStatements.length > 1) {
-        // 多条SQL，逐条执行
+        // 多条SQL，批量执行
         this.executeMultipleSql(sqlStatements)
       } else {
-        // 单条SQL，正常执行
-        const riskLevel = this.analyzeSqlRisk(sql)
+        // 单条SQL，也创建新tab执行
+        this.executeSingleSqlInNewTab(sql)
+      }
+    },
 
-        if (riskLevel === 'LOW') {
-          // 低风险直接执行
-          this.$emit('execute-sql', sql)
-        } else {
-          // 中高风险需要确认
-          this.sqlToExecute = sql
-          this.sqlRiskLevel = riskLevel
-          this.showConfirmDialog = true
-        }
+    executeSingleSqlInNewTab(sql) {
+      // 创建单条执行的批次ID
+      const batchId = `single-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
+      // 发出单条SQL执行事件，创建新Tab
+      this.$emit('execute-batch-sql', {
+        id: batchId,
+        sqlList: [sql],
+        total: 1,
+        isSingleExecution: true  // 标记这是单条执行
+      })
+
+      // 分析风险并处理
+      const riskLevel = this.analyzeSqlRisk(sql)
+
+      if (riskLevel === 'LOW') {
+        // 低风险直接执行
+        this.$emit('execute-sql-in-tab', { batchId, sql, index: 0 })
+      } else {
+        // 中高风险需要确认
+        this.confirmSingleSqlExecution(batchId, sql, riskLevel)
+      }
+    },
+
+    async confirmSingleSqlExecution(batchId, sql, riskLevel) {
+      const confirmed = await this.confirmSqlExecution(sql, riskLevel, '执行SQL')
+
+      if (confirmed) {
+        this.$emit('execute-sql-in-tab', { batchId, sql, index: 0 })
+      } else {
+        this.showToast('SQL执行已取消', 'info')
+        // 通知取消
+        this.$emit('cancel-sql-in-tab', { batchId, index: 0 })
       }
     },
 
