@@ -210,4 +210,33 @@ public class SqlController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    @GetMapping("/table/{sessionId}/{database}/{table}/create")
+    public ResponseEntity<?> getTableCreateSql(
+            @PathVariable String sessionId,
+            @PathVariable String database,
+            @PathVariable String table) {
+        try {
+            // 先切换到指定数据库
+            connectionManager.switchDatabase(sessionId, database);
+
+            // 执行 SHOW CREATE TABLE
+            List<Map<String, Object>> result = connectionManager.executeQuery(
+                sessionId,
+                "SHOW CREATE TABLE `" + table + "`"
+            );
+
+            if (result != null && !result.isEmpty()) {
+                String createSql = (String) result.get(0).get("Create Table");
+                return ResponseEntity.ok(Map.of(
+                    "tableName", table,
+                    "createSql", createSql
+                ));
+            } else {
+                return ResponseEntity.badRequest().body(Map.of("error", "表不存在: " + table));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }

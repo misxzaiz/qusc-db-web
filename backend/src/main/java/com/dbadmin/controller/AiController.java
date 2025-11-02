@@ -329,6 +329,8 @@ public class AiController {
         String message = (String) request.get("message");
         String configId = (String) request.get("configId");
         String systemPrompt = (String) request.get("systemPrompt");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> tableContexts = (List<Map<String, Object>>) request.get("tableContexts");
 
         log.info("收到流式聊天请求: message={}, configId={}", message, configId);
 
@@ -369,7 +371,7 @@ public class AiController {
                 }
 
                 // 流式生成响应
-                aiService.streamChat(message, config, systemPrompt, historyList, emitter);
+                aiService.streamChat(message, config, systemPrompt, historyList, tableContexts, emitter);
 
             } catch (Exception e) {
                 log.error("流式聊天处理失败", e);
@@ -401,6 +403,8 @@ public class AiController {
         String systemPrompt = (String) request.get("systemPrompt");
         @SuppressWarnings("unchecked")
         List<Map<String, String>> history = (List<Map<String, String>>) request.get("history");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> tableContexts = (List<Map<String, Object>>) request.get("tableContexts");
 
         if (message == null || message.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "消息不能为空"));
@@ -409,7 +413,7 @@ public class AiController {
         try {
             AiConfig config = getConfig(configId);
 
-            String response = aiService.freeChat(message, config, systemPrompt, history);
+            String response = aiService.freeChat(message, config, systemPrompt, history, tableContexts);
             return ResponseEntity.ok(Map.of("response", response));
         } catch (Exception e) {
             log.error("自由聊天处理失败", e);

@@ -18,14 +18,6 @@
     </div>
 
     <div v-if="isExpanded" class="ai-content">
-      <!-- 配置选择器 -->
-      <div class="config-selector">
-        <select v-model="selectedConfig" @change="onConfigChange" class="config-select">
-          <option v-for="config in aiConfigs" :key="config.id" :value="config.id">
-            {{ config.name }}
-          </option>
-        </select>
-      </div>
 
       <!-- 角色选择 -->
       <div v-if="selectedRole" class="role-bar">
@@ -106,6 +98,35 @@
 
       <!-- 输入区 -->
       <div class="input-area">
+        <!-- 配置选择器 -->
+        <div class="config-selector">
+          <select v-model="selectedConfig" @change="onConfigChange" class="config-select">
+            <option v-for="config in aiConfigs" :key="config.id" :value="config.id">
+              {{ config.name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- 表标签栏 -->
+        <div v-if="referencedTables.size > 0" class="table-tags-bar">
+          <div
+            v-for="[tableName, tableInfo] in referencedTables"
+            :key="tableName"
+            class="table-tag"
+            :class="{ active: tableInfo.active, loading: tableInfo.loading }"
+            @click="toggleTableActive(tableName)"
+          >
+            <span class="tag-icon">
+              <font-awesome-icon v-if="tableInfo.loading" icon="spinner" spin />
+              <span v-else>{{ tableInfo.active ? '💡' : '🌫️' }}</span>
+            </span>
+            <span class="tag-name">{{ tableName }}</span>
+            <button class="tag-close" @click.stop="removeTableTag(tableName)">
+              <font-awesome-icon icon="times" />
+            </button>
+          </div>
+        </div>
+
         <div class="input-wrapper">
           <div class="textarea-wrapper">
             <textarea
@@ -346,8 +367,7 @@ export default {
       tableSelectorPosition: { x: 0, y: 0 },
       tableSearchQuery: '',
       filteredTables: [],
-      selectedTables: new Set(),
-      tableSchemas: new Map()
+      referencedTables: new Map(), // 表名 -> { active: boolean, visible: boolean, createSql: string, loading: boolean }
     }
   },
   computed: {
@@ -628,27 +648,39 @@ export default {
 
     // 处理输入键盘事件
     handleInputKeydown(e) {
-      if (e.key === 'Escape') {
-        this.cancelTableSelection()
+      // Shift+Enter 换行，不发送
+      if (e.key === 'Enter' && e.shiftKey) {
         return
       }
-      if (e.key === 'Enter' && !e.shiftKey) {
-        if (this.showTableSelector) {
+
+      // Enter 发送消息
+      if (e.key === 'Enter' && !this.showTableSelector) {
+        e.preventDefault()
+        this.sendMessage()
+        return
+      }
+
+      // Escape 关闭表选择器
+      if (e.key === 'Escape') {
+        this.hideTableSelector()
+        return
+      }
+
+      // 表选择器导航
+      if (this.showTableSelector) {
+        if (e.key === 'Enter') {
           e.preventDefault()
-          if (this.selectedTables.size > 0) {
-            this.confirmTableSelection()
-          } else {
-            this.cancelTableSelection()
+          // 选择第一个匹配的表
+          if (this.filteredTables.length > 0) {
+            this.selectTable(this.filteredTables[0])
           }
+        } else if (e.key === 'ArrowDown') {
+          e.preventDefault()
+          // 可以在这里添加上下导航逻辑
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault()
+          // 可以在这里添加上下导航逻辑
         }
-      }
-      if (e.key === 'ArrowDown') {
-        e.preventDefault()
-        this.navigateTableList(1)
-      }
-      if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        this.navigateTableList(-1)
       }
     },
 
@@ -656,6 +688,9 @@ export default {
     async handleInputChange(e) {
       const text = e.target.value
       const cursorPos = e.target.selectionStart
+
+      // 处理@表名自动创建标签
+      this.handleAtTables(text)
 
       // 查找@符号
       const atIndex = text.lastIndexOf('@', cursorPos)
@@ -749,10 +784,8 @@ export default {
 
     // 选择表
     async selectTable(table) {
-      // 加载表结构
-      if (!this.tableSchemas.has(table)) {
-        await this.loadTableSchema(table)
-      }
+      // 创建表标签（默认激活）
+      this.createTableTag(table, true)
 
       // 替换@引用为表名
       const text = this.inputText
@@ -773,9 +806,6 @@ export default {
         })
       }
 
-      // 添加到已选表集合
-      this.selectedTables.add(table)
-
       // 隐藏选择器
       this.hideTableSelector()
     },
@@ -794,12 +824,67 @@ export default {
       }
 
       try {
-        const response = await fetch(`/api/sql/table/${sessionId}/${database}/${tableName}/schema`)
-        const schema = await response.json()
-        this.tableSchemas.set(tableName, schema)
+        const response = await fetch(`/api/sql/table/${sessionId}/${database}/${tableName}/create`)
+        const data = await response.json()
+
+        if (this.referencedTables.has(tableName)) {
+          const tableInfo = this.referencedTables.get(tableName)
+          tableInfo.createSql = data.createSql
+          tableInfo.loading = false
+        }
       } catch (error) {
         console.error(`加载表${tableName}结构失败`, error)
+        if (this.referencedTables.has(tableName)) {
+          const tableInfo = this.referencedTables.get(tableName)
+          tableInfo.loading = false
+        }
       }
+    },
+
+    // 创建表标签
+    createTableTag(tableName, active = true) {
+      if (!this.referencedTables.has(tableName)) {
+        this.referencedTables.set(tableName, {
+          active: active,
+          visible: true,
+          createSql: '',
+          loading: false
+        })
+        // 加载表结构
+        this.loadTableSchema(tableName)
+      }
+    },
+
+    // 切换表标签激活状态
+    toggleTableActive(tableName) {
+      if (this.referencedTables.has(tableName)) {
+        const tableInfo = this.referencedTables.get(tableName)
+        tableInfo.active = !tableInfo.active
+      }
+    },
+
+    // 移除表标签
+    removeTableTag(tableName) {
+      this.referencedTables.delete(tableName)
+    },
+
+    // 提取消息中的@表名
+    extractAtTables(text) {
+      const regex = /@(\w+)/g
+      const tables = []
+      let match
+      while ((match = regex.exec(text)) !== null) {
+        tables.push(match[1])
+      }
+      return tables
+    },
+
+    // 处理@表名自动创建标签
+    handleAtTables(text) {
+      const tables = this.extractAtTables(text)
+      tables.forEach(table => {
+        this.createTableTag(table, true) // 默认激活
+      })
     },
 
     
@@ -815,6 +900,9 @@ export default {
 
     async sendMessage() {
       if (!this.inputText.trim() || this.loading || this.streaming) return
+
+      // 处理@表名自动创建标签
+      this.handleAtTables(this.inputText)
 
       this.messages.push({
         role: 'user',
@@ -842,33 +930,32 @@ export default {
       try {
         // 准备历史记录和系统提示词
         const history = this.getFilteredHistory()
-        let systemPrompt = this.selectedRole ? this.selectedRole.systemPrompt : null
+        const systemPrompt = this.selectedRole ? this.selectedRole.systemPrompt : null
 
-        // 如果有选中的表，添加表结构信息到系统提示词
-        if (this.selectedTables.size > 0) {
-          let schemaInfo = '\n\n以下是相关的数据库表结构信息：\n'
-          this.selectedTables.forEach(tableName => {
-            const schema = this.tableSchemas.get(tableName)
-            if (schema) {
-              schemaInfo += `\n表名：${tableName}\n`
-              schemaInfo += `表结构：\n${JSON.stringify(schema.columns, null, 2)}\n`
-            }
-          })
-          systemPrompt = (systemPrompt || '') + schemaInfo
-        }
+        // 收集所有激活状态的表结构
+        const tableContexts = []
+        this.referencedTables.forEach((tableInfo, tableName) => {
+          if (tableInfo.active && tableInfo.createSql) {
+            tableContexts.push({
+              table: tableName,
+              createSql: tableInfo.createSql
+            })
+          }
+        })
 
         // 准备请求数据
         const requestData = {
           message,
           configId: this.selectedConfig,
           systemPrompt,
-          history
+          history,
+          tableContexts
         }
 
         console.log('发起流式请求:', requestData)
         console.log('历史记录条数:', history.length)
         console.log('使用角色:', this.selectedRole?.name)
-        console.log('选中的表:', Array.from(this.selectedTables))
+        console.log('表上下文:', tableContexts)
 
         if (this.eventSource) this.eventSource.close()
 
@@ -972,20 +1059,18 @@ export default {
       try {
         // 准备历史记录和系统提示词
         const history = this.getFilteredHistory()
-        let systemPrompt = this.selectedRole ? this.selectedRole.systemPrompt : null
+        const systemPrompt = this.selectedRole ? this.selectedRole.systemPrompt : null
 
-        // 如果有选中的表，添加表结构信息到系统提示词
-        if (this.selectedTables.size > 0) {
-          let schemaInfo = '\n\n以下是相关的数据库表结构信息：\n'
-          this.selectedTables.forEach(tableName => {
-            const schema = this.tableSchemas.get(tableName)
-            if (schema) {
-              schemaInfo += `\n表名：${tableName}\n`
-              schemaInfo += `表结构：\n${JSON.stringify(schema.columns, null, 2)}\n`
-            }
-          })
-          systemPrompt = (systemPrompt || '') + schemaInfo
-        }
+        // 收集所有激活状态的表结构
+        const tableContexts = []
+        this.referencedTables.forEach((tableInfo, tableName) => {
+          if (tableInfo.active && tableInfo.createSql) {
+            tableContexts.push({
+              table: tableName,
+              createSql: tableInfo.createSql
+            })
+          }
+        })
 
         const response = await fetch('/api/ai/chat/free', {
           method: 'POST',
@@ -994,7 +1079,8 @@ export default {
             message,
             configId: this.selectedConfig,
             systemPrompt,
-            history
+            history,
+            tableContexts
           })
         })
 
@@ -1176,8 +1262,9 @@ export default {
 }
 
 .config-selector {
-  padding: 10px;
+  padding: 6px 10px;
   border-bottom: 1px solid var(--border-primary);
+  max-height: 32px;
 }
 
 .config-select {
@@ -1188,6 +1275,7 @@ export default {
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   font-size: 12px;
+  max-height: 24px;
 }
 
 .role-bar {
@@ -1340,10 +1428,16 @@ export default {
   display: flex;
   gap: 8px;
   align-items: flex-end;
+  width: 100%;
+}
+
+.textarea-wrapper {
+  flex: 1;
+  position: relative;
 }
 
 .input-wrapper textarea {
-  flex: 1;
+  width: 100%;
   padding: 6px 8px;
   background-color: var(--bg-primary);
   border: 1px solid var(--border-primary);
@@ -1352,6 +1446,7 @@ export default {
   font-size: 13px;
   resize: none;
   font-family: inherit;
+  box-sizing: border-box;
 }
 
 .input-wrapper textarea:focus {
@@ -1702,6 +1797,74 @@ export default {
   flex: 1;
   font-size: 12px;
   color: var(--warning);
+}
+
+/* 表标签栏样式 */
+.table-tags-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
+.table-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.table-tag:hover {
+  background: var(--bg-highlight);
+}
+
+.table-tag.active {
+  background: #e3f2fd;
+  border-color: #1976d2;
+  color: #1976d2;
+}
+
+.table-tag.loading {
+  opacity: 0.7;
+}
+
+.tag-icon {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+}
+
+.tag-name {
+  font-weight: 500;
+}
+
+.tag-close {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.tag-close:hover {
+  opacity: 1;
 }
 
 /* 引用选择器样式 */

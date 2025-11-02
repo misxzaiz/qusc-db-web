@@ -4,15 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(ai):重构AI角色管理和聊天历史功能- 后端流式聊天接口支持历史记录传递和解析&#10;- 移除角色管理API，前端改为本地存储自定义角色- 前端AI侧边栏添加角色标签选择和生成引导&#10;- 实现按角色分组的历史记录存储和加载&#10;-优化聊天历史过滤逻辑，排除错误消息&#10;- 更新自由聊天接口参数，移除roleId依赖&#10;- 添加自定义角色创建、保存和删除功能- 完善角色切换时的历史记录保存与恢复">
-      <change beforePath="$PROJECT_DIR$/.claude/settings.local.json" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/settings.local.json" afterDir="false" />
+    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(ai):重构AI流式聊天接口和前端交互- 后端AiController将流式聊天接口从GET改为POST方法&#10;- 使用ResponseBodyEmitter替代SseEmitter处理流式响应&#10;- 修改历史记录参数传递方式，通过request body接收- 更新事件发送格式为标准SSE格式(data: ...\\n\\n)&#10;- 前端AiSidebar2实现@表引用功能，支持表结构自动注入&#10;- 添加表选择器UI和相关交互逻辑- 实现表结构获取接口getTableSchemaWithDatabase&#10;- SqlEditor增加自动连接最后使用数据库功能&#10;- 更新Claude测试配置和调试命令">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/controller/AiController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/controller/AiController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/controller/SqlController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/controller/SqlController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/service/AiService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/service/AiService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/target/classes/com/dbadmin/controller/SqlController.class" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/com/dbadmin/controller/SqlController.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/components/AiSidebar2.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/AiSidebar2.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -274,7 +272,15 @@
       <option name="project" value="LOCAL" />
       <updated>1762057192755</updated>
     </task>
-    <option name="localTasksCounter" value="25" />
+    <task id="LOCAL-00025" summary="feat(ai):重构AI流式聊天接口和前端交互- 后端AiController将流式聊天接口从GET改为POST方法&#10;- 使用ResponseBodyEmitter替代SseEmitter处理流式响应&#10;- 修改历史记录参数传递方式，通过request body接收- 更新事件发送格式为标准SSE格式(data: ...\\n\\n)&#10;- 前端AiSidebar2实现@表引用功能，支持表结构自动注入&#10;- 添加表选择器UI和相关交互逻辑- 实现表结构获取接口getTableSchemaWithDatabase&#10;- SqlEditor增加自动连接最后使用数据库功能&#10;- 更新Claude测试配置和调试命令">
+      <option name="closed" value="true" />
+      <created>1762058912555</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1762058912557</updated>
+    </task>
+    <option name="localTasksCounter" value="26" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -328,7 +334,8 @@
     <MESSAGE value="feat(sql-editor): 实现AI侧边栏展开状态同步&#10;&#10;- 在AiSidebar2组件中添加toggle事件发射&#10;- 在SqlEditor中监听AI侧边栏toggle事件&#10;- 添加isAiSidebarOpen响应式状态管理- 实现主内容区域根据AI侧边栏状态调整边距- 添加CSS过渡动画优化展开收起体验&#10;- 更新组件间通信机制确保状态同步" />
     <MESSAGE value="feat(ai): 添加AI生成角色功能和兼容接口- 后端添加 /api/ai/free-chat 兼容路径&#10;- 前端AI侧边栏新增AI生成角色模式&#10;- 实现角色描述到系统提示词的AI转换功能&#10;- 添加手动生成和AI生成两种角色创建方式&#10;- 优化自由聊天错误处理和日志记录&#10;- 前端集成FontAwesome图标库支持AI功能按钮&#10;- 更新添加新的API调Claude测试配置用示例" />
     <MESSAGE value="feat(ai):重构AI角色管理和聊天历史功能- 后端流式聊天接口支持历史记录传递和解析&#10;- 移除角色管理API，前端改为本地存储自定义角色- 前端AI侧边栏添加角色标签选择和生成引导&#10;- 实现按角色分组的历史记录存储和加载&#10;-优化聊天历史过滤逻辑，排除错误消息&#10;- 更新自由聊天接口参数，移除roleId依赖&#10;- 添加自定义角色创建、保存和删除功能- 完善角色切换时的历史记录保存与恢复" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(ai):重构AI角色管理和聊天历史功能- 后端流式聊天接口支持历史记录传递和解析&#10;- 移除角色管理API，前端改为本地存储自定义角色- 前端AI侧边栏添加角色标签选择和生成引导&#10;- 实现按角色分组的历史记录存储和加载&#10;-优化聊天历史过滤逻辑，排除错误消息&#10;- 更新自由聊天接口参数，移除roleId依赖&#10;- 添加自定义角色创建、保存和删除功能- 完善角色切换时的历史记录保存与恢复" />
+    <MESSAGE value="feat(ai):重构AI流式聊天接口和前端交互- 后端AiController将流式聊天接口从GET改为POST方法&#10;- 使用ResponseBodyEmitter替代SseEmitter处理流式响应&#10;- 修改历史记录参数传递方式，通过request body接收- 更新事件发送格式为标准SSE格式(data: ...\\n\\n)&#10;- 前端AiSidebar2实现@表引用功能，支持表结构自动注入&#10;- 添加表选择器UI和相关交互逻辑- 实现表结构获取接口getTableSchemaWithDatabase&#10;- SqlEditor增加自动连接最后使用数据库功能&#10;- 更新Claude测试配置和调试命令" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(ai):重构AI流式聊天接口和前端交互- 后端AiController将流式聊天接口从GET改为POST方法&#10;- 使用ResponseBodyEmitter替代SseEmitter处理流式响应&#10;- 修改历史记录参数传递方式，通过request body接收- 更新事件发送格式为标准SSE格式(data: ...\\n\\n)&#10;- 前端AiSidebar2实现@表引用功能，支持表结构自动注入&#10;- 添加表选择器UI和相关交互逻辑- 实现表结构获取接口getTableSchemaWithDatabase&#10;- SqlEditor增加自动连接最后使用数据库功能&#10;- 更新Claude测试配置和调试命令" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
 </project>

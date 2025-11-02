@@ -712,7 +712,7 @@ public class AiService {
     }
 
     // 流式聊天
-    public void streamChat(String message, AiConfig config, String systemPrompt, List<Map<String, String>> history, ResponseBodyEmitter emitter) throws Exception {
+    public void streamChat(String message, AiConfig config, String systemPrompt, List<Map<String, String>> history, List<Map<String, Object>> tableContexts, ResponseBodyEmitter emitter) throws Exception {
         if (!config.getEnabled() || config.getApiKey() == null || config.getApiKey().isEmpty()) {
             throw new Exception("AI服务未配置或已禁用");
         }
@@ -738,8 +738,26 @@ public class AiService {
             log.info("添加历史记录: {} 条", history.size());
         }
 
-        // 添加当前消息
-        messages.add(Map.of("role", "user", "content", message));
+        // 添加表上下文信息
+        if (tableContexts != null && !tableContexts.isEmpty()) {
+            StringBuilder tableContext = new StringBuilder("\n\n以下是相关的数据库表结构信息：\n\n");
+            for (Map<String, Object> tableCtx : tableContexts) {
+                String tableName = (String) tableCtx.get("table");
+                String createSql = (String) tableCtx.get("createSql");
+                if (tableName != null && createSql != null) {
+                    tableContext.append("表名：").append(tableName).append("\n");
+                    tableContext.append("创建语句：\n").append(createSql).append("\n\n");
+                }
+            }
+
+            // 将表上下文作为用户消息的一部分添加
+            String userMessageWithTableContext = message + tableContext.toString();
+            messages.add(Map.of("role", "user", "content", userMessageWithTableContext));
+            log.info("添加表上下文: {} 个表", tableContexts.size());
+        } else {
+            // 添加当前消息
+            messages.add(Map.of("role", "user", "content", message));
+        }
         requestBody.put("messages", messages);
 
         if (config.getTemperature() != null) {
@@ -1060,7 +1078,7 @@ public class AiService {
     }
 
     // 自由聊天
-    public String freeChat(String message, AiConfig config, String systemPrompt, List<Map<String, String>> history) throws Exception {
+    public String freeChat(String message, AiConfig config, String systemPrompt, List<Map<String, String>> history, List<Map<String, Object>> tableContexts) throws Exception {
         if (!config.getEnabled() || config.getApiKey() == null || config.getApiKey().isEmpty()) {
             throw new Exception("AI服务未配置或已禁用");
         }
@@ -1080,8 +1098,25 @@ public class AiService {
             messages.addAll(history);
         }
 
-        // 添加当前消息
-        messages.add(Map.of("role", "user", "content", message));
+        // 添加表上下文信息
+        if (tableContexts != null && !tableContexts.isEmpty()) {
+            StringBuilder tableContext = new StringBuilder("\n\n以下是相关的数据库表结构信息：\n\n");
+            for (Map<String, Object> tableCtx : tableContexts) {
+                String tableName = (String) tableCtx.get("table");
+                String createSql = (String) tableCtx.get("createSql");
+                if (tableName != null && createSql != null) {
+                    tableContext.append("表名：").append(tableName).append("\n");
+                    tableContext.append("创建语句：\n").append(createSql).append("\n\n");
+                }
+            }
+
+            // 将表上下文作为用户消息的一部分添加
+            String userMessageWithTableContext = message + tableContext.toString();
+            messages.add(Map.of("role", "user", "content", userMessageWithTableContext));
+        } else {
+            // 添加当前消息
+            messages.add(Map.of("role", "user", "content", message));
+        }
         requestBody.put("messages", messages);
 
         if (config.getTemperature() != null) {
