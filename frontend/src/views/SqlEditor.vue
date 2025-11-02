@@ -83,7 +83,7 @@
           </div>
 
           <!-- 编辑器 -->
-          <div class="editor-section">
+          <div class="editor-section" :style="{ height: editorHeight + 'px' }">
             <div class="editor-wrapper">
               <SqlCodeEditor
                 :ref="`editor-${tab.id}`"
@@ -94,6 +94,13 @@
               />
             </div>
           </div>
+
+          <!-- 拖拽手柄 -->
+          <div
+            class="resize-handle"
+            :class="{ 'resizing': isResizing }"
+            @mousedown="startResize"
+          ></div>
 
           <!-- 错误信息 -->
           <div v-if="tab.error" class="error-section">
@@ -175,6 +182,13 @@ export default {
     const rightSidebarRef = ref(null)
     const queryHistoryRef = ref(null)
 
+    // 编辑器高度管理
+    const editorHeight = ref(300)
+    const isResizing = ref(false)
+    const startY = ref(0)
+    const startHeight = ref(300)
+    const containerHeight = ref(0)
+
     // 创建新Tab
     const createNewTab = (title = '新查询') => {
       const tab = {
@@ -198,6 +212,7 @@ export default {
     onMounted(() => {
       loadTabsFromStorage()
       restoreLastConnection()
+      loadEditorHeight()
 
       // 监听连接事件
       window.addEventListener('session-connected', handleSessionConnected)
@@ -754,12 +769,74 @@ ${tab.sqlText}
       }
     }
 
+    // 拖拽调整高度相关方法
+    const startResize = (e) => {
+      isResizing.value = true
+      startY.value = e.clientY
+      startHeight.value = editorHeight.value
+
+      // 获取容器高度
+      const container = document.querySelector('.tab-content')
+      if (container) {
+        containerHeight.value = container.clientHeight
+      }
+
+      // 添加全局事件监听
+      document.addEventListener('mousemove', handleResize)
+      document.addEventListener('mouseup', stopResize)
+
+      // 防止选中文本
+      e.preventDefault()
+      document.body.style.cursor = 'ns-resize'
+      document.body.style.userSelect = 'none'
+    }
+
+    const handleResize = (e) => {
+      if (!isResizing.value) return
+
+      const deltaY = e.clientY - startY.value
+      let newHeight = startHeight.value + deltaY
+
+      // 限制高度范围（最小100px，最大70%容器高度）
+      if (containerHeight.value > 0) {
+        newHeight = Math.max(100, Math.min(newHeight, containerHeight.value * 0.7))
+      }
+
+      editorHeight.value = Math.round(newHeight)
+
+      // 保存到localStorage
+      localStorage.setItem('editor-height', editorHeight.value.toString())
+    }
+
+    const stopResize = () => {
+      isResizing.value = false
+      document.removeEventListener('mousemove', handleResize)
+      document.removeEventListener('mouseup', stopResize)
+
+      // 恢复样式
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+
+    // 从localStorage恢复高度
+    const loadEditorHeight = () => {
+      const saved = localStorage.getItem('editor-height')
+      if (saved) {
+        const height = parseInt(saved, 10)
+        if (!isNaN(height) && height >= 100 && height <= 1000) {
+          editorHeight.value = height
+        }
+      }
+    }
+
     return {
       tabs,
       activeTabIndex,
       activeSessions,
       rightSidebarRef,
       isRightSidebarExpanded,
+      editorHeight,
+      isResizing,
       getCurrentTabTables,
       getCurrentTabInfo,
       switchTab,
@@ -784,7 +861,11 @@ ${tab.sqlText}
       handleSidebarResize,
       handleRightSidebarResize,
       commitTransaction,
-      rollbackTransaction
+      rollbackTransaction,
+      startResize,
+      handleResize,
+      stopResize,
+      loadEditorHeight
     }
   }
 }
@@ -1013,8 +1094,10 @@ ${tab.sqlText}
 
 /* 编辑器区域 */
 .editor-section {
-  height: 300px;
-  flex-shrink: 0;
+  flex: none;  /* 不使用flex-grow */
+  overflow: hidden;  /* 防止溢出 */
+  min-height: 100px;  /* 最小高度 */
+  max-height: 70vh;  /* 最大高度 */
   display: flex;
   flex-direction: column;
 }
@@ -1022,6 +1105,44 @@ ${tab.sqlText}
 .editor-wrapper {
   flex: 1;
   border-bottom: 1px solid var(--border-primary);
+  overflow: auto;  /* 内容滚动 */
+}
+
+/* 拖拽手柄 */
+.resize-handle {
+  height: 4px;
+  background: var(--border-primary);
+  cursor: ns-resize;
+  flex: none;
+  position: relative;
+  transition: background-color 0.2s;
+}
+
+.resize-handle:hover {
+  background: var(--primary-color);
+  height: 6px;
+}
+
+.resize-handle.resizing {
+  background: var(--primary-color);
+  height: 6px;
+}
+
+.resize-handle::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 2px;
+  background: var(--text-tertiary);
+  border-radius: 1px;
+  opacity: 0.5;
+}
+
+.resize-handle:hover::before {
+  opacity: 1;
 }
 
 /* 结果区域 */
