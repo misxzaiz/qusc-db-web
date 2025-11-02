@@ -78,9 +78,6 @@
 
         <!-- 工具栏 -->
         <div class="toolbar">
-          <button class="tool-btn" @click="useStream = !useStream" :class="{ active: useStream }" title="流式输出">
-            <font-awesome-icon icon="bolt" />
-          </button>
           <button class="tool-btn" @click="showPrompts = !showPrompts" :class="{ active: showPrompts }" title="提示词">
             <font-awesome-icon icon="lightbulb" />
           </button>
@@ -94,10 +91,7 @@
               <span v-else>{{ currentRoleAvatar }}</span>
             </div>
             <div class="message-content">
-              <div v-if="msg.role === 'assistant' && msg.streaming" class="streaming-text">
-                {{ msg.content }}<span class="cursor">|</span>
-              </div>
-              <MarkdownRenderer v-else :content="msg.content" />
+              <MarkdownRenderer :content="msg.content" :streaming="msg.streaming" />
             </div>
           </div>
         </div>
@@ -152,9 +146,6 @@
             </button>
           </div>
           <div class="input-status">
-            <span v-if="useStream" class="status-item">
-              <font-awesome-icon icon="bolt" /> 流式
-            </span>
             <span v-if="selectedRole" class="status-item">
               {{ selectedRole.name }}
             </span>
@@ -271,7 +262,6 @@ export default {
       showRoleManager: false,
       showCreateRole: false,
       showPrompts: false,
-      useStream: true,
       referencedTables: new Map(),
       tableSelectorVisible: false,
       tableSelectorPosition: { x: 0, y: 0 },
@@ -393,11 +383,8 @@ export default {
       }
       this.scrollToBottom()
 
-      if (this.useStream) {
-        await this.streamMessage(message)
-      } else {
-        await this.normalMessage(message)
-      }
+      // 始终使用流式输出
+      await this.streamMessage(message)
       
       this.saveHistory()
     },
@@ -486,39 +473,7 @@ export default {
       }
     },
 
-    async normalMessage(message) {
-      this.loading = true
-      try {
-        const history = this.getFilteredHistory()
-        const systemPrompt = this.selectedRole?.systemPrompt || ''
-        const tableContexts = Array.from(this.referencedTables.values())
-          .filter(info => info.active && info.createSql)
-          .map(info => ({
-            tableName: info.tableName,
-            createSql: info.createSql
-          }))
-
-        const response = await aiApi.freeChat(message, this.selectedConfig, systemPrompt, history, tableContexts)
-
-        this.messages.push({
-          role: 'assistant',
-          content: response.data.response,
-          timestamp: new Date()
-        })
-
-        this.scrollToBottom()
-      } catch (error) {
-        console.error('发送消息失败:', error)
-        this.messages.push({
-          role: 'assistant',
-          content: '抱歉，发送消息时出现错误。',
-          timestamp: new Date()
-        })
-      } finally {
-        this.loading = false
-      }
-    },
-
+    
     getFilteredHistory() {
       return this.messages.slice(-10).map(msg => ({
         role: msg.role,
@@ -901,20 +856,6 @@ export default {
   padding: 10px 15px;
   border-radius: 18px 18px 18px 4px;
   display: inline-block;
-}
-
-.streaming-text {
-  color: var(--text-primary);
-  line-height: 1.5;
-}
-
-.cursor {
-  animation: blink 1s infinite;
-}
-
-@keyframes blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
 }
 
 .input-container {

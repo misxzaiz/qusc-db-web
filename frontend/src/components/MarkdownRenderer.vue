@@ -1,5 +1,8 @@
 <template>
-  <div class="markdown-renderer" v-html="renderedContent"></div>
+  <div class="markdown-renderer">
+    <div v-html="renderedContent"></div>
+    <span v-if="streaming" class="streaming-cursor">|</span>
+  </div>
 </template>
 
 <script>
@@ -12,6 +15,10 @@ export default {
     content: {
       type: String,
       default: ''
+    },
+    streaming: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {
@@ -34,7 +41,34 @@ export default {
         gfm: true
       })
 
-      return marked(this.content)
+      // 处理不完整的Markdown语法
+      let processedContent = this.content
+
+      // 处理未闭合的代码块
+      const codeBlockCount = (processedContent.match(/```/g) || []).length
+      if (codeBlockCount % 2 !== 0) {
+        processedContent += '\n```'
+      }
+
+      // 处理未闭合的行内代码
+      const inlineCodeCount = (processedContent.match(/`/g) || []).length
+      if (inlineCodeCount % 2 !== 0) {
+        processedContent += '`'
+      }
+
+      // 处理未闭合的粗体
+      const boldCount = (processedContent.match(/\*\*/g) || []).length
+      if (boldCount % 2 !== 0) {
+        processedContent += '**'
+      }
+
+      // 处理未闭合的斜体
+      const italicCount = (processedContent.match(/(?<!\*)\*(?!\*)/g) || []).length
+      if (italicCount % 2 !== 0) {
+        processedContent += '*'
+      }
+
+      return marked(processedContent)
     }
   }
 }
@@ -44,6 +78,18 @@ export default {
 .markdown-renderer {
   color: var(--text-primary);
   line-height: 1.6;
+}
+
+.streaming-cursor {
+  color: var(--accent-primary);
+  font-weight: bold;
+  animation: blink 1s infinite;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
 }
 
 /* Markdown 样式 */
