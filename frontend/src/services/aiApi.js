@@ -281,6 +281,11 @@ export const aiApi = {
     })
   },
 
+  // 获取表结构
+  getTableStructure(sessionId, database, table) {
+    return api.get(`/sql/table/${sessionId}/${database}/${table}/create`)
+  },
+
   // 同步配置到后端（可选，用于将所有本地配置同步到后端）
   syncConfigsToBackend() {
     const configs = storage.getConfigs()

@@ -148,9 +148,10 @@
             >
               <div class="table-list" ref="tableList">
                 <div
-                  v-for="table in filteredTables"
+                  v-for="(table, index) in filteredTables"
                   :key="table"
                   class="table-item"
+                  :class="{ selected: index === selectedTableIndex }"
                   @click="selectTable(table)"
                 >
                   <span class="icon">📊</span>
@@ -164,10 +165,12 @@
 
             <button
               class="send-btn"
-              @click="sendMessage"
-              :disabled="!inputText.trim() || loading || streaming"
+              @click="streaming ? stopStreaming() : sendMessage()"
+              :disabled="!inputText.trim() && !streaming"
+              :class="{ 'stop-btn': streaming }"
             >
               <font-awesome-icon v-if="!loading && !streaming" icon="paper-plane" />
+              <font-awesome-icon v-else-if="streaming" icon="stop" />
               <font-awesome-icon v-else icon="spinner" spin />
             </button>
           </div>
@@ -256,10 +259,10 @@
 import MarkdownRenderer from './MarkdownRenderer.vue'
 import { aiApi } from '../services/aiApi'
 import { connectionStore } from '../stores/connectionStore'
-import { faMagic } from '@fortawesome/free-solid-svg-icons'
+import { faMagic, faStop } from '@fortawesome/free-solid-svg-icons'
 import { library } from '@fortawesome/fontawesome-svg-core'
 
-library.add(faMagic)
+library.add(faMagic, faStop)
 
 export default {
   name: 'RightTabSidebar',
@@ -293,6 +296,7 @@ export default {
       tableSelectorPosition: { x: 0, y: 0 },
       tableSearchQuery: '',
       availableTables: [],
+      selectedTableIndex: -1,
       newRole: {
         name: '',
         avatar: '',
@@ -541,6 +545,29 @@ export default {
     },
 
     handleKeyDown(event) {
+      // 表选择器键盘导航
+      if (this.tableSelectorVisible) {
+        if (event.key === 'ArrowDown') {
+          event.preventDefault()
+          this.selectedTableIndex = Math.min(this.selectedTableIndex + 1, this.filteredTables.length - 1)
+          this.scrollToSelectedTable()
+        } else if (event.key === 'ArrowUp') {
+          event.preventDefault()
+          this.selectedTableIndex = Math.max(this.selectedTableIndex - 1, 0)
+          this.scrollToSelectedTable()
+        } else if (event.key === 'Enter') {
+          event.preventDefault()
+          if (this.selectedTableIndex >= 0 && this.filteredTables[this.selectedTableIndex]) {
+            this.selectTable(this.filteredTables[this.selectedTableIndex])
+          }
+        } else if (event.key === 'Escape') {
+          event.preventDefault()
+          this.tableSelectorVisible = false
+          this.selectedTableIndex = -1
+        }
+        return
+      }
+
       if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault()
         this.sendMessage()
@@ -620,6 +647,7 @@ export default {
       console.log('searchText:', searchText)
 
       this.tableSearchQuery = searchText
+      this.selectedTableIndex = -1 // 重置选中索引
 
       // 获取当前连接的表列表
       const parent = this.$parent
@@ -641,9 +669,26 @@ export default {
         const lineHeight = 20 // 估算的行高
         const lineIndex = this.inputText.substring(0, atIndex).split('\n').length - 1
 
-        this.tableSelectorPosition = {
-          x: rect.left + 10, // @符号的大概位置
-          y: rect.top + (lineIndex + 1) * lineHeight + 10
+        // 选择器高度
+        const selectorHeight = 180
+        // 计算默认位置（textarea下方）
+        let defaultTop = rect.top + (lineIndex + 1) * lineHeight + 10
+
+        // 检查是否会超出视窗底部
+        const willOverflowBottom = defaultTop + selectorHeight > window.innerHeight
+
+        if (willOverflowBottom) {
+          // 显示在textarea上方
+          this.tableSelectorPosition = {
+            x: rect.left + 10,
+            y: rect.top + (lineIndex - 1) * lineHeight - selectorHeight - 10
+          }
+        } else {
+          // 显示在textarea下方
+          this.tableSelectorPosition = {
+            x: rect.left + 10,
+            y: defaultTop
+          }
         }
 
         this.tableSelectorVisible = true
@@ -680,9 +725,69 @@ export default {
           active: true,
           createSql: null
         })
+
+        // 获取表结构
+        this.loadTableStructure(tableName)
       }
 
       this.tableSelectorVisible = false
+    },
+
+    scrollToSelectedTable() {
+      this.$nextTick(() => {
+        const tableList = this.$refs.tableList
+        if (tableList && this.selectedTableIndex >= 0) {
+          const selectedItem = tableList.children[this.selectedTableIndex]
+          if (selectedItem) {
+            selectedItem.scrollIntoView({ block: 'nearest' })
+          }
+        }
+      })
+    },
+
+    // 停止流式输出
+    stopStreaming() {
+      if (this.eventSource) {
+        this.eventSource.close()
+        this.eventSource = null
+      }
+      this.streaming = false
+      this.streamContent = ''
+
+      // 将最后一条消息标记为非流式
+      const lastMessage = this.messages[this.messages.length - 1]
+      if (lastMessage && lastMessage.role === 'assistant' && lastMessage.streaming) {
+        lastMessage.streaming = false
+      }
+    },
+
+    // 加载表结构
+    async loadTableStructure(tableName) {
+      try {
+        const parent = this.$parent
+        if (!parent || !parent.getCurrentSession || !parent.currentTab) {
+          console.warn('无法获取会话信息')
+          return
+        }
+
+        const sessionId = parent.getCurrentSession()
+        const database = parent.currentTab.database
+
+        if (!sessionId || !database) {
+          console.warn('会话ID或数据库为空')
+          return
+        }
+
+        const response = await aiApi.getTableStructure(sessionId, database, tableName)
+
+        // 更新表结构信息
+        const tableInfo = this.referencedTables.get(tableName)
+        if (tableInfo) {
+          tableInfo.createSql = response.data.createSql
+        }
+      } catch (error) {
+        console.error('加载表结构失败:', error)
+      }
     },
   }
 }
@@ -994,6 +1099,15 @@ export default {
   background-color: var(--bg-highlight);
 }
 
+.table-item.selected {
+  background-color: var(--accent-primary);
+  color: white;
+}
+
+.table-item.selected .icon {
+  opacity: 1;
+}
+
 .table-item .icon {
   font-size: 12px;
   opacity: 0.6;
@@ -1102,6 +1216,15 @@ export default {
 
 .send-btn:hover:not(:disabled) {
   background-color: var(--primary-hover);
+}
+
+.send-btn.stop-btn {
+  background-color: var(--error-color, #e74c3c);
+  border-color: var(--error-color, #e74c3c);
+}
+
+.send-btn.stop-btn:hover:not(:disabled) {
+  background-color: #c0392b;
 }
 
 .send-btn:disabled {
