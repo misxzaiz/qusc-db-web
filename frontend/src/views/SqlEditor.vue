@@ -1034,7 +1034,17 @@ ${JSON.stringify(sampleData, null, 2)}
 
     // 右侧边栏宽度处理
     const handleRightSidebarResize = (width) => {
-      // 可以在这里处理宽度变化
+      // 根据右侧边栏宽度调整主内容区的margin-right
+      const mainContent = document.querySelector('.main-content')
+      if (mainContent) {
+        if (width === 40) {
+          // 折叠状态，不需要margin-right
+          mainContent.style.marginRight = '0px'
+        } else {
+          // 展开状态，设置margin-right为400px避免内容被遮挡
+          mainContent.style.marginRight = '400px'
+        }
+      }
     }
 
     // 返回所有需要在模板中使用的数据和方法

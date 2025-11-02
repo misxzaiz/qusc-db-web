@@ -50,6 +50,8 @@ export default {
   justify-content: space-between;
   padding: 0 var(--spacing-xl);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 200; /* 确保header在右侧边栏之上 */
 }
 
 .header-left {

@@ -599,13 +599,13 @@ export default {
 .right-sidebar {
   position: fixed;
   right: 0;
-  top: 0;
+  top: 56px; /* header高度 */
   bottom: 0;
   width: 40px;
   background-color: var(--bg-secondary);
   border-left: 1px solid var(--border-primary);
   transition: width 0.3s ease;
-  z-index: 1000;
+  z-index: 100; /* 降低z-index，避免覆盖header */
   display: flex;
   flex-direction: column;
 }
