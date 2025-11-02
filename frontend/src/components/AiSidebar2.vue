@@ -230,6 +230,8 @@ export default {
       if (this.isExpanded) {
         this.$nextTick(() => this.scrollToBottom())
       }
+      // 通知父组件侧边栏状态变化
+      this.$emit('toggle', this.isExpanded)
     },
 
     async loadConfigs() {

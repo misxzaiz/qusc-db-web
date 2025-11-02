@@ -11,7 +11,7 @@
     />
 
     <!-- 主内容区 -->
-    <div class="main-content">
+    <div class="main-content" :class="{ 'ai-sidebar-open': isAiSidebarOpen }">
       <!-- Tab栏 -->
       <div class="tab-bar">
         <div class="tab-list">
@@ -287,7 +287,7 @@
     </div>
 
     <!-- 右侧AI边栏 -->
-    <AiSidebar @execute-sql="onExecuteAiSql" @resize="handleAiResize" />
+    <AiSidebar @execute-sql="onExecuteAiSql" @resize="handleAiResize" @toggle="onAiSidebarToggle" />
   </div>
 </template>
 
@@ -319,6 +319,9 @@ export default {
 
     // AI配置
     const selectedAiConfig = ref(null)
+
+    // AI侧边栏状态
+    const isAiSidebarOpen = ref(false)
 
     // QueryHistory组件引用
     const queryHistoryRef = ref(null)
@@ -939,6 +942,11 @@ export default {
       markTabModified(currentTab.value)
     })
 
+    // AI侧边栏开关处理
+    const onAiSidebarToggle = (isOpen) => {
+      isAiSidebarOpen.value = isOpen
+    }
+
     // 返回所有需要在模板中使用的数据和方法
     return {
       tabs,
@@ -948,6 +956,7 @@ export default {
       sidebarWidth,
       aiWidth,
       selectedAiConfig,
+      isAiSidebarOpen,
       queryHistoryRef,
       newTab,
       closeTab,
@@ -982,7 +991,8 @@ export default {
       onHistoryCopy,
       onHistoryExecute,
       onHistoryClear,
-      onQueryHistoryReady
+      onQueryHistoryReady,
+      onAiSidebarToggle
     }
   }
 }
@@ -1002,6 +1012,17 @@ export default {
   flex-direction: column;
   min-width: 0;
   overflow: hidden;
+  transition: margin-right 0.3s ease;
+}
+
+/* 当AI侧边栏展开时，主内容区域右边距 */
+.main-content.ai-sidebar-open {
+  margin-right: 400px;
+}
+
+/* AI侧边栏样式调整 */
+.ai-sidebar {
+  position: fixed !important;
 }
 
 /* Tab样式 */
