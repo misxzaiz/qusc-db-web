@@ -117,12 +117,14 @@
           </div>
 
           <!-- 查询结果 - 使用新的ResultTabs组件 -->
-          <ResultTabs
-            :results="tab.results"
-            @analyze="handleAnalyzeClick"
-            @export="exportResult"
-            @refresh="handleResultRefresh"
-          />
+          <div class="results-section">
+            <ResultTabs
+              :results="tab.results"
+              @analyze="handleAnalyzeClick"
+              @export="exportResult"
+              @refresh="handleResultRefresh"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -769,6 +771,8 @@ ${tab.sqlText}
   background-color: var(--bg-tertiary);
   border-bottom: 1px solid var(--border-primary);
   padding: 0 var(--spacing-sm);
+  height: 40px;
+  flex-shrink: 0;
 }
 
 .tab-list {
@@ -852,9 +856,11 @@ ${tab.sqlText}
 }
 
 .tab-pane {
-  height: 100%;
+  flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* 工具栏 */
@@ -959,8 +965,8 @@ ${tab.sqlText}
 
 /* 编辑器区域 */
 .editor-section {
-  flex: 1;
-  min-height: 200px;
+  height: 300px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
 }
@@ -970,11 +976,21 @@ ${tab.sqlText}
   border-bottom: 1px solid var(--border-primary);
 }
 
+/* 结果区域 */
+.results-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 /* 错误信息 */
 .error-section {
   padding: var(--spacing-md);
   background-color: var(--error-bg);
   border-bottom: 1px solid var(--error-border);
+  flex-shrink: 0;
 }
 
 .error-section h4 {
