@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(ai):重构AI诊断和分析功能集成到侧边栏&#10;&#10;- 修改sendMessage方法支持定义消息发送自- 移除SQL编辑器中的内联AI诊断结果显示&#10;- 添加AI分析按钮禁用状态和提示信息- 集成AI错误诊断和查询结果分析到AI助手&#10;- 添加AI侧边栏引用和相关图标库&#10;- 优化AI消息格式和内容展示&#10;- 更新组件引用和方法导出">
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/AiSidebar2.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/AiSidebar2.vue" afterDir="false" />
+    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(ai):重构AI侧边栏交互并添加右侧固定图标栏&#10;&#10;- 在 AiSidebar2.vue 中添加 visible 控制显示状态&#10;- 默认展开 AI 侧边栏并控制其可见性&#10;- 移除 SqlEditor.vue 中的旧 AI 侧边栏类名控制逻辑- 添加 RightIconBar 组件用于固定右侧图标栏&#10;- 实现通过右侧图标栏控制 AI侧边栏开关&#10;- 调整主内容区域样式以适应新的布局结构&#10;- 更新组件引用和事件处理方法以支持新交互">
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/AiSidebar2.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/RightIconBar.vue" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -300,7 +301,15 @@
       <option name="project" value="LOCAL" />
       <updated>1762063341052</updated>
     </task>
-    <option name="localTasksCounter" value="29" />
+    <task id="LOCAL-00029" summary="feat(ai):重构AI侧边栏交互并添加右侧固定图标栏&#10;&#10;- 在 AiSidebar2.vue 中添加 visible 控制显示状态&#10;- 默认展开 AI 侧边栏并控制其可见性&#10;- 移除 SqlEditor.vue 中的旧 AI 侧边栏类名控制逻辑- 添加 RightIconBar 组件用于固定右侧图标栏&#10;- 实现通过右侧图标栏控制 AI侧边栏开关&#10;- 调整主内容区域样式以适应新的布局结构&#10;- 更新组件引用和事件处理方法以支持新交互">
+      <option name="closed" value="true" />
+      <created>1762064098038</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1762064098038</updated>
+    </task>
+    <option name="localTasksCounter" value="30" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -332,7 +341,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="feat(editor): 引入SQL代码编辑器组件并优化样式系统- 集成 CodeMirror 6 SQL 编辑器，支持语法高亮和自动补全&#10;- 添加 One Dark 主题支持&#10;- 实现SQL格式化功能- 增加查询历史记录功能，支持时间显示和点击加载&#10;- 添加结果导出为 CSV 功能- 统一使用CSS变量重构全局样式系统- 移除内联样式，引入独立主题文件-优化按钮、表单、卡片等UI组件样式&#10;- 改进响应式设计和交互效果- 增强可访问性和用户体验" />
     <MESSAGE value="feat(sql): 实现数据库切换功能&#10;&#10;- 新增获取数据库列表接口&#10;- 新增切换数据库接口&#10;- 新增获取当前数据库接口- 前端支持数据库选择和切换&#10;- 连接时数据库字段改为可选&#10;-优化连接流程，先加载数据库再加载表&#10;- 添加数据库列表刷新功能- 完善错误处理和用户提示" />
     <MESSAGE value="feat(sql): 支持按数据库筛选数据表- 修改后端 getTables 接口，新增 database 参数用于指定数据库- 更新前端 getTables 方法，支持传递 database 参数&#10;-优化连接管理器，使用 connectionStore 替代 connectionStorage&#10;- 重构 SQL 编辑器界面，引入 ConnectionTree 组件&#10;- 新增连接对话框，支持创建和测试数据库连接&#10;- 改进查询历史记录功能，增加执行时间显示- 调整界面布局，优化工具栏和连接信息展示&#10;- 完善 USE语句执行逻辑，自动更新当前数据库状态" />
     <MESSAGE value="feat(connection):重构连接树组件支持已保存连接管理&#10;&#10;- 新增已保存连接列表展示功能&#10;- 实现连接状态标识和连接按钮- 添加跨标签页同步连接列表功能-优化空状态提示信息&#10;- 移除新建连接对话框相关代码- 调整组件样式和布局结构&#10;- 完善连接选择和会话管理逻辑" />
@@ -357,7 +365,8 @@
     <MESSAGE value="feat(ai): 实现AI聊天中表结构上下文注入功能&#10;&#10;- 后端接口支持传入tableContexts参数，包含表名和建表SQL&#10;- AiService中处理表结构信息，将其附加到用户消息中&#10;- 前端实现@表名自动识别并生成表标签&#10;- 新增表结构获取接口getTableCreateSql&#10;- 优化前端表标签交互和样式显示&#10;- 调整配置选择器位置和输入框布局&#10;- 改进消息发送快捷键处理逻辑" />
     <MESSAGE value="feat(ai): 调整AI配置选择器位置和优化输入区布局&#10;&#10;- 将AI配置选择器从输入区移动至顶部AI配置栏&#10;- 更新配置选择器样式为紧凑型设计&#10;- 移除输入区@表名自动创建标签逻辑&#10;- 优化表标签交互和样式显示- 改进消息发送快捷键处理逻辑" />
     <MESSAGE value="feat(ai):重构AI诊断和分析功能集成到侧边栏&#10;&#10;- 修改sendMessage方法支持定义消息发送自- 移除SQL编辑器中的内联AI诊断结果显示&#10;- 添加AI分析按钮禁用状态和提示信息- 集成AI错误诊断和查询结果分析到AI助手&#10;- 添加AI侧边栏引用和相关图标库&#10;- 优化AI消息格式和内容展示&#10;- 更新组件引用和方法导出" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(ai):重构AI诊断和分析功能集成到侧边栏&#10;&#10;- 修改sendMessage方法支持定义消息发送自- 移除SQL编辑器中的内联AI诊断结果显示&#10;- 添加AI分析按钮禁用状态和提示信息- 集成AI错误诊断和查询结果分析到AI助手&#10;- 添加AI侧边栏引用和相关图标库&#10;- 优化AI消息格式和内容展示&#10;- 更新组件引用和方法导出" />
+    <MESSAGE value="feat(ai):重构AI侧边栏交互并添加右侧固定图标栏&#10;&#10;- 在 AiSidebar2.vue 中添加 visible 控制显示状态&#10;- 默认展开 AI 侧边栏并控制其可见性&#10;- 移除 SqlEditor.vue 中的旧 AI 侧边栏类名控制逻辑- 添加 RightIconBar 组件用于固定右侧图标栏&#10;- 实现通过右侧图标栏控制 AI侧边栏开关&#10;- 调整主内容区域样式以适应新的布局结构&#10;- 更新组件引用和事件处理方法以支持新交互" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(ai):重构AI侧边栏交互并添加右侧固定图标栏&#10;&#10;- 在 AiSidebar2.vue 中添加 visible 控制显示状态&#10;- 默认展开 AI 侧边栏并控制其可见性&#10;- 移除 SqlEditor.vue 中的旧 AI 侧边栏类名控制逻辑- 添加 RightIconBar 组件用于固定右侧图标栏&#10;- 实现通过右侧图标栏控制 AI侧边栏开关&#10;- 调整主内容区域样式以适应新的布局结构&#10;- 更新组件引用和事件处理方法以支持新交互" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
 </project>

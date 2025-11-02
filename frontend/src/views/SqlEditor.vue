@@ -267,18 +267,11 @@
       </div>
     </div>
 
-    <!-- 右侧固定图标栏 -->
-    <RightIconBar
-      :is-ai-sidebar-open="isAiSidebarOpen"
-      @toggle-ai="onToggleAiSidebar"
-    />
-
-    <!-- 右侧AI边栏 -->
-    <AiSidebar
-      v-show="isAiSidebarOpen"
-      ref="aiSidebarRef"
+    <!-- 右侧边栏 -->
+    <RightTabSidebar
+      ref="rightSidebarRef"
       @execute-sql="onExecuteAiSql"
-      @resize="handleAiResize"
+      @resize="handleRightSidebarResize"
     />
   </div>
 </template>
@@ -288,8 +281,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { connectionStore } from '../stores/connectionStore'
 import SqlCodeEditor from '../components/SqlCodeEditor.vue'
 import TabSidebar from '../components/TabSidebar.vue'
-import AiSidebar from '../components/AiSidebar2.vue'
-import RightIconBar from '../components/RightIconBar.vue'
+import RightTabSidebar from '../components/RightTabSidebar.vue'
 import { faBrain } from '@fortawesome/free-solid-svg-icons'
 import { library } from '@fortawesome/fontawesome-svg-core'
 
@@ -301,8 +293,7 @@ export default {
   components: {
     SqlCodeEditor,
     TabSidebar,
-    AiSidebar,
-    RightIconBar
+    RightTabSidebar
   },
 
   setup() {
@@ -313,19 +304,15 @@ export default {
 
     // 侧边栏宽度
     const sidebarWidth = ref(40)
-    const aiWidth = ref(40)
 
     // AI配置
     const selectedAiConfig = ref(null)
-
-    // AI侧边栏状态
-    const isAiSidebarOpen = ref(false)
 
     // QueryHistory组件引用
     const queryHistoryRef = ref(null)
 
     // AI侧边栏引用
-    const aiSidebarRef = ref(null)
+    const rightSidebarRef = ref(null)
 
     // 计算属性
     const activeSessions = computed(() => {
@@ -696,10 +683,7 @@ export default {
     const diagnoseError = async (tab) => {
       if (!tab.error || !tab.sqlText) return
 
-      // 打开AI侧边栏
-      isAiSidebarOpen.value = true
-
-      // 等待AI侧边栏加载完成
+      // 等待组件加载
       await nextTick()
 
       // 构建诊断消息
@@ -719,8 +703,8 @@ ${tab.error}
 3. 修复后的正确SQL`
 
       // 使用AI助手发送消息
-      if (aiSidebarRef.value && aiSidebarRef.value.sendMessage) {
-        aiSidebarRef.value.sendMessage(diagnosticMessage)
+      if (rightSidebarRef.value && rightSidebarRef.value.sendMessage) {
+        rightSidebarRef.value.sendMessage(diagnosticMessage)
       }
 
       // 清除之前的诊断结果
@@ -737,14 +721,8 @@ ${tab.error}
     const analyzeResult = async (tab, result) => {
       if (!tab.sqlText || !result.data) return
 
-      // 打开AI侧边栏
-      isAiSidebarOpen.value = true
-
-      // 等待AI侧边栏加载完成
+      // 等待组件加载
       await nextTick()
-
-      // 再等待一下确保组件完全渲染
-      await new Promise(resolve => setTimeout(resolve, 100))
 
       // 构建分析消息
       const sampleData = result.data.slice(0, 5) // 只显示前5行示例
@@ -779,8 +757,8 @@ ${JSON.stringify(sampleData, null, 2)}
 4. 数据质量如何？`
 
       // 使用AI助手发送消息
-      if (aiSidebarRef.value && aiSidebarRef.value.sendMessage) {
-        aiSidebarRef.value.sendMessage(analysisMessage)
+      if (rightSidebarRef.value && rightSidebarRef.value.sendMessage) {
+        rightSidebarRef.value.sendMessage(analysisMessage)
       }
 
       // 清除之前的分析结果
@@ -973,10 +951,7 @@ ${JSON.stringify(sampleData, null, 2)}
       sidebarWidth.value = width
     }
 
-    const handleAiResize = (width) => {
-      aiWidth.value = width
-    }
-
+    
     // 查询历史处理方法
     const onHistorySelect = (sql) => {
       const tab = currentTab.value
@@ -1057,14 +1032,9 @@ ${JSON.stringify(sampleData, null, 2)}
       markTabModified(currentTab.value)
     })
 
-    // AI侧边栏开关处理（来自AiSidebar组件）
-    const onAiSidebarToggle = (isOpen) => {
-      isAiSidebarOpen.value = isOpen
-    }
-
-    // AI侧边栏开关处理（来自RightIconBar组件）
-    const onToggleAiSidebar = () => {
-      isAiSidebarOpen.value = !isAiSidebarOpen.value
+    // 右侧边栏宽度处理
+    const handleRightSidebarResize = (width) => {
+      // 可以在这里处理宽度变化
     }
 
     // 返回所有需要在模板中使用的数据和方法
@@ -1074,10 +1044,8 @@ ${JSON.stringify(sampleData, null, 2)}
       activeSessions,
       currentTab,
       sidebarWidth,
-      aiWidth,
       selectedAiConfig,
-      isAiSidebarOpen,
-      aiSidebarRef,
+      rightSidebarRef,
       queryHistoryRef,
       newTab,
       closeTab,
@@ -1108,14 +1076,12 @@ ${JSON.stringify(sampleData, null, 2)}
       formatDiagnosis,
       onExecuteAiSql,
       handleSidebarResize,
-      handleAiResize,
       onHistorySelect,
       onHistoryCopy,
       onHistoryExecute,
       onHistoryClear,
       onQueryHistoryReady,
-      onAiSidebarToggle,
-      onToggleAiSidebar,
+      handleRightSidebarResize,
       saveLastConnection,
       loadLastConnection,
       autoConnect
