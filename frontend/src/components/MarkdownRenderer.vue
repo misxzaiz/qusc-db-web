@@ -80,10 +80,6 @@ export default {
     renderedContent() {
       if (!this.content) return ''
 
-      // 调试信息
-      console.log('MarkdownRenderer - 渲染内容:', this.content.substring(0, 100))
-      console.log('allowSqlExecution:', this.allowSqlExecution)
-
       // 处理不完整的Markdown语法
       let processedContent = this.content
 
@@ -141,17 +137,10 @@ export default {
 
           // SQL代码块添加特殊标识，以便后续处理
           let codeClass = `hljs ${actualLang || 'language-unknown'}`
-          console.log('代码块调试 - actualLang:', actualLang, 'code前50:', code.substring(0, 50))
-          console.log('isSqlLanguage结果:', this.isSqlLanguage(actualLang))
-          console.log('isSqlContent结果:', this.isSqlContent(code))
-          console.log('allowSqlExecution:', this.allowSqlExecution)
 
           if (this.allowSqlExecution && (this.isSqlLanguage(actualLang) || this.isSqlContent(code))) {
             // 为SQL代码块添加特殊class
             codeClass = `hljs sql sql-code-block`
-            console.log('✅ 检测到SQL代码块:', actualLang, code.substring(0, 50))
-          } else {
-            console.log('❌ 未检测为SQL代码块')
           }
 
           return `<pre><code class="${codeClass}">${highlightedCode}</code></pre>`
@@ -261,12 +250,7 @@ export default {
 
     setupEventListeners() {
       const container = this.$refs.contentContainer
-      if (!container) {
-        console.log('MarkdownRenderer: container not found')
-        return
-      }
-
-      console.log('MarkdownRenderer: setupEventListeners called')
+      if (!container) return
 
       // 为SQL代码块添加操作按钮
       this.addSqlButtonsToCodeBlocks(container)
@@ -281,9 +265,7 @@ export default {
     addSqlButtonsToCodeBlocks(container) {
       // 查找所有代码块
       const allCodeElements = container.querySelectorAll('pre code')
-      console.log('addSqlButtonsToCodeBlocks: found', allCodeElements.length, 'code blocks')
 
-      let sqlCount = 0
       allCodeElements.forEach((codeElement) => {
         // 检查是否已经添加了按钮
         if (codeElement.closest('.sql-code-block-wrapper')) return
@@ -293,26 +275,10 @@ export default {
 
         // 获取代码内容
         const code = codeElement.textContent || codeElement.innerText
-        console.log('Code block content:', code.substring(0, 50))
 
-        // 临时：为所有代码块都添加按钮
-        // const isSql = this.isSqlContent(code)
-        // if (!isSql) return
-
-        // 临时：为所有代码块都添加按钮进行测试
-        const isSql = true
-
-        /* 测试代码，暂时注释
-        const isSql = code.toUpperCase().includes('SELECT')
-
-        if (!isSql) {
-          console.log('Not SQL, skipping...')
-          return
-        }
-        */
-
-        console.log('Found SQL:', code.substring(0, 50))
-        sqlCount++
+        // 检查是否是SQL
+        const isSql = this.isSqlContent(code)
+        if (!isSql) return
 
         // 创建唯一的ID
         const codeId = `sql-${this.uniqueId}-${Math.random().toString(36).substr(2, 9)}`
@@ -346,8 +312,6 @@ export default {
         // 存储SQL代码
         wrapper.setAttribute('data-sql', encodeURIComponent(code))
       })
-
-      console.log('Added buttons to', sqlCount, 'SQL blocks')
     },
 
     handleSqlButtonClick(event) {
@@ -445,7 +409,6 @@ export default {
   },
   mounted() {
     // 组件挂载后设置事件监听器
-    console.log('MarkdownRenderer mounted, allowSqlExecution:', this.allowSqlExecution)
     this.$nextTick(() => {
       this.setupEventListeners()
     })
