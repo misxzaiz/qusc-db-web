@@ -4,11 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(editor): 添加@表选择器功能支持智能表名引用&#10;&#10;- 在RightTabSidebar.vue中实现@符号触发的表选择器UI- 添加表名搜索和过滤功能，支持快速查找数据库表- 实现表选择器定位逻辑，根据光标位置动态显示&#10;- 集成表名选择后的文本替换和光标定位功能- 添加表引用状态管理，跟踪已引用的表列表&#10;- 在aiApi.js中新增getTableStructure方法获取表结构- 实现表选择器键盘导航支持上下键选择和回车确认&#10;- 添加发送按钮流式输出控制，支持停止操作-优化表选择器">
+    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(ai): 重构AI聊天组件，支持多角色和流式输出- 移除旧版AiChat.vue组件&#10;- 新增支持角色管理和流式输出的AiChat2.vue组件&#10;- 实现基于EventSource的流式消息处理- 添加角色选择和管理功能&#10;- 支持Markdown格式消息渲染&#10;- 集成数据库表结构引用功能&#10;- 保存和加载聊天历史记录&#10;- 支持快捷">
       <change beforePath="$PROJECT_DIR$/frontend/src/components/RightTabSidebar.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/RightTabSidebar.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/services/aiApi.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/aiApi.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/services/api.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/api.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -390,7 +387,23 @@
       <option name="project" value="LOCAL" />
       <updated>1762068706087</updated>
     </task>
-    <option name="localTasksCounter" value="40" />
+    <task id="LOCAL-00040" summary="refactor(api):重构表结构获取逻辑并清理调试代码&#10;&#10;- 将 getTableStructure 方法从 aiApi.js 移动到 sqlApi.js&#10;- 在 SqlEditor.vue 和 RightTabSidebar.vue 中更新调用逻辑&#10;- 移除开发阶段的 console.log 调试输出&#10;- 优化 getTables 方法中的条件判断逻辑&#10;- 清理无用的注释和冗余代码结构">
+      <option name="closed" value="true" />
+      <created>1762069100717</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1762069100717</updated>
+    </task>
+    <task id="LOCAL-00041" summary="feat(ai): 重构AI聊天组件，支持多角色和流式输出- 移除旧版AiChat.vue组件&#10;- 新增支持角色管理和流式输出的AiChat2.vue组件&#10;- 实现基于EventSource的流式消息处理- 添加角色选择和管理功能&#10;- 支持Markdown格式消息渲染&#10;- 集成数据库表结构引用功能&#10;- 保存和加载聊天历史记录&#10;- 支持快捷操作和上下文附加&#10;- 实现流式/普通模式切换&#10;- 添加角色指示器和数据库状态显示">
+      <option name="closed" value="true" />
+      <created>1762069269470</created>
+      <option name="number" value="00041" />
+      <option name="presentableId" value="LOCAL-00041" />
+      <option name="project" value="LOCAL" />
+      <updated>1762069269470</updated>
+    </task>
+    <option name="localTasksCounter" value="42" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -432,8 +445,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="refactor(layout):重构应用布局结构以改善响应式设计&#10;&#10;- 调整 App.vue 中的 flexbox 布局属性以增强主区域自适应能力- 移除 ConnectionTree.vue 中冗余的树形标题容器元素&#10;- 将 index.html 中的 flex 布局样式迁移至 App.vue 组件内&#10;- 修改 TabSidebar.vue 导航图标容器方向为横向排列并设定固定宽度-优化侧边栏面板显示逻辑，使用 CSS 类控制展开" />
-    <MESSAGE value="4" />
     <MESSAGE value="feat(connection-tree):优化数据库节点布局和样式&#10;&#10;- 调整数据库节点结构，使用 div 包裹元素以支持更好的布局" />
     <MESSAGE value="feat(ai): 新增AI生成CRUD、测试数据和执行计划分析功能- 在前端AI服务中添加generateCrud、generateTestData和explainQueryPlan方法&#10;- 在后端AiController中实现对应的CRUD、测试数据生成和执行计划解释接口&#10;- 在AiService中增加generateCrud、generateTestData和explainQueryPlan业务逻辑&#10;- 更新前端AiSidebar组件，支持多种AI功能选择和特殊输入字段&#10;- 添加CRUD生成、测试数据生成和执行计划分析的UI界面和交互逻辑&#10;- 在ConnectionManagerService中实现分页查询和事务管理功能- 更新SqlController以支持分页查询和事务控制命令&#10;- 在SqlEditor中实现多标签页和事务状态显示功能" />
     <MESSAGE value="feat(ai-chat):重构AI聊天界面和功能&#10;&#10;-重新设计聊天头部布局，优化配置选择器和操作按钮&#10;- 添加快捷工具栏，包含生成、解释、优化、分析等常用功能&#10;-重构表引用面板，采用卡片式布局展示数据库表信息&#10;- 改进输入区域，支持Shift+Enter换行和Enter发送&#10;- 添加数据库上下文状态显示，展示当前数据库和表数量&#10;- 实现附加表结构功能，可将数据库上下文添加到输入中&#10;-优化整体界面样式和交互体验&#10;- 完善表结构加载逻辑，增加错误处理和降级机制" />
@@ -457,7 +468,9 @@
     <MESSAGE value="feat(markdown): 支持流式渲染和不完整语法处理&#10;&#10;- 添加 streaming 属性支持实时渲染指示器- 自动补全未闭合的 Markdown 语法元素  -代码块、行内代码、粗体、斜体&#10;- 移除旧版流式输出控制按钮和状态显示&#10;- 统一使用流式消息处理逻辑&#10;- 删除冗余的 normalMessage 方法&#10;- 优化样式和动画效果" />
     <MESSAGE value="feat(editor): 添加@表选择器功能支持智能表名引用&#10;&#10;- 在RightTabSidebar.vue中实现@符号触发的表选择器UI&#10;- 添加表名搜索和过滤功能，支持快速查找数据库表- 实现表选择器定位逻辑，根据光标位置动态显示&#10;- 集成表名选择后的文本替换和光标定位功能&#10;- 添加表引用状态管理，跟踪已引用的表列表- 在SqlEditor.vue中实现getTables方法提供表数据源- 添加相关CSS样式支持表选择器的视觉呈现&#10;-优化表选择器交互体验，支持点击选择和空状态显示" />
     <MESSAGE value="feat(editor): 添加@表选择器功能支持智能表名引用&#10;&#10;- 在RightTabSidebar.vue中实现@符号触发的表选择器UI- 添加表名搜索和过滤功能，支持快速查找数据库表- 实现表选择器定位逻辑，根据光标位置动态显示&#10;- 集成表名选择后的文本替换和光标定位功能- 添加表引用状态管理，跟踪已引用的表列表&#10;- 在aiApi.js中新增getTableStructure方法获取表结构- 实现表选择器键盘导航支持上下键选择和回车确认&#10;- 添加发送按钮流式输出控制，支持停止操作-优化表选择器" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(editor): 添加@表选择器功能支持智能表名引用&#10;&#10;- 在RightTabSidebar.vue中实现@符号触发的表选择器UI- 添加表名搜索和过滤功能，支持快速查找数据库表- 实现表选择器定位逻辑，根据光标位置动态显示&#10;- 集成表名选择后的文本替换和光标定位功能- 添加表引用状态管理，跟踪已引用的表列表&#10;- 在aiApi.js中新增getTableStructure方法获取表结构- 实现表选择器键盘导航支持上下键选择和回车确认&#10;- 添加发送按钮流式输出控制，支持停止操作-优化表选择器" />
+    <MESSAGE value="refactor(api):重构表结构获取逻辑并清理调试代码&#10;&#10;- 将 getTableStructure 方法从 aiApi.js 移动到 sqlApi.js&#10;- 在 SqlEditor.vue 和 RightTabSidebar.vue 中更新调用逻辑&#10;- 移除开发阶段的 console.log 调试输出&#10;- 优化 getTables 方法中的条件判断逻辑&#10;- 清理无用的注释和冗余代码结构" />
+    <MESSAGE value="feat(ai): 重构AI聊天组件，支持多角色和流式输出- 移除旧版AiChat.vue组件&#10;- 新增支持角色管理和流式输出的AiChat2.vue组件&#10;- 实现基于EventSource的流式消息处理- 添加角色选择和管理功能&#10;- 支持Markdown格式消息渲染&#10;- 集成数据库表结构引用功能&#10;- 保存和加载聊天历史记录&#10;- 支持快捷" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(ai): 重构AI聊天组件，支持多角色和流式输出- 移除旧版AiChat.vue组件&#10;- 新增支持角色管理和流式输出的AiChat2.vue组件&#10;- 实现基于EventSource的流式消息处理- 添加角色选择和管理功能&#10;- 支持Markdown格式消息渲染&#10;- 集成数据库表结构引用功能&#10;- 保存和加载聊天历史记录&#10;- 支持快捷" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
 </project>

@@ -60,7 +60,9 @@
 
         <!-- 角色选择 -->
         <div v-if="selectedRole" class="role-bar">
-          <span class="role-avatar">{{ selectedRole.avatar || '🤖' }}</span>
+          <span class="role-avatar">
+            <font-awesome-icon icon="robot" />
+          </span>
           <span class="role-name">{{ selectedRole.name }}</span>
           <button class="btn-icon small" @click="selectedRole = null" title="切换">
             <font-awesome-icon icon="times" />
@@ -69,7 +71,9 @@
 
         <!-- 无角色提示 -->
         <div v-else class="no-role-hint">
-          <span class="hint-icon">💡</span>
+          <span class="hint-icon">
+            <font-awesome-icon icon="lightbulb" />
+          </span>
           <span class="hint-text">请先创建一个AI角色</span>
           <button class="btn-icon small" @click="showCreateRole = true" title="创建角色">
             <font-awesome-icon icon="plus" />
@@ -87,8 +91,8 @@
         <div ref="messagesContainer" class="messages-container">
           <div v-for="(msg, index) in messages" :key="index" class="message" :class="msg.role">
             <div class="message-avatar">
-              <span v-if="msg.role === 'user'">👤</span>
-              <span v-else>{{ currentRoleAvatar }}</span>
+              <font-awesome-icon v-if="msg.role === 'user'" icon="user" />
+              <font-awesome-icon v-else :icon="currentRoleAvatar" />
             </div>
             <div class="message-content">
               <MarkdownRenderer :content="msg.content" :streaming="msg.streaming" />
@@ -154,7 +158,7 @@
                   :class="{ selected: index === selectedTableIndex }"
                   @click="selectTable(table)"
                 >
-                  <span class="icon">📊</span>
+                  <font-awesome-icon class="icon" icon="table" />
                   <span class="table-name">{{ table }}</span>
                 </div>
                 <div v-if="filteredTables.length === 0" class="empty">
@@ -202,7 +206,9 @@
               :class="{ active: selectedRole?.id === role.id }"
               @click="selectedRole = role"
             >
-              <span class="role-avatar">{{ role.avatar || '🤖' }}</span>
+              <span class="role-avatar">
+                <font-awesome-icon icon="robot" />
+              </span>
               <div class="role-info">
                 <span class="role-name">{{ role.name }}</span>
                 <span class="role-desc">{{ role.description }}</span>
@@ -235,7 +241,7 @@
           </div>
           <div class="form-group">
             <label>头像</label>
-            <input v-model="newRole.avatar" placeholder="例如：👨‍💻" maxlength="2" />
+            <input v-model="newRole.avatar" placeholder="例如：robot" />
           </div>
           <div class="form-group">
             <label>描述</label>
@@ -315,7 +321,8 @@ export default {
 
   computed: {
     currentRoleAvatar() {
-      return this.selectedRole?.avatar || '🤖'
+      // 返回图标名称而不是emoji
+      return this.selectedRole?.avatar || 'robot'
     },
 
     filteredTables() {
