@@ -4,9 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(backend):重构AI服务以支持真正的流式处理- 移除OpenAI提供商配置，仅保留心流AI&#10;- 更新心流AI模型为glm-4.6&#10;- 使用Java 11 HttpClient替换RestTemplate实现流式通信- 实现SSE格式数据的实时解析和传输&#10;- 添加详细的流式响应处理逻辑和错误处理- 优化AI配置管理界面，移除OpenAI相关选项&#10;- 更新前端AI设置页面的提供商列表和文档链接">
+    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(sql-editor): 实现AI侧边栏展开状态同步&#10;&#10;- 在AiSidebar2组件中添加toggle事件发射&#10;- 在SqlEditor中监听AI侧边栏toggle事件&#10;- 添加isAiSidebarOpen响应式状态管理- 实现主内容区域根据AI侧边栏状态调整边距- 添加CSS过渡动画优化展开收起体验&#10;- 更新组件间通信机制确保状态同步">
+      <change beforePath="$PROJECT_DIR$/.claude/settings.local.json" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/settings.local.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/controller/AiController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/controller/AiController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/components/AiSidebar2.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/AiSidebar2.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -244,7 +246,15 @@
       <option name="project" value="LOCAL" />
       <updated>1762053731818</updated>
     </task>
-    <option name="localTasksCounter" value="22" />
+    <task id="LOCAL-00022" summary="feat(sql-editor): 实现AI侧边栏展开状态同步&#10;&#10;- 在AiSidebar2组件中添加toggle事件发射&#10;- 在SqlEditor中监听AI侧边栏toggle事件&#10;- 添加isAiSidebarOpen响应式状态管理- 实现主内容区域根据AI侧边栏状态调整边距- 添加CSS过渡动画优化展开收起体验&#10;- 更新组件间通信机制确保状态同步">
+      <option name="closed" value="true" />
+      <created>1762054040138</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1762054040138</updated>
+    </task>
+    <option name="localTasksCounter" value="23" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -295,7 +305,8 @@
     <MESSAGE value="feat(ai-chat):重构AI聊天界面和功能&#10;&#10;-重新设计聊天头部布局，优化配置选择器和操作按钮&#10;- 添加快捷工具栏，包含生成、解释、优化、分析等常用功能&#10;-重构表引用面板，采用卡片式布局展示数据库表信息&#10;- 改进输入区域，支持Shift+Enter换行和Enter发送&#10;- 添加数据库上下文状态显示，展示当前数据库和表数量&#10;- 实现附加表结构功能，可将数据库上下文添加到输入中&#10;-优化整体界面样式和交互体验&#10;- 完善表结构加载逻辑，增加错误处理和降级机制" />
     <MESSAGE value="feat(backend): 实现AI聊天和角色管理功能- 添加流式聊天API支持SSE实时通信&#10;- 实现AI角色预设和自定义角色管理&#10;- 新增自由聊天接口支持历史记录AI- 完善配置更新和删除功能&#10;-优化AI服务层流式响应处理逻辑&#10;- 添加详细的日志记录和错误处理&#10;- 支持多种AI提供商配置管理" />
     <MESSAGE value="feat(backend):重构AI服务以支持真正的流式处理- 移除OpenAI提供商配置，仅保留心流AI&#10;- 更新心流AI模型为glm-4.6&#10;- 使用Java 11 HttpClient替换RestTemplate实现流式通信- 实现SSE格式数据的实时解析和传输&#10;- 添加详细的流式响应处理逻辑和错误处理- 优化AI配置管理界面，移除OpenAI相关选项&#10;- 更新前端AI设置页面的提供商列表和文档链接" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(backend):重构AI服务以支持真正的流式处理- 移除OpenAI提供商配置，仅保留心流AI&#10;- 更新心流AI模型为glm-4.6&#10;- 使用Java 11 HttpClient替换RestTemplate实现流式通信- 实现SSE格式数据的实时解析和传输&#10;- 添加详细的流式响应处理逻辑和错误处理- 优化AI配置管理界面，移除OpenAI相关选项&#10;- 更新前端AI设置页面的提供商列表和文档链接" />
+    <MESSAGE value="feat(sql-editor): 实现AI侧边栏展开状态同步&#10;&#10;- 在AiSidebar2组件中添加toggle事件发射&#10;- 在SqlEditor中监听AI侧边栏toggle事件&#10;- 添加isAiSidebarOpen响应式状态管理- 实现主内容区域根据AI侧边栏状态调整边距- 添加CSS过渡动画优化展开收起体验&#10;- 更新组件间通信机制确保状态同步" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(sql-editor): 实现AI侧边栏展开状态同步&#10;&#10;- 在AiSidebar2组件中添加toggle事件发射&#10;- 在SqlEditor中监听AI侧边栏toggle事件&#10;- 添加isAiSidebarOpen响应式状态管理- 实现主内容区域根据AI侧边栏状态调整边距- 添加CSS过渡动画优化展开收起体验&#10;- 更新组件间通信机制确保状态同步" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
 </project>

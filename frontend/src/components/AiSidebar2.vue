@@ -162,12 +162,73 @@
         <div class="dialog-body">
           <input v-model="newRole.name" placeholder="角色名称" class="dialog-input" />
           <input v-model="newRole.avatar" placeholder="头像(emoji)" maxlength="2" class="dialog-input" />
-          <input v-model="newRole.description" placeholder="描述" class="dialog-input" />
-          <textarea v-model="newRole.systemPrompt" placeholder="系统提示词" rows="3" class="dialog-input"></textarea>
+
+          <!-- AI生成模式 -->
+          <div class="create-mode-toggle">
+            <button
+              class="mode-btn"
+              :class="{ active: !aiGenerateMode }"
+              @click="aiGenerateMode = false"
+            >
+              手动输入
+            </button>
+            <button
+              class="mode-btn"
+              :class="{ active: aiGenerateMode }"
+              @click="aiGenerateMode = true"
+            >
+              AI生成
+            </button>
+          </div>
+
+          <!-- 手动输入模式 -->
+          <div v-if="!aiGenerateMode">
+            <input v-model="newRole.description" placeholder="角色描述" class="dialog-input" />
+            <textarea v-model="newRole.systemPrompt" placeholder="系统提示词" rows="3" class="dialog-input"></textarea>
+          </div>
+
+          <!-- AI生成模式 -->
+          <div v-else>
+            <textarea
+              v-model="roleDescription"
+              placeholder="用一句话描述你想要的角色，例如：一个专业的SQL优化专家"
+              rows="2"
+              class="dialog-input"
+            ></textarea>
+            <button
+              class="btn btn-secondary generate-btn"
+              @click="generateRoleWithAI"
+              :disabled="!roleDescription.trim() || generatingRole"
+            >
+              <font-awesome-icon v-if="!generatingRole" icon="magic" />
+              <font-awesome-icon v-else icon="spinner" spin />
+              {{ generatingRole ? '生成中...' : 'AI生成' }}
+            </button>
+
+            <!-- 生成结果 -->
+            <div v-if="generatedRole" class="generated-result">
+              <div class="result-item">
+                <label>角色名称：</label>
+                <input v-model="generatedRole.name" class="dialog-input" />
+              </div>
+              <div class="result-item">
+                <label>角色描述：</label>
+                <input v-model="generatedRole.description" class="dialog-input" />
+              </div>
+              <div class="result-item">
+                <label>系统提示词：</label>
+                <textarea v-model="generatedRole.systemPrompt" rows="3" class="dialog-input"></textarea>
+              </div>
+              <div class="result-actions">
+                <button class="btn btn-small" @click="regenerateRole">重新生成</button>
+                <button class="btn btn-small btn-primary" @click="useGeneratedRole">使用此角色</button>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="dialog-footer">
           <button class="btn" @click="showCreateRole = false">取消</button>
-          <button class="btn btn-primary" @click="createRole">创建</button>
+          <button v-if="!aiGenerateMode" class="btn btn-primary" @click="createRole">创建</button>
         </div>
       </div>
     </div>
@@ -178,13 +239,17 @@
 import MarkdownRenderer from './MarkdownRenderer.vue'
 import { aiApi } from '../services/aiApi'
 import { connectionStore } from '../stores/connectionStore'
+import { faMagic } from '@fortawesome/free-solid-svg-icons'
+import { library } from '@fortawesome/fontawesome-svg-core'
+
+library.add(faMagic)
 
 export default {
   name: 'AiSidebar',
   components: {
     MarkdownRenderer
   },
-  emits: ['execute-sql'],
+  emits: ['execute-sql', 'toggle'],
   data() {
     return {
       isExpanded: false,
@@ -206,7 +271,12 @@ export default {
         systemPrompt: ''
       },
       useStream: true,
-      eventSource: null
+      eventSource: null,
+      // AI生成相关
+      aiGenerateMode: false,
+      roleDescription: '',
+      generatingRole: false,
+      generatedRole: null
     }
   },
   computed: {
@@ -324,6 +394,98 @@ export default {
       } catch (error) {
         console.error('删除角色失败', error)
       }
+    },
+
+    // AI生成角色
+    async generateRoleWithAI() {
+      if (!this.roleDescription.trim() || !this.selectedConfig) {
+        alert('请输入角色描述并选择AI配置')
+        return
+      }
+
+      this.generatingRole = true
+      this.generatedRole = null
+
+      try {
+        const prompt = `请根据以下描述生成一个AI角色，返回JSON格式：
+描述：${this.roleDescription}
+
+请生成包含以下字段的JSON：
+{
+  "name": "角色名称",
+  "description": "角色描述",
+  "systemPrompt": "详细的系统提示词",
+  "avatar": "合适的emoji表情（2个字符以内）"
+}
+
+要求：
+1. 角色名称要简洁明了
+2. 描述要准确概括角色特点
+3. 系统提示词要详细，包含角色的专业背景、沟通风格、回答方式等
+4. emoji要符合角色特征
+
+只返回JSON，不要其他内容。`
+
+        const response = await fetch('/api/ai/chat/free', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: prompt,
+            configId: this.selectedConfig
+          })
+        })
+
+        if (response.ok) {
+          const result = await response.json()
+          try {
+            // 处理AI返回的内容，去除可能的代码块标记
+            let jsonStr = result.response.trim()
+
+            // 去除```json和```标记
+            if (jsonStr.startsWith('```json')) {
+              jsonStr = jsonStr.substring(7)
+            }
+            if (jsonStr.endsWith('```')) {
+              jsonStr = jsonStr.substring(0, jsonStr.length - 3)
+            }
+
+            // 去除可能的换行符
+            jsonStr = jsonStr.trim()
+
+            const generated = JSON.parse(jsonStr)
+            this.generatedRole = {
+              name: generated.name || '',
+              description: generated.description || '',
+              systemPrompt: generated.systemPrompt || '',
+              avatar: generated.avatar || '🤖'
+            }
+          } catch (e) {
+            console.error('解析AI生成结果失败', e)
+            console.error('原始响应:', result.response)
+            alert('AI生成结果格式错误，请重试')
+          }
+        }
+      } catch (error) {
+        console.error('生成角色失败', error)
+        alert('生成角色失败，请检查网络连接')
+      } finally {
+        this.generatingRole = false
+      }
+    },
+
+    // 重新生成角色
+    regenerateRole() {
+      this.generateRoleWithAI()
+    },
+
+    // 使用生成的角色
+    useGeneratedRole() {
+      if (!this.generatedRole) return
+
+      this.newRole = { ...this.generatedRole }
+      this.generatedRole = null
+      this.roleDescription = ''
+      this.aiGenerateMode = false
     },
 
     quickAction(type) {
@@ -1000,5 +1162,81 @@ export default {
 
 .btn-primary:hover {
   background-color: var(--accent-primary-hover);
+}
+
+/* AI生成模式样式 */
+.create-mode-toggle {
+  display: flex;
+  margin-bottom: 10px;
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 6px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-xs);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  transition: var(--transition-fast);
+}
+
+.mode-btn.active {
+  background-color: var(--accent-primary);
+  color: white;
+}
+
+.generate-btn {
+  width: 100%;
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+
+.generated-result {
+  margin-top: 15px;
+  padding: 10px;
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-primary);
+}
+
+.result-item {
+  margin-bottom: 10px;
+}
+
+.result-item label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.result-item .dialog-input {
+  margin-bottom: 0;
+}
+
+.result-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.btn-small {
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+.btn-secondary {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--border-primary);
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-highlight);
 }
 </style>

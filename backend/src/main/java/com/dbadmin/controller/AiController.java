@@ -453,8 +453,15 @@ public class AiController {
             String response = aiService.freeChat(message, config, systemPrompt, history);
             return ResponseEntity.ok(Map.of("response", response));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            log.error("自由聊天处理失败", e);
+            return ResponseEntity.status(500).body(Map.of("error", "处理失败: " + e.getMessage()));
         }
+    }
+
+    // 兼容路径
+    @PostMapping("/free-chat")
+    public ResponseEntity<?> freeChatCompat(@RequestBody Map<String, Object> request) {
+        return freeChat(request);
     }
 
     private AiConfig getConfig(String configId) throws Exception {
