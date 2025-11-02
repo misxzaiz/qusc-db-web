@@ -4,11 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="refactor(ai): 切换聊天流式传输实现方式&#10;&#10;- 将Server-Sent Events替换为fetch POST请求处理流式响应- 移除EventSource相关代码逻辑&#10;- 更新SQL编辑器右侧边栏宽度计算逻辑&#10;-修正折叠状态下图标栏宽度设置问题">
-      <change beforePath="$PROJECT_DIR$/.claude/settings.local.json" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/settings.local.json" afterDir="false" />
+    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(ai):优化AI聊天流式处理逻辑&#10;&#10;- 重构 aiApi.js 中的 EventSource 模拟实现&#10;- 提前返回 mockEventSource，避免等待 fetch 完成&#10;- 改进流结束判断逻辑，打印日志替代 onmessage 通知- 增强错误处理，确保 fetch 错误能触发 onerror 回调&#10;- 在 RightTabSidebar.vue 中增加 AI 配置检查- 更新 streamChat 调用方式，使用 Promise 处理 eventSource&#10;- 简化 SSE 数据解析流程，移除前缀处理&#10;- 增加连接确认消息过滤和流式内容累积逻辑&#10;- 补充 eventSource 创建失败的错误捕获&#10;- 更新本地测试 curl 命令配置">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/components/RightTabSidebar.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/RightTabSidebar.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -342,7 +340,23 @@
       <option name="project" value="LOCAL" />
       <updated>1762065654025</updated>
     </task>
-    <option name="localTasksCounter" value="34" />
+    <task id="LOCAL-00034" summary="refactor(ai):优化AI助手聊天流式传输和界面交互&#10;&#10;- 将Server-Sent Events替换为fetch POST请求处理流式响应&#10;- 移除EventSource相关代码逻辑&#10;- 新增ensureAiTabOpen方法确保侧边栏展开并切换到AI标签&#10;- 更新SSE数据解析逻辑，支持data:前缀格式&#10;- 优化消息完成状态判断，支持done字段检测&#10;- 改进消息气泡样式，区分用户和AI消息对齐方式&#10;- 调整SQL编辑器调用AI助手流程，先展开侧边栏再发送消息&#10;- 添加流数据解析错误时的原始数据显示- 更新Claude配置中的AI服务测试命令">
+      <option name="closed" value="true" />
+      <created>1762066069225</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1762066069225</updated>
+    </task>
+    <task id="LOCAL-00035" summary="feat(ai):优化AI聊天流式处理逻辑&#10;&#10;- 重构 aiApi.js 中的 EventSource 模拟实现&#10;- 提前返回 mockEventSource，避免等待 fetch 完成&#10;- 改进流结束判断逻辑，打印日志替代 onmessage 通知- 增强错误处理，确保 fetch 错误能触发 onerror 回调&#10;- 在 RightTabSidebar.vue 中增加 AI 配置检查- 更新 streamChat 调用方式，使用 Promise 处理 eventSource&#10;- 简化 SSE 数据解析流程，移除前缀处理&#10;- 增加连接确认消息过滤和流式内容累积逻辑&#10;- 补充 eventSource 创建失败的错误捕获&#10;- 更新本地测试 curl 命令配置">
+      <option name="closed" value="true" />
+      <created>1762066945553</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1762066945553</updated>
+    </task>
+    <option name="localTasksCounter" value="36" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -384,8 +398,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="feat(connection):优化连接树合并逻辑和点击处理&#10;&#10;- 保持已保存连接的原始顺序- 活跃会话优先使用实时数据&#10;- 分离无对应保存" />
-    <MESSAGE value="feat(ai): 集成AI助手功能支持SQL生成和优化- 后端添加RestTemplate Bean支持HTTP请求- 前端新增AI设置和聊天页面路由&#10;- SQL编辑器集成AI助手侧边栏和相关功能按钮&#10;- 实现AI SQL生成、解释和优化功能&#10;- 添加AI配置管理对话框和本地存储支持&#10;- 新增AI助手相关UI组件和样式&#10;- Claude配置添加AI服务测试命令" />
     <MESSAGE value="feat(ai): 添加AI SQL助手功能&#10;&#10;- 新增AI配置管理界面和相关API接口&#10;- 实现SQL生成、解释和优化核心功能&#10;- 支持多种AI服务商（DeepSeek、心流、OpenAI等）&#10;- 添加前端聊天界面用于与AI交互- 集成LocalStorage存储AI配置信息&#10;- 提供AI模型参数配置和测试连接功能- 支持数据库表结构引用和快速操作按钮&#10;- 实现消息历史记录和SQL执行结果展示" />
     <MESSAGE value="1" />
     <MESSAGE value="2" />
@@ -409,7 +421,9 @@
     <MESSAGE value="feat(ai): 移除旧版AI助手侧边栏组件- 删除了完整的 AiSidebar2.vue 组件文件&#10;- 移除了所有相关的模板、脚本和样式代码&#10;- 清理了与旧版AI助手相关的功能实现- 为新版AI助手功能重构做准备" />
     <MESSAGE value="feat(ai): 新增流式聊天和普通聊天接口&#10;&#10;- 实现 streamChat 方法用于处理 Server-Sent Events 流式响应&#10;- 添加 freeChat 方法支持普通聊天请求&#10;- 优化右侧边栏宽度控制逻辑，使用 CSS 变量动态调整布局&#10;- 移除旧版 AI 助手侧边栏组件及相关代码&#10;-重构 AI 诊断功能并集成到新侧边栏中" />
     <MESSAGE value="refactor(ai): 切换聊天流式传输实现方式&#10;&#10;- 将Server-Sent Events替换为fetch POST请求处理流式响应- 移除EventSource相关代码逻辑&#10;- 更新SQL编辑器右侧边栏宽度计算逻辑&#10;-修正折叠状态下图标栏宽度设置问题" />
-    <option name="LAST_COMMIT_MESSAGE" value="refactor(ai): 切换聊天流式传输实现方式&#10;&#10;- 将Server-Sent Events替换为fetch POST请求处理流式响应- 移除EventSource相关代码逻辑&#10;- 更新SQL编辑器右侧边栏宽度计算逻辑&#10;-修正折叠状态下图标栏宽度设置问题" />
+    <MESSAGE value="refactor(ai):优化AI助手聊天流式传输和界面交互&#10;&#10;- 将Server-Sent Events替换为fetch POST请求处理流式响应&#10;- 移除EventSource相关代码逻辑&#10;- 新增ensureAiTabOpen方法确保侧边栏展开并切换到AI标签&#10;- 更新SSE数据解析逻辑，支持data:前缀格式&#10;- 优化消息完成状态判断，支持done字段检测&#10;- 改进消息气泡样式，区分用户和AI消息对齐方式&#10;- 调整SQL编辑器调用AI助手流程，先展开侧边栏再发送消息&#10;- 添加流数据解析错误时的原始数据显示- 更新Claude配置中的AI服务测试命令" />
+    <MESSAGE value="feat(ai):优化AI聊天流式处理逻辑&#10;&#10;- 重构 aiApi.js 中的 EventSource 模拟实现&#10;- 提前返回 mockEventSource，避免等待 fetch 完成&#10;- 改进流结束判断逻辑，打印日志替代 onmessage 通知- 增强错误处理，确保 fetch 错误能触发 onerror 回调&#10;- 在 RightTabSidebar.vue 中增加 AI 配置检查- 更新 streamChat 调用方式，使用 Promise 处理 eventSource&#10;- 简化 SSE 数据解析流程，移除前缀处理&#10;- 增加连接确认消息过滤和流式内容累积逻辑&#10;- 补充 eventSource 创建失败的错误捕获&#10;- 更新本地测试 curl 命令配置" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(ai):优化AI聊天流式处理逻辑&#10;&#10;- 重构 aiApi.js 中的 EventSource 模拟实现&#10;- 提前返回 mockEventSource，避免等待 fetch 完成&#10;- 改进流结束判断逻辑，打印日志替代 onmessage 通知- 增强错误处理，确保 fetch 错误能触发 onerror 回调&#10;- 在 RightTabSidebar.vue 中增加 AI 配置检查- 更新 streamChat 调用方式，使用 Promise 处理 eventSource&#10;- 简化 SSE 数据解析流程，移除前缀处理&#10;- 增加连接确认消息过滤和流式内容累积逻辑&#10;- 补充 eventSource 创建失败的错误捕获&#10;- 更新本地测试 curl 命令配置" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
 </project>

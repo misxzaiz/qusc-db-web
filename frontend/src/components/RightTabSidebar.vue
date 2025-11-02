@@ -880,13 +880,8 @@ export default {
   max-width: calc(100% - 50px);
 }
 
-/* 用户消息右对齐 */
-.message.user .message-content {
-  text-align: right;
-}
-
-/* AI消息左对齐 */
-.message.assistant .message-content {
+/* 用户消息和AI消息都使用左对齐文本 */
+.message-content {
   text-align: left;
 }
 
@@ -897,7 +892,7 @@ export default {
   padding: 10px 15px;
   border-radius: 18px 18px 4px 18px;
   display: inline-block;
-  margin-left: auto;
+  margin-left: auto; /* 保持气泡在右侧 */
 }
 
 .message.assistant .message-content {
