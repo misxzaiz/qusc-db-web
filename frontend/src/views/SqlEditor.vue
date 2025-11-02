@@ -132,6 +132,8 @@
     <!-- 右侧边栏 -->
     <RightTabSidebar
       ref="rightSidebarRef"
+      :get-current-tab-tables="getCurrentTabTables"
+      :get-current-tab-info="getCurrentTabInfo"
       @execute-sql="onExecuteAiSql"
       @resize="handleRightSidebarResize"
     />
@@ -725,12 +727,41 @@ ${tab.sqlText}
       isRightSidebarExpanded.value = width > 40
     }
 
+    // 获取当前Tab的表列表
+    const getCurrentTabTables = () => {
+      const tab = tabs.value[activeTabIndex.value]
+      if (!tab || !tab.sessionId || !tab.database) {
+        return []
+      }
+
+      const session = connectionStore.getSession(tab.sessionId)
+      if (session && session.tables[tab.database]) {
+        return session.tables[tab.database]
+      }
+
+      return []
+    }
+
+    // 获取当前Tab的会话信息
+    const getCurrentTabInfo = () => {
+      const tab = tabs.value[activeTabIndex.value]
+      if (!tab) {
+        return null
+      }
+      return {
+        sessionId: tab.sessionId,
+        database: tab.database
+      }
+    }
+
     return {
       tabs,
       activeTabIndex,
       activeSessions,
       rightSidebarRef,
       isRightSidebarExpanded,
+      getCurrentTabTables,
+      getCurrentTabInfo,
       switchTab,
       closeTab,
       newTab,

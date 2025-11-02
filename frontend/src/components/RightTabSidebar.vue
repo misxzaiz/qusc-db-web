@@ -309,6 +309,17 @@ export default {
     MarkdownRenderer
   },
 
+  props: {
+    getCurrentTabTables: {
+      type: Function,
+      default: () => []
+    },
+    getCurrentTabInfo: {
+      type: Function,
+      default: () => null
+    }
+  },
+
   emits: ['execute-sql', 'resize', 'toggle'],
 
   data() {
@@ -364,7 +375,7 @@ export default {
         return this.availableTables
       }
       return this.availableTables.filter(table =>
-        table.toLowerCase().includes(this.tableSearchQuery.toLowerCase())
+        typeof table === 'string' && table.toLowerCase().includes(this.tableSearchQuery.toLowerCase())
       )
     }
   },
@@ -766,9 +777,10 @@ export default {
       this.selectedTableIndex = -1 // 重置选中索引
 
       // 获取当前连接的表列表
-      const parent = this.$parent
-      if (parent && typeof parent.getTables === 'function') {
-        this.availableTables = parent.getTables()
+      if (typeof this.getCurrentTabTables === 'function') {
+        const tables = this.getCurrentTabTables()
+        // 确保表列表是数组格式
+        this.availableTables = Array.isArray(tables) ? tables : []
       } else {
         this.availableTables = []
       }
@@ -875,21 +887,14 @@ export default {
     // 加载表结构
     async loadTableStructure(tableName) {
       try {
-        const parent = this.$parent
-        if (!parent || !parent.getCurrentSession || !parent.currentTab) {
-          console.warn('无法获取会话信息')
-          return
-        }
-
-        const sessionId = parent.getCurrentSession()
-        const database = parent.currentTab.database
-
-        if (!sessionId || !database) {
+        // 获取当前tab的会话信息
+        const tabInfo = this.getCurrentTabInfo()
+        if (!tabInfo || !tabInfo.sessionId || !tabInfo.database) {
           console.warn('会话ID或数据库为空')
           return
         }
 
-        const response = await sqlApi.getTableCreate(sessionId, database, tableName)
+        const response = await sqlApi.getTableCreate(tabInfo.sessionId, tabInfo.database, tableName)
 
         // 更新表结构信息
         const tableInfo = this.referencedTables.get(tableName)
