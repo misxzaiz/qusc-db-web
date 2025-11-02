@@ -742,7 +742,7 @@ public class AiService {
         if (tableContexts != null && !tableContexts.isEmpty()) {
             StringBuilder tableContext = new StringBuilder("\n\n以下是相关的数据库表结构信息：\n\n");
             for (Map<String, Object> tableCtx : tableContexts) {
-                String tableName = (String) tableCtx.get("table");
+                String tableName = (String) tableCtx.get("tableName");
                 String createSql = (String) tableCtx.get("createSql");
                 if (tableName != null && createSql != null) {
                     tableContext.append("表名：").append(tableName).append("\n");
