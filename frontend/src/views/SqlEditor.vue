@@ -142,6 +142,7 @@
       :get-current-tab-tables="getCurrentTabTables"
       :get-current-tab-info="getCurrentTabInfo"
       @execute-sql="onExecuteAiSql"
+      @open-in-new-tab="onOpenAiSqlInNewTab"
       @resize="handleRightSidebarResize"
     />
   </div>
@@ -731,6 +732,30 @@ ${tab.sqlText}
       }
     }
 
+    const onOpenAiSqlInNewTab = (sql) => {
+      // 创建新Tab
+      const newTab = {
+        id: Date.now().toString(),
+        title: 'SQL',
+        sqlText: sql,
+        results: [],
+        error: null,
+        executing: false,
+        modified: false,
+        sessionId: tabs.value[activeTabIndex.value]?.sessionId || '',
+        database: tabs.value[activeTabIndex.value]?.database || '',
+        inTransaction: false
+      }
+
+      tabs.value.push(newTab)
+      activeTabIndex.value = tabs.value.length - 1
+
+      // 自动执行
+      nextTick(() => {
+        executeSql(newTab)
+      })
+    }
+
     const handleSidebarResize = (width) => {
       // 处理侧边栏大小调整
     }
@@ -858,6 +883,7 @@ ${tab.sqlText}
       onHistoryClear,
       onQueryHistoryReady,
       onExecuteAiSql,
+      onOpenAiSqlInNewTab,
       handleSidebarResize,
       handleRightSidebarResize,
       commitTransaction,

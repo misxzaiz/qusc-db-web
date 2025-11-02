@@ -95,7 +95,62 @@
               <font-awesome-icon v-else :icon="currentRoleAvatar" />
             </div>
             <div class="message-content">
-              <MarkdownRenderer :content="msg.content" :streaming="msg.streaming" />
+              <MarkdownRenderer
+                :content="msg.content"
+                :streaming="msg.streaming"
+                :allow-sql-execution="true"
+                @execute-sql="(sql) => handleExecuteSql(sql, msg)"
+                @copy-sql="handleCopySql"
+                @open-in-new-tab="handleOpenInNewTab"
+              />
+
+              <!-- SQL执行结果 -->
+              <div v-if="msg.sqlResult" class="sql-result-section">
+                <div class="sql-result-header" @click="toggleSqlResult(msg)">
+                  <font-awesome-icon icon="database" />
+                  <span>SQL执行结果</span>
+                  <font-awesome-icon :icon="msg.showSqlResult ? 'chevron-up' : 'chevron-down'" />
+                </div>
+                <div v-if="msg.showSqlResult" class="sql-result-content">
+                  <div v-if="msg.sqlResult.success" class="result-success">
+                    <div class="result-summary">
+                      <span class="success-badge">✓ 执行成功</span>
+                      <span v-if="msg.sqlResult.executionTime" class="execution-time">
+                        耗时: {{ msg.sqlResult.executionTime }}ms
+                      </span>
+                      <span v-if="msg.sqlResult.affectedRows" class="affected-rows">
+                        影响行数: {{ formatNumber(msg.sqlResult.affectedRows) }}
+                      </span>
+                    </div>
+                    <div v-if="msg.sqlResult.data && msg.sqlResult.data.length > 0" class="result-preview">
+                      <table class="result-table">
+                        <thead>
+                          <tr>
+                            <th v-for="col in msg.sqlResult.columns" :key="col">{{ col }}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="(row, idx) in msg.sqlResult.data.slice(0, 5)" :key="idx">
+                            <td v-for="col in msg.sqlResult.columns" :key="col">
+                              {{ formatCellValue(row[col]) }}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <div v-if="msg.sqlResult.data.length > 5" class="more-results">
+                        还有 {{ msg.sqlResult.data.length - 5 }} 行结果...
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="result-error">
+                    <div class="error-header">
+                      <font-awesome-icon icon="exclamation-triangle" />
+                      <span>执行失败</span>
+                    </div>
+                    <pre class="error-message">{{ msg.sqlResult.error }}</pre>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -326,6 +381,7 @@ export default {
     return {
       isCollapsed: true,
       activeTab: 'ai',
+      isResizing: false, // 添加isResizing属性
 
       // AI相关数据
       messages: [],
@@ -904,6 +960,121 @@ export default {
       } catch (error) {
         console.error('加载表结构失败:', error)
       }
+    },
+
+    // SQL执行相关方法
+    async handleExecuteSql(sql, message) {
+      try {
+        // 获取当前Tab信息
+        const tabInfo = this.getCurrentTabInfo()
+        if (!tabInfo || !tabInfo.sessionId) {
+          this.showToast('请先选择数据库连接', 'error')
+          return
+        }
+
+        // 添加执行状态到消息
+        message.sqlResult = {
+          executing: true,
+          success: false,
+          error: null,
+          data: null,
+          columns: [],
+          affectedRows: null,
+          executionTime: null
+        }
+
+        // 执行SQL
+        const startTime = Date.now()
+        const response = await sqlApi.executeSql(tabInfo.sessionId, sql)
+        const executionTime = Date.now() - startTime
+
+        // 更新结果
+        message.sqlResult = {
+          executing: false,
+          success: !response.data.error,
+          error: response.data.error,
+          data: response.data.data || [],
+          columns: response.data.columns || [],
+          affectedRows: response.data.affectedRows,
+          executionTime,
+          showSqlResult: true
+        }
+
+        // 如果成功，通知父组件刷新结果
+        if (message.sqlResult.success) {
+          this.$emit('execute-sql', sql)
+          this.showToast('SQL执行成功', 'success')
+        } else {
+          this.showToast('SQL执行失败: ' + message.sqlResult.error, 'error')
+        }
+      } catch (error) {
+        message.sqlResult = {
+          executing: false,
+          success: false,
+          error: error.message || '执行失败',
+          data: null,
+          columns: [],
+          affectedRows: null,
+          executionTime: null,
+          showSqlResult: true
+        }
+        this.showToast('SQL执行失败: ' + error.message, 'error')
+      }
+    },
+
+    handleCopySql(sql) {
+      // 复制功能已在 MarkdownRenderer 中处理
+      console.log('SQL copied:', sql)
+    },
+
+    handleOpenInNewTab(sql) {
+      // 通知父组件在新Tab中打开SQL
+      this.$emit('open-in-new-tab', sql)
+    },
+
+    toggleSqlResult(message) {
+      // 切换SQL结果显示状态
+      if (message.sqlResult) {
+        message.sqlResult.showSqlResult = !message.sqlResult.showSqlResult
+      }
+    },
+
+    formatNumber(num) {
+      if (num === null || num === undefined) return '0'
+      if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
+      if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
+      return num.toString()
+    },
+
+    formatCellValue(value) {
+      if (value === null || value === undefined) return 'NULL'
+      if (typeof value === 'string') {
+        if (value.length > 50) return value.substring(0, 50) + '...'
+      }
+      return value
+    },
+
+    showToast(message, type = 'info') {
+      // 创建临时提示
+      const toast = document.createElement('div')
+      toast.className = `sql-toast sql-toast-${type}`
+      toast.textContent = message
+      toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff'};
+        color: white;
+        border-radius: 4px;
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+      `
+
+      document.body.appendChild(toast)
+      setTimeout(() => {
+        toast.remove()
+      }, 3000)
     },
   }
 }
@@ -1555,6 +1726,134 @@ export default {
 
 .btn-primary:hover {
   background-color: var(--primary-hover);
+}
+
+/* SQL结果展示样式 */
+.sql-result-section {
+  margin-top: 15px;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.sql-result-header {
+  padding: 10px 15px;
+  background-color: var(--bg-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-primary);
+  transition: background-color 0.2s ease;
+}
+
+.sql-result-header:hover {
+  background-color: var(--bg-highlight);
+}
+
+.sql-result-header span {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.sql-result-content {
+  background-color: var(--bg-primary);
+}
+
+.result-success {
+  padding: 15px;
+}
+
+.result-summary {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 12px;
+}
+
+.success-badge {
+  background-color: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.execution-time,
+.affected-rows {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.result-preview {
+  margin-top: 10px;
+}
+
+.result-table {
+  width: 100%;
+  font-size: 12px;
+  border-collapse: collapse;
+}
+
+.result-table th,
+.result-table td {
+  padding: 6px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-primary);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-table th {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.result-table td {
+  color: var(--text-secondary);
+}
+
+.more-results {
+  padding: 8px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  background-color: var(--bg-secondary);
+  border-radius: 4px;
+  margin-top: 8px;
+}
+
+.result-error {
+  padding: 15px;
+}
+
+.error-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: #dc3545;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.error-message {
+  background-color: var(--bg-secondary);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  border-radius: 4px;
+  padding: 10px;
+  color: #dc3545;
+  font-size: 12px;
+  margin: 0;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* CSS变量 */

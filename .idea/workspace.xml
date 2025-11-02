@@ -7,11 +7,9 @@
     <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(backend):优化数据库连接和SQL查询处理&#10;&#10;- 在ConnectionManagerService中添加Unicode支持和字符编码配置&#10;- 移除重复的serverTimezone属性设置- 在SqlController中改进SQL查询解析逻辑，支持注释移除&#10;- 更新WebConfig中的CORS配置，限制允许的源地址&#10;-优化Claude本地配置文件中的调试命令权限设置">
       <change beforePath="$PROJECT_DIR$/.claude/settings.local.json" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/settings.local.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/config/WebConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/config/WebConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/controller/SqlController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/controller/SqlController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/service/ConnectionManagerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/service/ConnectionManagerService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/target/classes/com/dbadmin/controller/SqlController.class" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/com/dbadmin/controller/SqlController.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/target/classes/com/dbadmin/service/ConnectionManagerService.class" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/com/dbadmin/service/ConnectionManagerService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/MarkdownRenderer.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/MarkdownRenderer.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/RightTabSidebar.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/RightTabSidebar.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

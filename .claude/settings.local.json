@@ -16,7 +16,9 @@
       "Bash(curl -X POST http://localhost:3000/api/sql/execute -H \"Content-Type: application/json\" -d '{\"\"sessionId\"\":\"\"test\"\",\"\"sql\"\":\"\"SELECT 1\"\"}' -v)",
       "Bash(cmd //c \"taskkill /PID:14824 /F\")",
       "Bash(javac -encoding UTF-8 -cp \"target/classes:lib/*\" -d target/classes src/main/java/com/dbadmin/controller/SqlController.java)",
-      "Bash(java -cp \"target/classes;C:/Users/28409/.m2/repository/*/*/*.jar\" com.dbadmin.DbAdminApplication)"
+      "Bash(java -cp \"target/classes;C:/Users/28409/.m2/repository/*/*/*.jar\" com.dbadmin.DbAdminApplication)",
+      "Bash(mvn clean package -DskipTests)",
+      "Bash(./mvnw clean package -DskipTests)"
     ],
     "deny": [],
     "ask": []

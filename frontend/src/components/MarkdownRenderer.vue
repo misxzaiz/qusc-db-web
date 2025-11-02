@@ -1,16 +1,58 @@
 <template>
   <div class="markdown-renderer">
-    <div v-html="renderedContent"></div>
+    <div ref="contentContainer" v-html="renderedContent"></div>
     <span v-if="streaming" class="streaming-cursor">|</span>
+
+    <!-- SQL确认对话框 -->
+    <SqlConfirmDialog
+      v-if="showConfirmDialog"
+      :sql="sqlToExecute"
+      :risk-level="sqlRiskLevel"
+      @confirm="handleSqlConfirm"
+      @cancel="handleSqlCancel"
+    />
   </div>
 </template>
 
 <script>
 import { marked } from 'marked'
 import hljs from 'highlight.js'
+import SqlConfirmDialog from './SqlConfirmDialog.vue'
+
+// SQL风险等级定义
+const SQL_RISK_LEVELS = {
+  LOW: {
+    keywords: ['SELECT', 'SHOW', 'DESCRIBE', 'EXPLAIN', 'WITH'],
+    color: '#28a745',
+    confirmRequired: false,
+    message: '安全操作'
+  },
+  MEDIUM: {
+    keywords: ['INSERT', 'UPDATE', 'DELETE', 'REPLACE'],
+    color: '#ffc107',
+    confirmRequired: true,
+    message: '将修改数据'
+  },
+  HIGH: {
+    keywords: ['CREATE', 'ALTER', 'DROP', 'TRUNCATE'],
+    color: '#dc3545',
+    confirmRequired: true,
+    message: '将变更表结构'
+  },
+  CRITICAL: {
+    patterns: [/DROP\s+DATABASE/i, /DROP\s+TABLE\s+(?!IF\s+EXISTS)/i, /DELETE\s+FROM\s+\w+\s+WHERE\s+1\s*=\s*1/i],
+    color: '#721c24',
+    confirmRequired: true,
+    doubleConfirm: true,
+    message: '危险操作！'
+  }
+}
 
 export default {
   name: 'MarkdownRenderer',
+  components: {
+    SqlConfirmDialog
+  },
   props: {
     content: {
       type: String,
@@ -19,27 +61,28 @@ export default {
     streaming: {
       type: Boolean,
       default: false
+    },
+    allowSqlExecution: {
+      type: Boolean,
+      default: true
+    }
+  },
+  emits: ['execute-sql', 'copy-sql', 'open-in-new-tab'],
+  data() {
+    return {
+      showConfirmDialog: false,
+      sqlToExecute: '',
+      sqlRiskLevel: 'LOW',
+      uniqueId: Math.random().toString(36).substr(2, 9)
     }
   },
   computed: {
     renderedContent() {
       if (!this.content) return ''
 
-      // 配置 marked
-      marked.setOptions({
-        highlight: (code, lang) => {
-          if (lang && hljs.getLanguage(lang)) {
-            try {
-              return hljs.highlight(code, { language: lang }).value
-            } catch (err) {
-              console.error('Highlight error:', err)
-            }
-          }
-          return hljs.highlightAuto(code).value
-        },
-        breaks: true,
-        gfm: true
-      })
+      // 调试信息
+      console.log('MarkdownRenderer - 渲染内容:', this.content.substring(0, 100))
+      console.log('allowSqlExecution:', this.allowSqlExecution)
 
       // 处理不完整的Markdown语法
       let processedContent = this.content
@@ -68,7 +111,350 @@ export default {
         processedContent += '*'
       }
 
-      return marked(processedContent)
+      // 预处理SQL代码块，为没有语言标识的SQL代码块添加标识
+      processedContent = this.preprocessSqlBlocks(processedContent)
+
+      // 配置 marked
+      marked.setOptions({
+        highlight: (code, lang) => {
+          let highlightedCode = code
+          let actualLang = lang
+
+          // 如果没有语言标识，尝试自动检测
+          if (!lang) {
+            const detected = this.detectSqlLanguage(code)
+            if (detected) {
+              actualLang = detected
+            }
+          }
+
+          if (actualLang && hljs.getLanguage(actualLang)) {
+            try {
+              highlightedCode = hljs.highlight(code, { language: actualLang }).value
+            } catch (err) {
+              console.error('Highlight error:', err)
+              highlightedCode = hljs.highlightAuto(code).value
+            }
+          } else {
+            highlightedCode = hljs.highlightAuto(code).value
+          }
+
+          // SQL代码块添加特殊标识，以便后续处理
+          let codeClass = `hljs ${actualLang || 'language-unknown'}`
+          console.log('代码块调试 - actualLang:', actualLang, 'code前50:', code.substring(0, 50))
+          console.log('isSqlLanguage结果:', this.isSqlLanguage(actualLang))
+          console.log('isSqlContent结果:', this.isSqlContent(code))
+          console.log('allowSqlExecution:', this.allowSqlExecution)
+
+          if (this.allowSqlExecution && (this.isSqlLanguage(actualLang) || this.isSqlContent(code))) {
+            // 为SQL代码块添加特殊class
+            codeClass = `hljs sql sql-code-block`
+            console.log('✅ 检测到SQL代码块:', actualLang, code.substring(0, 50))
+          } else {
+            console.log('❌ 未检测为SQL代码块')
+          }
+
+          return `<pre><code class="${codeClass}">${highlightedCode}</code></pre>`
+        },
+        breaks: true,
+        gfm: true
+      })
+
+      const rendered = marked(processedContent)
+
+      // 在下一个tick设置事件监听
+      this.$nextTick(() => {
+        this.setupEventListeners()
+      })
+
+      return rendered
+    }
+  },
+  methods: {
+    isSqlLanguage(lang) {
+      if (!lang) return false
+      const sqlLanguages = ['sql', 'mysql', 'postgresql', 'postgres', 'plsql', 'tsql', 'mariadb']
+      return sqlLanguages.includes(lang.toLowerCase())
+    },
+
+    detectSqlLanguage(code) {
+      // 检测代码是否是SQL
+      const trimmedCode = code.trim()
+
+      // SQL关键字检测
+      const sqlKeywords = [
+        'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'ALTER', 'DROP',
+        'WITH', 'MERGE', 'TRUNCATE', 'BEGIN', 'COMMIT', 'ROLLBACK'
+      ]
+
+      const firstWord = trimmedCode.split(/\s+/)[0]?.toUpperCase()
+      if (sqlKeywords.includes(firstWord)) {
+        return 'sql'
+      }
+
+      return null
+    },
+
+    isSqlContent(code) {
+      // 检测内容是否是SQL语句
+      const trimmedCode = code.trim().toUpperCase()
+
+      // 检查是否包含SQL关键字
+      const sqlPatterns = [
+        /^SELECT\s+/i,
+        /^INSERT\s+/i,
+        /^UPDATE\s+/i,
+        /^DELETE\s+/i,
+        /^CREATE\s+/i,
+        /^ALTER\s+/i,
+        /^DROP\s+/i,
+        /^WITH\s+/i,
+        /^TRUNCATE\s+/i,
+        /\bFROM\s+\w+/i,
+        /\bWHERE\s+/i,
+        /\bJOIN\s+/i
+      ]
+
+      return sqlPatterns.some(pattern => pattern.test(trimmedCode))
+    },
+
+    preprocessSqlBlocks(content) {
+      // 预处理代码块，为没有语言标识的SQL代码块添加标识
+      return content.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
+        // 如果已经有语言标识，直接返回
+        if (lang) return match
+
+        // 检测是否是SQL代码
+        if (this.isSqlContent(code)) {
+          return '```sql\n' + code + '```'
+        }
+
+        return match
+      })
+    },
+
+    
+    analyzeSqlRisk(sql) {
+      const normalizedSql = sql.toUpperCase().trim()
+
+      // 检查极危险操作
+      for (const [level, config] of Object.entries(SQL_RISK_LEVELS)) {
+        if (config.patterns) {
+          for (const pattern of config.patterns) {
+            if (pattern.test(sql)) {
+              return level
+            }
+          }
+        }
+
+        if (config.keywords) {
+          for (const keyword of config.keywords) {
+            if (normalizedSql.startsWith(keyword)) {
+              return level
+            }
+          }
+        }
+      }
+
+      return 'LOW'
+    },
+
+    setupEventListeners() {
+      const container = this.$refs.contentContainer
+      if (!container) {
+        console.log('MarkdownRenderer: container not found')
+        return
+      }
+
+      console.log('MarkdownRenderer: setupEventListeners called')
+
+      // 为SQL代码块添加操作按钮
+      this.addSqlButtonsToCodeBlocks(container)
+
+      // 移除旧的事件监听器
+      container.removeEventListener('click', this.handleSqlButtonClick)
+
+      // 添加新的事件监听器
+      container.addEventListener('click', this.handleSqlButtonClick)
+    },
+
+    addSqlButtonsToCodeBlocks(container) {
+      // 查找所有代码块
+      const allCodeElements = container.querySelectorAll('pre code')
+      console.log('addSqlButtonsToCodeBlocks: found', allCodeElements.length, 'code blocks')
+
+      let sqlCount = 0
+      allCodeElements.forEach((codeElement) => {
+        // 检查是否已经添加了按钮
+        if (codeElement.closest('.sql-code-block-wrapper')) return
+
+        const preElement = codeElement.parentElement
+        if (!preElement) return
+
+        // 获取代码内容
+        const code = codeElement.textContent || codeElement.innerText
+        console.log('Code block content:', code.substring(0, 50))
+
+        // 临时：为所有代码块都添加按钮
+        // const isSql = this.isSqlContent(code)
+        // if (!isSql) return
+
+        // 临时：为所有代码块都添加按钮进行测试
+        const isSql = true
+
+        /* 测试代码，暂时注释
+        const isSql = code.toUpperCase().includes('SELECT')
+
+        if (!isSql) {
+          console.log('Not SQL, skipping...')
+          return
+        }
+        */
+
+        console.log('Found SQL:', code.substring(0, 50))
+        sqlCount++
+
+        // 创建唯一的ID
+        const codeId = `sql-${this.uniqueId}-${Math.random().toString(36).substr(2, 9)}`
+
+        // 创建包装器
+        const wrapper = document.createElement('div')
+        wrapper.className = 'sql-code-block-wrapper'
+        wrapper.setAttribute('data-code-id', codeId)
+
+        // 在pre元素前插入包装器
+        preElement.parentNode.insertBefore(wrapper, preElement)
+
+        // 将pre元素移入包装器
+        wrapper.appendChild(preElement)
+
+        // 创建操作按钮
+        const actionsDiv = document.createElement('div')
+        actionsDiv.className = 'sql-actions'
+        actionsDiv.innerHTML = `
+          <button class="sql-btn" data-action="copy" data-code-id="${codeId}" title="复制">
+            <i class="fas fa-copy"></i>
+          </button>
+          <button class="sql-btn" data-action="execute" data-code-id="${codeId}" title="执行">
+            <i class="fas fa-play"></i>
+          </button>
+        `
+
+        // 在pre元素前插入按钮
+        wrapper.insertBefore(actionsDiv, preElement)
+
+        // 存储SQL代码
+        wrapper.setAttribute('data-sql', encodeURIComponent(code))
+      })
+
+      console.log('Added buttons to', sqlCount, 'SQL blocks')
+    },
+
+    handleSqlButtonClick(event) {
+      const target = event.target
+      const button = target.closest('.sql-btn')
+
+      if (!button) return
+
+      const action = button.dataset.action
+      const codeId = button.dataset.codeId
+
+      if (!action || !codeId) return
+
+      const element = document.querySelector(`[data-code-id="${codeId}"]`)
+      if (!element) return
+
+      const sql = decodeURIComponent(element.dataset.sql)
+
+      switch (action) {
+        case 'copy':
+          this.copySql(sql)
+          break
+        case 'execute':
+          this.executeSql(sql)
+          break
+        case 'new-tab':
+          this.openSqlInNewTab(sql)
+          break
+      }
+    },
+
+    copySql(sql) {
+      navigator.clipboard.writeText(sql).then(() => {
+        this.$emit('copy-sql', sql)
+        this.showToast('SQL已复制到剪贴板', 'success')
+      }).catch(err => {
+        console.error('复制失败:', err)
+        this.showToast('复制失败', 'error')
+      })
+    },
+
+    executeSql(sql) {
+      const riskLevel = this.analyzeSqlRisk(sql)
+
+      if (riskLevel === 'LOW') {
+        // 低风险直接执行
+        this.$emit('execute-sql', sql)
+      } else {
+        // 中高风险需要确认
+        this.sqlToExecute = sql
+        this.sqlRiskLevel = riskLevel
+        this.showConfirmDialog = true
+      }
+    },
+
+    openSqlInNewTab(sql) {
+      this.$emit('open-in-new-tab', sql)
+    },
+
+    showToast(message, type = 'info') {
+      // 创建临时提示
+      const toast = document.createElement('div')
+      toast.className = `sql-toast sql-toast-${type}`
+      toast.textContent = message
+      toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff'};
+        color: white;
+        border-radius: 4px;
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+      `
+
+      document.body.appendChild(toast)
+      setTimeout(() => {
+        toast.remove()
+      }, 3000)
+    },
+
+    handleSqlConfirm() {
+      this.$emit('execute-sql', this.sqlToExecute)
+      this.showConfirmDialog = false
+      this.sqlToExecute = ''
+      this.sqlRiskLevel = 'LOW'
+    },
+
+    handleSqlCancel() {
+      this.showConfirmDialog = false
+      this.sqlToExecute = ''
+      this.sqlRiskLevel = 'LOW'
+    }
+  },
+  mounted() {
+    // 组件挂载后设置事件监听器
+    console.log('MarkdownRenderer mounted, allowSqlExecution:', this.allowSqlExecution)
+    this.$nextTick(() => {
+      this.setupEventListeners()
+    })
+  },
+  beforeUnmount() {
+    // 清理事件监听器
+    const container = this.$refs.contentContainer
+    if (container) {
+      container.removeEventListener('click', this.handleSqlButtonClick)
     }
   }
 }
@@ -277,5 +663,213 @@ export default {
 
 .markdown-renderer :deep(.hljs-strong) {
   font-weight: bold;
+}
+
+/* SQL代码块样式 */
+.markdown-renderer :deep(.sql-code-block-wrapper) {
+  position: relative;
+  margin: 1em 0;
+  border: 1px solid var(--border-primary);
+  border-radius: 4px;
+  background-color: var(--bg-secondary);
+}
+
+.markdown-renderer :deep(.sql-actions) {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 6px;
+  z-index: 10;
+}
+
+.markdown-renderer :deep(.sql-btn) {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 4px;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.markdown-renderer :deep(.sql-btn:hover) {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+}
+
+.markdown-renderer :deep(.sql-btn i) {
+  pointer-events: none;
+}
+
+/* SQL代码块pre样式调整 */
+.markdown-renderer :deep(.sql-code-block-wrapper pre) {
+  margin: 0;
+  background-color: transparent;
+  border: none;
+  padding: 2em 1em 1em 1em; /* 为按钮留出空间 */
+  overflow-x: auto;
+}
+
+/* Toast动画 */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* 确认对话框样式 */
+.sql-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.sql-confirm-dialog {
+  background-color: var(--bg-primary);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.sql-confirm-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border-primary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sql-confirm-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 18px;
+}
+
+.sql-confirm-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.sql-preview {
+  margin-bottom: 20px;
+}
+
+.sql-preview h4 {
+  margin: 0 0 10px 0;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.sql-preview pre {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 4px;
+  padding: 12px;
+  overflow-x: auto;
+  font-size: 13px;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.sql-risk-warning {
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.sql-risk-warning.low {
+  background-color: rgba(40, 167, 69, 0.1);
+  border: 1px solid rgba(40, 167, 69, 0.3);
+  color: #28a745;
+}
+
+.sql-risk-warning.medium {
+  background-color: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  color: #ffc107;
+}
+
+.sql-risk-warning.high {
+  background-color: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  color: #dc3545;
+}
+
+.sql-risk-warning.critical {
+  background-color: rgba(114, 28, 36, 0.1);
+  border: 1px solid rgba(114, 28, 36, 0.3);
+  color: #721c24;
+}
+
+.sql-confirm-footer {
+  padding: 20px;
+  border-top: 1px solid var(--border-primary);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.sql-confirm-btn {
+  padding: 8px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.sql-confirm-btn-cancel {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+}
+
+.sql-confirm-btn-cancel:hover {
+  background-color: var(--bg-highlight);
+}
+
+.sql-confirm-btn-execute {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.sql-confirm-btn-execute:hover {
+  background-color: var(--primary-hover);
+}
+
+.sql-confirm-btn-execute.medium {
+  background-color: #ffc107;
+}
+
+.sql-confirm-btn-execute.high {
+  background-color: #dc3545;
+}
+
+.sql-confirm-btn-execute.critical {
+  background-color: #721c24;
 }
 </style>
