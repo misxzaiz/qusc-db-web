@@ -755,7 +755,7 @@ ${tab.sqlText}
 
 .app-layout {
   display: flex;
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
 }
 
