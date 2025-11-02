@@ -4,12 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(backend):优化数据库连接和SQL查询处理&#10;&#10;- 在ConnectionManagerService中添加Unicode支持和字符编码配置&#10;- 移除重复的serverTimezone属性设置- 在SqlController中改进SQL查询解析逻辑，支持注释移除&#10;- 更新WebConfig中的CORS配置，限制允许的源地址&#10;-优化Claude本地配置文件中的调试命令权限设置">
-      <change beforePath="$PROJECT_DIR$/.claude/settings.local.json" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/settings.local.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/MarkdownRenderer.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/MarkdownRenderer.vue" afterDir="false" />
+    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="chore(frontend): 移除 MarkdownRenderer 中的调试日志&#10;&#10;- 删除了多个用于调试的 console.log语句&#10;- 清理了 SQL 代码块检测逻辑中的临时测试代码&#10;- 移除了组件挂载和事件监听器设置时的调试输出&#10;- 简化了 addSqlButtonsToCodeBlocks 方法中的日志记录&#10;- 去除了代码块内容和 SQL 检测相关的调试信息打印">
       <change beforePath="$PROJECT_DIR$/frontend/src/components/RightTabSidebar.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/RightTabSidebar.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -447,7 +443,23 @@
       <option name="project" value="LOCAL" />
       <updated>1762081070619</updated>
     </task>
-    <option name="localTasksCounter" value="47" />
+    <task id="LOCAL-00047" summary="feat(frontend): 添加SQL代码执行和-结果展示功能 在MarkdownRenderer组件中实现SQL代码块识别和高亮&#10;- 添加SQL风险分析和确认对话框机制- 实现SQL代码块的操作按钮（复制、执行、新标签页打开）- 在RightTabSidebar中添加SQL执行结果展示区域&#10;- 支持SQL执行成功/失败状态显示和数据预览&#10;- 添加SQL执行时间统计和影响行数显示&#10;- 实现从AI回复中提取SQL并在新标签页执行的功能&#10;- 添加代码块复制成功提示和SQL执行风险警告&#10;-优化SQL代码块样式和交互体验- 添加调试日志和错误处理机制">
+      <option name="closed" value="true" />
+      <created>1762093955592</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1762093955592</updated>
+    </task>
+    <task id="LOCAL-00048" summary="chore(frontend): 移除 MarkdownRenderer 中的调试日志&#10;&#10;- 删除了多个用于调试的 console.log语句&#10;- 清理了 SQL 代码块检测逻辑中的临时测试代码&#10;- 移除了组件挂载和事件监听器设置时的调试输出&#10;- 简化了 addSqlButtonsToCodeBlocks 方法中的日志记录&#10;- 去除了代码块内容和 SQL 检测相关的调试信息打印">
+      <option name="closed" value="true" />
+      <created>1762094123772</created>
+      <option name="number" value="00048" />
+      <option name="presentableId" value="LOCAL-00048" />
+      <option name="project" value="LOCAL" />
+      <updated>1762094123772</updated>
+    </task>
+    <option name="localTasksCounter" value="49" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -489,8 +501,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="feat(ai):重构AI角色管理和聊天历史功能- 后端流式聊天接口支持历史记录传递和解析&#10;- 移除角色管理API，前端改为本地存储自定义角色- 前端AI侧边栏添加角色标签选择和生成引导&#10;- 实现按角色分组的历史记录存储和加载&#10;-优化聊天历史过滤逻辑，排除错误消息&#10;- 更新自由聊天接口参数，移除roleId依赖&#10;- 添加自定义角色创建、保存和删除功能- 完善角色切换时的历史记录保存与恢复" />
-    <MESSAGE value="feat(ai):重构AI流式聊天接口和前端交互- 后端AiController将流式聊天接口从GET改为POST方法&#10;- 使用ResponseBodyEmitter替代SseEmitter处理流式响应&#10;- 修改历史记录参数传递方式，通过request body接收- 更新事件发送格式为标准SSE格式(data: ...\\n\\n)&#10;- 前端AiSidebar2实现@表引用功能，支持表结构自动注入&#10;- 添加表选择器UI和相关交互逻辑- 实现表结构获取接口getTableSchemaWithDatabase&#10;- SqlEditor增加自动连接最后使用数据库功能&#10;- 更新Claude测试配置和调试命令" />
     <MESSAGE value="feat(ai): 实现AI聊天中表结构上下文注入功能&#10;&#10;- 后端接口支持传入tableContexts参数，包含表名和建表SQL&#10;- AiService中处理表结构信息，将其附加到用户消息中&#10;- 前端实现@表名自动识别并生成表标签&#10;- 新增表结构获取接口getTableCreateSql&#10;- 优化前端表标签交互和样式显示&#10;- 调整配置选择器位置和输入框布局&#10;- 改进消息发送快捷键处理逻辑" />
     <MESSAGE value="feat(ai): 调整AI配置选择器位置和优化输入区布局&#10;&#10;- 将AI配置选择器从输入区移动至顶部AI配置栏&#10;- 更新配置选择器样式为紧凑型设计&#10;- 移除输入区@表名自动创建标签逻辑&#10;- 优化表标签交互和样式显示- 改进消息发送快捷键处理逻辑" />
     <MESSAGE value="feat(ai):重构AI诊断和分析功能集成到侧边栏&#10;&#10;- 修改sendMessage方法支持定义消息发送自- 移除SQL编辑器中的内联AI诊断结果显示&#10;- 添加AI分析按钮禁用状态和提示信息- 集成AI错误诊断和查询结果分析到AI助手&#10;- 添加AI侧边栏引用和相关图标库&#10;- 优化AI消息格式和内容展示&#10;- 更新组件引用和方法导出" />
@@ -514,7 +524,9 @@
     <MESSAGE value="feat(sql-editor): 添加右侧边栏展开/折叠功能&#10;&#10;- 实现右侧边栏展开状态的响应式控制&#10;- 添加边栏宽度变化时的过渡动画效果&#10;- 更新主内容区布局以适应边栏状态变化&#10;- 初始化边栏默认为折叠状态&#10;- 添加边栏展开时的样式类名切换逻辑" />
     <MESSAGE value="feat(sql-editor):优化右侧边栏表结构加载逻辑&#10;&#10;- 为 RightTabSidebar 组件添加 getCurrentTabTables 和 getCurrentTabInfo 属性&#10;- 改进表搜索过滤逻辑，增加类型检查避免非字符串项报错&#10;- 使用 props 替代 $parent 访问方式获取当前 tab 的表列表和会话信息&#10;- 确保从 getCurrentTabTables 获取的数据为数组格式- 重构 loadTableStructure 方法，通过 getCurrentTabInfo 获取会话信息&#10;- 在 SqlEditor 组件中实现 getCurrentTabTables 和 getCurrentTabInfo 方法&#10;- 通过响应式状态管理当前 tab 的表列表和会话信息" />
     <MESSAGE value="feat(backend):优化数据库连接和SQL查询处理&#10;&#10;- 在ConnectionManagerService中添加Unicode支持和字符编码配置&#10;- 移除重复的serverTimezone属性设置- 在SqlController中改进SQL查询解析逻辑，支持注释移除&#10;- 更新WebConfig中的CORS配置，限制允许的源地址&#10;-优化Claude本地配置文件中的调试命令权限设置" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(backend):优化数据库连接和SQL查询处理&#10;&#10;- 在ConnectionManagerService中添加Unicode支持和字符编码配置&#10;- 移除重复的serverTimezone属性设置- 在SqlController中改进SQL查询解析逻辑，支持注释移除&#10;- 更新WebConfig中的CORS配置，限制允许的源地址&#10;-优化Claude本地配置文件中的调试命令权限设置" />
+    <MESSAGE value="feat(frontend): 添加SQL代码执行和-结果展示功能 在MarkdownRenderer组件中实现SQL代码块识别和高亮&#10;- 添加SQL风险分析和确认对话框机制- 实现SQL代码块的操作按钮（复制、执行、新标签页打开）- 在RightTabSidebar中添加SQL执行结果展示区域&#10;- 支持SQL执行成功/失败状态显示和数据预览&#10;- 添加SQL执行时间统计和影响行数显示&#10;- 实现从AI回复中提取SQL并在新标签页执行的功能&#10;- 添加代码块复制成功提示和SQL执行风险警告&#10;-优化SQL代码块样式和交互体验- 添加调试日志和错误处理机制" />
+    <MESSAGE value="chore(frontend): 移除 MarkdownRenderer 中的调试日志&#10;&#10;- 删除了多个用于调试的 console.log语句&#10;- 清理了 SQL 代码块检测逻辑中的临时测试代码&#10;- 移除了组件挂载和事件监听器设置时的调试输出&#10;- 简化了 addSqlButtonsToCodeBlocks 方法中的日志记录&#10;- 去除了代码块内容和 SQL 检测相关的调试信息打印" />
+    <option name="LAST_COMMIT_MESSAGE" value="chore(frontend): 移除 MarkdownRenderer 中的调试日志&#10;&#10;- 删除了多个用于调试的 console.log语句&#10;- 清理了 SQL 代码块检测逻辑中的临时测试代码&#10;- 移除了组件挂载和事件监听器设置时的调试输出&#10;- 简化了 addSqlButtonsToCodeBlocks 方法中的日志记录&#10;- 去除了代码块内容和 SQL 检测相关的调试信息打印" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="XDebuggerManager">

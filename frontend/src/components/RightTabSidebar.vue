@@ -985,7 +985,7 @@ export default {
 
         // 执行SQL
         const startTime = Date.now()
-        const response = await sqlApi.executeSql(tabInfo.sessionId, sql)
+        const response = await sqlApi.execute(tabInfo.sessionId, sql)
         const executionTime = Date.now() - startTime
 
         // 更新结果
