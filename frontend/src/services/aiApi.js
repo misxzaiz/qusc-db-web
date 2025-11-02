@@ -194,7 +194,15 @@ export const aiApi = {
         tableContexts
       }
 
-      return fetch(url, {
+      // 创建一个模拟EventSource的对象
+      const mockEventSource = {
+        onmessage: null,
+        onerror: null,
+        close: null
+      }
+
+      // 启动fetch请求
+      fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -209,13 +217,8 @@ export const aiApi = {
         const reader = response.body.getReader()
         const decoder = new TextDecoder()
 
-        // 创建一个模拟EventSource的对象
-        const mockEventSource = {
-          onmessage: null,
-          onerror: null,
-          close: () => {
-            reader.cancel()
-          }
+        mockEventSource.close = () => {
+          reader.cancel()
         }
 
         // 读取流
@@ -224,9 +227,7 @@ export const aiApi = {
             while (true) {
               const { done, value } = await reader.read()
               if (done) {
-                if (mockEventSource.onmessage) {
-                  mockEventSource.onmessage({ data: '[DONE]' })
-                }
+                console.log('aiApi.js 流读取结束')
                 break
               }
 
@@ -239,6 +240,8 @@ export const aiApi = {
                   if (data && data !== '[DONE]') {
                     if (mockEventSource.onmessage) {
                       mockEventSource.onmessage({ data })
+                    } else {
+                      console.warn('aiApi.js: onmessage 未设置，数据丢失:', data)
                     }
                   }
                 }
@@ -253,8 +256,15 @@ export const aiApi = {
         }
 
         readStream()
-        return mockEventSource
+      }).catch(error => {
+        console.error('Fetch error:', error)
+        if (mockEventSource.onerror) {
+          mockEventSource.onerror(error)
+        }
       })
+
+      // 立即返回 mockEventSource，不等待 fetch 完成
+      return mockEventSource
     })
   },
 

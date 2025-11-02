@@ -377,6 +377,11 @@ export default {
       const message = customMessage || this.inputText
       if (!message.trim() || this.loading || this.streaming) return
 
+      if (!this.selectedConfig) {
+        console.warn('没有选择AI配置')
+        return
+      }
+
       this.messages.push({
         role: 'user',
         content: message,
@@ -393,7 +398,7 @@ export default {
       } else {
         await this.normalMessage(message)
       }
-
+      
       this.saveHistory()
     },
 
@@ -411,19 +416,29 @@ export default {
             createSql: info.createSql
           }))
 
-        this.eventSource = aiApi.streamChat(message, this.selectedConfig, systemPrompt, history, tableContexts)
+        const eventSourcePromise = aiApi.streamChat(message, this.selectedConfig, systemPrompt, history, tableContexts)
 
-        this.eventSource.onmessage = (event) => {
-          const data = event.data
-          // 处理SSE格式数据
-          if (data.startsWith('data: ')) {
-            const jsonStr = data.slice(6) // 移除 'data: ' 前缀
+        // 等待 Promise 解析以获取 eventSource 对象
+        eventSourcePromise.then(eventSource => {
+          this.eventSource = eventSource
+
+          eventSource.onmessage = (event) => {
+            const data = event.data
+            // aiApi.js已经处理了SSE格式，这里直接处理纯JSON
+            if (!data) return
+
             try {
-              const parsed = JSON.parse(jsonStr)
+              const parsed = JSON.parse(data)
+
+              // 忽略连接确认消息
+              if (parsed.status === 'connected') {
+                return
+              }
 
               // 检查是否完成
-              if (parsed.done || parsed.status === 'done') {
+              if (parsed.done === true) {
                 this.streaming = false
+                this.streamContent = ''
                 // 将最后一条消息标记为非流式
                 const lastMessage = this.messages[this.messages.length - 1]
                 if (lastMessage && lastMessage.role === 'assistant' && lastMessage.streaming) {
@@ -431,6 +446,7 @@ export default {
                 }
                 this.scrollToBottom()
               } else if (parsed.content) {
+                // 累积流式内容
                 this.streamContent += parsed.content
 
                 // 更新或添加消息
@@ -448,16 +464,22 @@ export default {
                 this.scrollToBottom()
               }
             } catch (e) {
-              console.error('解析流数据失败:', e, '原始数据:', data)
+              console.error('解析流数据失败:', e)
             }
           }
-        }
 
-        this.eventSource.onerror = (error) => {
-          console.error('流式连接错误:', error)
+          eventSource.onerror = (error) => {
+            console.error('流式连接错误:', error)
+            this.streaming = false
+            eventSource?.close()
+          }
+        })
+
+        // 错误处理
+        eventSourcePromise.catch(error => {
+          console.error('创建eventSource失败:', error)
           this.streaming = false
-          this.eventSource?.close()
-        }
+        })
       } catch (error) {
         console.error('发送消息失败:', error)
         this.streaming = false
