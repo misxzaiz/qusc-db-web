@@ -36,6 +36,7 @@ import {
   faCompress,
   faTimes,
   faCheck,
+  faCheckCircle,
   faExclamationTriangle,
   faInfoCircle,
   faQuestionCircle,
@@ -84,7 +85,8 @@ import {
   faFastForward,
   faFastBackward,
   faCogs,
-  faCube
+  faCube,
+  faInbox
 } from '@fortawesome/free-solid-svg-icons'
 import App from './App.vue'
 import ConnectionManager from './views/ConnectionManager.vue'
@@ -128,6 +130,7 @@ library.add(
   faCompress,
   faTimes,
   faCheck,
+  faCheckCircle,
   faExclamationTriangle,
   faInfoCircle,
   faQuestionCircle,
@@ -176,7 +179,8 @@ library.add(
   faFastForward,
   faFastBackward,
   faCogs,
-  faCube
+  faCube,
+  faInbox
 )
 
 const routes = [

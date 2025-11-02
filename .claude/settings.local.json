@@ -45,7 +45,9 @@
       "Bash(curl -X POST \"http://localhost:8080/api/ai/chat/stream\" -H \"Content-Type: application/json\" -H \"Accept: text/event-stream\" -d '{\"\"\"\"message\"\"\"\":\"\"\"\"hello\"\"\"\",\"\"\"\"configId\"\"\"\":\"\"\"\"test\"\"\"\"}')",
       "Bash(curl -s http://localhost:8080/api/connections/test -X POST -H \"Content-Type: application/json\" -d \"{}\")",
       "Bash(curl -s http://localhost:8080/api/connections/test -X POST -H \"Content-Type: application/json\" -d '{\"\"host\"\":\"\"localhost\"\",\"\"port\"\":3306,\"\"username\"\":\"\"root\"\",\"\"password\"\":\"\"test\"\"}')",
-      "Bash(curl -X POST http://localhost:3000/api/connections/test -H \"Content-Type: application/json\" -d '{\"\"host\"\":\"\"localhost\"\",\"\"port\"\":3306,\"\"username\"\":\"\"root\"\",\"\"password\"\":\"\"test\"\"}' -v)"
+      "Bash(curl -X POST http://localhost:3000/api/connections/test -H \"Content-Type: application/json\" -d '{\"\"host\"\":\"\"localhost\"\",\"\"port\"\":3306,\"\"username\"\":\"\"root\"\",\"\"password\"\":\"\"test\"\"}' -v)",
+      "Bash(findstr LISTENING)",
+      "Bash(curl -s http://localhost:8080/api/sql/execute -X POST -H \"Content-Type: application/json\" -d '{\"\"\"\"sessionId\"\"\"\":\"\"\"\"test-session\"\"\"\",\"\"\"\"sql\"\"\"\":\"\"\"\"SELECT 1 as id, \\'test'' as name\"}'' ')"
     ],
     "deny": [],
     "ask": []

@@ -66,9 +66,10 @@
               </div>
             </div>
             <div class="toolbar-right">
-              <button class="btn btn-primary btn-compact" @click="executeSql(tab)" :disabled="!tab.sessionId || !tab.sqlText.trim()">
-                <font-awesome-icon icon="play" />
-                <span class="btn-text">执行</span>
+              <button class="btn btn-primary btn-compact" @click="executeSql(tab)" :disabled="!tab.sessionId || !tab.sqlText.trim() || tab.executing">
+                <font-awesome-icon v-if="!tab.executing" icon="play" />
+                <font-awesome-icon v-else icon="spinner" spin />
+                <span class="btn-text">{{ tab.executing ? '执行中...' : '执行' }}</span>
               </button>
               <button class="btn btn-secondary btn-compact" @click="clearEditor(tab)">
                 <font-awesome-icon icon="times" />
@@ -112,157 +113,16 @@
                 <font-awesome-icon icon="stethoscope" />
                 {{ tab.diagnosing ? '诊断中...' : 'AI诊断' }}
               </button>
-
-              <!-- AI诊断结果现在在AI侧边栏显示 -->
             </div>
           </div>
 
-          <!-- 查询结果 -->
-          <div v-if="tab.results.length > 0" class="results-container">
-            <div v-for="(result, resultIndex) in tab.results" :key="resultIndex" class="result-section">
-              <div class="result-header">
-                <h4>
-                  查询结果 {{ resultIndex + 1 }}
-                  <span v-if="result.executionTime" class="execution-time">({{ result.executionTime }}ms)</span>
-                </h4>
-                <div class="result-actions">
-                  <button
-                    v-if="result.type === 'select'"
-                    class="btn btn-small ai-analyze-btn"
-                    @click.stop="handleAnalyzeClick(tab, result)"
-                    :disabled="result.analyzing"
-                  >
-                    <font-awesome-icon icon="brain" />
-                    {{ result.analyzing ? '分析中...' : 'AI解析' }}
-                  </button>
-                  <button v-else class="btn btn-small" disabled title="只支持SELECT查询">
-                    <font-awesome-icon icon="brain" />
-                    AI解析 (非SELECT)
-                  </button>
-                  <button class="btn btn-small" @click="exportResult(result)">
-                    <font-awesome-icon icon="download" />
-                    导出
-                  </button>
-                </div>
-              </div>
-
-              <!-- SELECT结果 -->
-              <div v-if="result.type === 'select'" class="result-table-wrapper">
-                <table v-if="result.data && result.data.length > 0" class="result-table">
-                  <thead>
-                    <tr>
-                      <th v-for="column in result.columns" :key="column" @click="sortResult(tab, resultIndex, column)">
-                        {{ column }}
-                        <font-awesome-icon
-                          :icon="result.sortColumn === column ? (result.sortOrder === 'asc' ? 'sort-up' : 'sort-down') : 'sort'"
-                          class="sort-icon"
-                        />
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="(row, rowIndex) in getPaginatedData(result)" :key="rowIndex">
-                      <td v-for="column in result.columns" :key="column">
-                        {{ formatCellValue(row[column]) }}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-
-                <!-- 分页组件 -->
-                <div v-if="result.totalCount > result.pageSize" class="pagination-component">
-                  <div class="pagination-info">
-                    共 {{ result.totalCount }} 条记录
-                  </div>
-                  <div class="pagination-controls">
-                    <button
-                      class="btn btn-small"
-                      @click="firstPage(tab, resultIndex)"
-                      :disabled="result.currentPage === 1"
-                    >
-                      首页
-                    </button>
-                    <button
-                      class="btn btn-small"
-                      @click="prevPage(tab, resultIndex)"
-                      :disabled="result.currentPage === 1"
-                    >
-                      <font-awesome-icon icon="angle-left" />
-                      上一页
-                    </button>
-
-                    <!-- 页码 -->
-                    <div class="page-numbers">
-                      <button
-                        v-for="page in getVisiblePages(result)"
-                        :key="page"
-                        class="btn btn-small"
-                        :class="{ active: page === result.currentPage }"
-                        @click="goToPage(tab, resultIndex, page)"
-                      >
-                        {{ page }}
-                      </button>
-                    </div>
-
-                    <button
-                      class="btn btn-small"
-                      @click="nextPage(tab, resultIndex)"
-                      :disabled="result.currentPage === result.totalPages"
-                    >
-                      下一页
-                      <font-awesome-icon icon="angle-right" />
-                    </button>
-                    <button
-                      class="btn btn-small"
-                      @click="lastPage(tab, resultIndex)"
-                      :disabled="result.currentPage === result.totalPages"
-                    >
-                      末页
-                    </button>
-
-                    <!-- 每页大小 -->
-                    <select
-                      v-model="result.pageSize"
-                      @change="changePageSize(tab, resultIndex)"
-                      class="page-size-select"
-                    >
-                      <option value="50">50条/页</option>
-                      <option value="100">100条/页</option>
-                      <option value="200">200条/页</option>
-                      <option value="500">500条/页</option>
-                    </select>
-
-                    <!-- 跳转 -->
-                    <div class="page-jump">
-                      跳至
-                      <input
-                        type="number"
-                        v-model="result.jumpPage"
-                        @keyup.enter="goToPage(tab, resultIndex, result.jumpPage)"
-                        min="1"
-                        :max="result.totalPages"
-                        class="page-input"
-                      />
-                      页
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- UPDATE/INSERT/DELETE结果 -->
-              <div v-else-if="result.type === 'update'" class="update-result">
-                <font-awesome-icon icon="check" class="success-icon" />
-                执行成功，{{ result.affectedRows }} 行受影响
-              </div>
-
-              <!-- 其他结果 -->
-              <div v-else class="empty-result">
-                执行成功
-              </div>
-
-              <!-- AI分析结果现在在AI侧边栏显示 -->
-            </div>
-          </div>
+          <!-- 查询结果 - 使用新的ResultTabs组件 -->
+          <ResultTabs
+            :results="tab.results"
+            @analyze="handleAnalyzeClick"
+            @export="exportResult"
+            @refresh="handleResultRefresh"
+          />
         </div>
       </div>
     </div>
@@ -282,10 +142,11 @@ import { connectionStore } from '../stores/connectionStore'
 import SqlCodeEditor from '../components/SqlCodeEditor.vue'
 import TabSidebar from '../components/TabSidebar.vue'
 import RightTabSidebar from '../components/RightTabSidebar.vue'
-import { faBrain } from '@fortawesome/free-solid-svg-icons'
+import ResultTabs from '../components/ResultTabs.vue'
+import { faBrain, faStethoscope } from '@fortawesome/free-solid-svg-icons'
 import { library } from '@fortawesome/fontawesome-svg-core'
 
-library.add(faBrain)
+library.add(faBrain, faStethoscope)
 
 export default {
   name: 'SqlEditor',
@@ -293,7 +154,8 @@ export default {
   components: {
     SqlCodeEditor,
     TabSidebar,
-    RightTabSidebar
+    RightTabSidebar,
+    ResultTabs
   },
 
   setup() {
@@ -302,115 +164,74 @@ export default {
     const activeTabIndex = ref(0)
     let tabIdCounter = 0
 
-    // 侧边栏宽度
-    const sidebarWidth = ref(40)
+    // 连接管理
+    const activeSessions = computed(() => connectionStore.getActiveSessions())
 
-    // AI配置
-    const selectedAiConfig = ref(null)
-
-    // QueryHistory组件引用
+    // 引用
+    const rightSidebarRef = ref(null)
     const queryHistoryRef = ref(null)
 
-    // AI侧边栏引用
-    const rightSidebarRef = ref(null)
-
-    // 计算属性
-    const activeSessions = computed(() => {
-      return connectionStore.getActiveSessions()
-    })
-
-    const currentTab = computed(() => {
-      return tabs.value[activeTabIndex.value] || {}
-    })
-
-    // Tab管理方法
-    const createNewTab = () => {
+    // 创建新Tab
+    const createNewTab = (title = '新查询') => {
       const tab = {
         id: ++tabIdCounter,
-        title: `查询 ${tabIdCounter}`,
+        title,
         sqlText: '',
         sessionId: '',
         database: '',
         results: [],
         error: null,
         modified: false,
-        inTransaction: false
+        inTransaction: false,
+        executing: false,
+        diagnosing: false
       }
       tabs.value.push(tab)
       return tab
     }
 
-    // 保存最后连接状态
-    const saveLastConnection = (sessionId, database) => {
-      const lastConnection = {
-        sessionId,
-        database,
-        timestamp: Date.now()
-      }
-      localStorage.setItem('last_connection', JSON.stringify(lastConnection))
-    }
+    // 初始化
+    onMounted(() => {
+      loadTabsFromStorage()
+      restoreLastConnection()
 
-    // 加载最后连接状态
-    const loadLastConnection = () => {
-      const saved = localStorage.getItem('last_connection')
-      if (saved) {
-        try {
-          return JSON.parse(saved)
-        } catch (e) {
-          console.error('加载最后连接失败', e)
-          return null
-        }
-      }
-      return null
-    }
+      // 监听连接事件
+      window.addEventListener('session-connected', handleSessionConnected)
+    })
 
-    // 自动连接最后使用的数据库
-    const autoConnect = async () => {
-      const lastConn = loadLastConnection()
-      if (!lastConn) return
+    onUnmounted(() => {
+      window.removeEventListener('session-connected', handleSessionConnected)
+    })
 
-      // 检查是否过期（24小时）
-      const now = Date.now()
-      const dayInMs = 24 * 60 * 60 * 1000
-      if (now - lastConn.timestamp > dayInMs) {
-        console.log('最后连接已过期')
-        return
-      }
-
-      // 检查会话是否仍然有效
-      const session = connectionStore.getSession(lastConn.sessionId)
-      if (!session) {
-        console.log('会话已失效')
-        return
-      }
-
-      // 自动连接到数据库
+    // 恢复最后的连接
+    const restoreLastConnection = async () => {
       try {
-        const response = await fetch(`/api/sql/connect/${lastConn.sessionId}/${lastConn.database}`, {
-          method: 'POST'
-        })
+        const lastConn = sessionStorage.getItem('last_connection')
+        if (lastConn) {
+          const { sessionId, database } = JSON.parse(lastConn)
+          const session = connectionStore.getSession(sessionId)
 
-        if (response.ok) {
-          console.log('自动连接成功')
-          // 为当前tab设置连接
-          if (tabs.value.length > 0) {
-            tabs.value[activeTabIndex.value].sessionId = lastConn.sessionId
-            tabs.value[activeTabIndex.value].database = lastConn.database
+          if (session) {
+            // 找到第一个Tab并设置连接
+            if (tabs.value.length > 0) {
+              tabs.value[0].sessionId = sessionId
+              tabs.value[0].database = database || session.currentDatabase || ''
 
-            // 确保连接在store中是活跃状态
-            if (!connectionStore.getActiveSessions().find(s => s.sessionId === lastConn.sessionId)) {
-              connectionStore.addActiveSession(lastConn.sessionId, session.connectionInfo)
-            }
-
-            // 触发事件通知其他组件（如ConnectionTree）
-            const event = new CustomEvent('session-connected', {
-              detail: {
-                sessionId: lastConn.sessionId,
-                database: lastConn.database,
-                autoConnect: true
+              // 确保连接在store中是活跃状态
+              if (!connectionStore.getActiveSessions().find(s => s.sessionId === sessionId)) {
+                connectionStore.addActiveSession(sessionId, session.connectionInfo)
               }
-            })
-            window.dispatchEvent(event)
+
+              // 触发事件通知其他组件
+              const event = new CustomEvent('session-connected', {
+                detail: {
+                  sessionId,
+                  database: database || session.currentDatabase,
+                  autoConnect: true
+                }
+              })
+              window.dispatchEvent(event)
+            }
           }
         }
       } catch (error) {
@@ -467,7 +288,9 @@ export default {
             results: [],
             error: null,
             modified: false,
-            inTransaction: false
+            inTransaction: false,
+            executing: false,
+            diagnosing: false
           }))
           if (tabs.value.length === 0) {
             createNewTab()
@@ -496,7 +319,6 @@ export default {
     const onTabDatabaseChange = (tab) => {
       if (tab.sessionId && tab.database) {
         connectionStore.switchDatabase(tab.sessionId, tab.database)
-        // 保存最后连接状态
         saveLastConnection(tab.sessionId, tab.database)
       }
       markTabModified(tab)
@@ -507,36 +329,66 @@ export default {
       return session ? session.databases : []
     }
 
-    // SQL执行方法
+    // 保存最后连接状态
+    const saveLastConnection = (sessionId, database) => {
+      sessionStorage.setItem('last_connection', JSON.stringify({ sessionId, database }))
+    }
+
+    // SQL执行方法 - 优化版本
     const executeSql = async (tab) => {
-      if (!tab.sessionId || !tab.sqlText.trim()) return
+      if (!tab.sessionId || !tab.sqlText.trim() || tab.executing) return
 
       tab.error = null
-      tab.results = []
+      tab.executing = true
 
       try {
         // 解析多条SQL
         const sqlStatements = parseSqlStatements(tab.sqlText)
-        const startTime = Date.now()
 
-        for (const sql of sqlStatements) {
-          const result = await executeSingleSql(tab.sessionId, sql)
-          result.executionTime = Date.now() - startTime
-          tab.results.push(result)
+        // 清空之前的结果
+        tab.results = []
 
-          // 如果是错误，停止执行
-          if (result.error) {
-            tab.error = result.error
-            break
-          }
+        for (let i = 0; i < sqlStatements.length; i++) {
+          const sql = sqlStatements[i]
+          const startTime = Date.now()
 
-          // 检查事务状态
-          if (isTransactionCommand(sql)) {
-            if (sql.toLowerCase().startsWith('begin') || sql.toLowerCase().startsWith('start transaction')) {
-              tab.inTransaction = true
-            } else if (sql.toLowerCase().startsWith('commit') || sql.toLowerCase().startsWith('rollback')) {
-              tab.inTransaction = false
+          try {
+            const result = await executeSingleSql(tab.sessionId, sql)
+            result.executionTime = Date.now() - startTime
+            result.statementIndex = i + 1
+            result.sql = sql
+
+            // 初始化结果属性
+            if (!result.pageSize) result.pageSize = 50
+            if (!result.currentPage) result.currentPage = 1
+
+            tab.results.push(result)
+
+            // 如果是错误，停止执行
+            if (result.error) {
+              tab.error = result.error
+              break
             }
+
+            // 检查事务状态
+            if (isTransactionCommand(sql)) {
+              if (sql.toLowerCase().startsWith('begin') || sql.toLowerCase().startsWith('start transaction')) {
+                tab.inTransaction = true
+              } else if (sql.toLowerCase().startsWith('commit') || sql.toLowerCase().startsWith('rollback')) {
+                tab.inTransaction = false
+              }
+            }
+          } catch (e) {
+            const errorResult = {
+              error: e.message,
+              executionTime: Date.now() - startTime,
+              statementIndex: i + 1,
+              sql: sql,
+              type: 'error'
+            }
+            tab.results.push(errorResult)
+            tab.error = e.message
+            break
           }
         }
 
@@ -546,8 +398,8 @@ export default {
         }
 
         markTabModified(tab)
-      } catch (e) {
-        tab.error = '执行失败: ' + e.message
+      } finally {
+        tab.executing = false
       }
     }
 
@@ -587,7 +439,7 @@ export default {
       return statements
     }
 
-    const executeSingleSql = async (sessionId, sql, page = 1, pageSize = null) => {
+    const executeSingleSql = async (sessionId, sql) => {
       const response = await fetch('/api/sql/execute', {
         method: 'POST',
         headers: {
@@ -596,67 +448,89 @@ export default {
         body: JSON.stringify({
           sessionId,
           sql,
-          page,
-          pageSize
+          page: null,  // 不使用后端分页
+          pageSize: null
         })
       })
 
-      const result = await response.json()
-
-      if (result.error) {
-        return { error: result.error, type: 'error' }
+      if (!response.ok) {
+        const error = await response.text()
+        throw new Error(error || '执行失败')
       }
 
+      const data = await response.json()
+
       // 判断结果类型
-      if (result.data) {
+      if (data.error) {
         return {
-          type: 'select',
-          data: result.data,
-          columns: result.columns,
-          totalCount: result.totalCount || result.data.length,
-          currentPage: page,
-          pageSize: pageSize || 50,
-          totalPages: Math.ceil((result.totalCount || result.data.length) / (pageSize || 50)),
-          sortColumn: '',
-          sortOrder: 'asc',
-          jumpPage: page
+          type: 'error',
+          error: data.error,
+          data: null,
+          columns: []
         }
-      } else if (result.affectedRows !== undefined) {
+      } else if (data.data) {
+        // SELECT查询
+        const result = {
+          type: 'select',
+          data: data.data || [],
+          columns: data.columns || [],
+          totalCount: data.totalCount || data.data.length,
+          // 初始化分页属性
+          pageSize: 50,
+          currentPage: 1,
+          searchText: '',
+          filteredData: null,
+          sortColumn: null,
+          sortOrder: 'asc',
+          selectedRows: new Set()
+        }
+        return result
+      } else if (data.affectedRows !== undefined) {
+        // UPDATE/INSERT/DELETE
         return {
           type: 'update',
-          affectedRows: result.affectedRows
+          affectedRows: data.affectedRows
         }
       } else {
+        // 其他命令
         return {
-          type: 'success'
+          type: 'success',
+          message: data.message || '执行成功'
         }
       }
     }
 
     const isTransactionCommand = (sql) => {
-      const lowerSql = sql.trim().toLowerCase()
+      const lowerSql = sql.toLowerCase().trim()
       return lowerSql.startsWith('begin') ||
              lowerSql.startsWith('start transaction') ||
              lowerSql.startsWith('commit') ||
              lowerSql.startsWith('rollback')
     }
 
-    // 事务方法
+    // 事务控制
     const commitTransaction = async (tab) => {
-      await executeSingleSql(tab.sessionId, 'COMMIT')
-      tab.inTransaction = false
+      try {
+        await executeSingleSql(tab.sessionId, 'COMMIT')
+        tab.inTransaction = false
+      } catch (e) {
+        tab.error = '提交失败: ' + e.message
+      }
     }
 
     const rollbackTransaction = async (tab) => {
-      await executeSingleSql(tab.sessionId, 'ROLLBACK')
-      tab.inTransaction = false
+      try {
+        await executeSingleSql(tab.sessionId, 'ROLLBACK')
+        tab.inTransaction = false
+      } catch (e) {
+        tab.error = '回滚失败: ' + e.message
+      }
     }
 
-    // 编辑器方法
+    // 其他方法
     const clearEditor = (tab) => {
       tab.sqlText = ''
       tab.error = null
-      tab.results = []
       markTabModified(tab)
     }
 
@@ -664,85 +538,31 @@ export default {
       // 简单的SQL格式化
       let formatted = tab.sqlText
         .replace(/\s+/g, ' ')
-        .replace(/,/g, ',\n  ')
+        .replace(/\bSELECT\b/gi, '\nSELECT')
         .replace(/\bFROM\b/gi, '\nFROM')
         .replace(/\bWHERE\b/gi, '\nWHERE')
         .replace(/\bORDER BY\b/gi, '\nORDER BY')
         .replace(/\bGROUP BY\b/gi, '\nGROUP BY')
         .replace(/\bHAVING\b/gi, '\nHAVING')
-        .replace(/\bJOIN\b/gi, '\nJOIN')
-        .replace(/\bLEFT JOIN\b/gi, '\nLEFT JOIN')
-        .replace(/\bRIGHT JOIN\b/gi, '\nRIGHT JOIN')
-        .replace(/\bINNER JOIN\b/gi, '\nINNER JOIN')
+        .trim()
 
       tab.sqlText = formatted
       markTabModified(tab)
     }
 
-    // AI错误诊断 - 使用AI助手
-    const diagnoseError = async (tab) => {
-      if (!tab.error || !tab.sqlText) return
-
-      // 等待组件加载
-      await nextTick()
-
-      // 构建诊断消息
-      const diagnosticMessage = `请帮我分析这个SQL错误：
-
-SQL语句：
-\`\`\`sql
-${tab.sqlText}
-\`\`\`
-
-错误信息：
-${tab.error}
-
-请告诉我：
-1. 错误的原因
-2. 如何修复
-3. 修复后的正确SQL`
-
-      // 使用AI助手发送消息
-      if (rightSidebarRef.value) {
-        // 先确保侧边栏展开并切换到AI标签
-        if (rightSidebarRef.value.ensureAiTabOpen) {
-          rightSidebarRef.value.ensureAiTabOpen()
-        }
-        // 然后发送消息
-        if (rightSidebarRef.value.sendMessage) {
-          rightSidebarRef.value.sendMessage(diagnosticMessage)
-        }
-      }
-
-      // 清除之前的诊断结果
-      tab.errorDiagnosis = null
-      tab.diagnosing = false
-    }
-
-    // 处理AI分析按钮点击
-    const handleAnalyzeClick = (tab, result) => {
+    // AI分析
+    const handleAnalyzeClick = ({ result, tabIndex }) => {
+      const tab = tabs.value[activeTabIndex.value]
       analyzeResult(tab, result)
     }
 
-    // AI分析查询结果 - 使用AI助手
     const analyzeResult = async (tab, result) => {
       if (!tab.sqlText || !result.data) return
 
-      // 等待组件加载
       await nextTick()
 
-      // 构建分析消息
-      const sampleData = result.data.slice(0, 5) // 只显示前5行示例
-      // 处理columns可能是字符串数组或对象数组的情况
-      const columnsInfo = result.columns.map(col => {
-        if (typeof col === 'string') {
-          return col
-        } else if (col && col.name) {
-          return `${col.name}${col.type ? ` (${col.type})` : ''}`
-        } else {
-          return String(col)
-        }
-      }).join(', ')
+      const sampleData = result.data.slice(0, 5)
+      const columnsInfo = result.columns.join(', ')
 
       const analysisMessage = `请帮我分析这个SQL查询结果：
 
@@ -763,382 +583,177 @@ ${JSON.stringify(sampleData, null, 2)}
 3. 是否有优化的建议？
 4. 数据质量如何？`
 
-      // 使用AI助手发送消息
       if (rightSidebarRef.value) {
-        // 先确保侧边栏展开并切换到AI标签
         if (rightSidebarRef.value.ensureAiTabOpen) {
           rightSidebarRef.value.ensureAiTabOpen()
         }
-        // 然后发送消息
         if (rightSidebarRef.value.sendMessage) {
           rightSidebarRef.value.sendMessage(analysisMessage)
         }
       }
 
-      // 清除之前的分析结果
-      result.aiAnalysis = null
       result.analyzing = false
     }
 
-    // 格式化AI分析结果
-    const formatAnalysis = (analysis) => {
-      // 将markdown转换为HTML（简单处理）
-      return analysis
-        .replace(/\n/g, '<br>')
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/```(.*?)```/gs, '<pre><code>$1</code></pre>')
-        .replace(/`(.*?)`/g, '<code>$1</code>')
-        .replace(/^#{1,6}\s+(.*?)$/gm, (match, content) => {
-          const level = match.match(/^#/)[0].length
-          return `<h${level}>${content}</h${level}>`
-        })
-        .replace(/^\* (.+)$/gm, '<li>$1</li>')
-        .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
-    }
-
-    // 格式化诊断结果
-    const formatDiagnosis = (diagnosis) => {
-      return formatAnalysis(diagnosis)
-    }
-
-    // 结果处理方法
-    const formatCellValue = (value) => {
-      if (value === null) return 'NULL'
-      if (value === undefined) return ''
-      if (value instanceof Date) return value.toISOString()
-      return String(value)
-    }
-
-    const sortResult = async (tab, resultIndex, column) => {
-      const result = tab.results[resultIndex]
-      if (result.type !== 'select') return
-
-      // 切换排序方向
-      if (result.sortColumn === column) {
-        result.sortOrder = result.sortOrder === 'asc' ? 'desc' : 'asc'
-      } else {
-        result.sortColumn = column
-        result.sortOrder = 'asc'
-      }
-
-      // 重新执行查询（带排序）
-      const sql = buildSelectWithSort(tab.sqlText, column, result.sortOrder)
-      const newResult = await executeSingleSql(tab.sessionId, sql, result.currentPage, result.pageSize)
-
-      // 更新结果
-      tab.results[resultIndex] = { ...newResult, sortColumn: result.sortColumn, sortOrder: result.sortOrder }
-    }
-
-    const buildSelectWithSort = (originalSql, column, order) => {
-      // 简单的ORDER BY添加，实际项目中应该更复杂
-      const trimmed = originalSql.trim()
-      if (trimmed.toLowerCase().includes('order by')) {
-        // 已有ORDER BY，修改它
-        return trimmed.replace(/\bORDER BY\s+[^;]+/gi, `ORDER BY ${column} ${order}`)
-      } else {
-        // 添加ORDER BY
-        return `${trimmed} ORDER BY ${column} ${order}`
-      }
-    }
-
-    // 分页方法
-    const getPaginatedData = (result) => {
-      if (!result.data) return []
-      return result.data
-    }
-
-    const getVisiblePages = (result) => {
-      const current = result.currentPage
-      const total = result.totalPages
-      const delta = 2
-      const range = []
-      const rangeWithDots = []
-
-      for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
-        range.push(i)
-      }
-
-      if (current - delta > 2) {
-        rangeWithDots.push(1, '...')
-      } else {
-        rangeWithDots.push(1)
-      }
-
-      rangeWithDots.push(...range)
-
-      if (current + delta < total - 1) {
-        rangeWithDots.push('...', total)
-      } else {
-        rangeWithDots.push(total)
-      }
-
-      return rangeWithDots.filter(page => page !== '...' || rangeWithDots.length > 1)
-    }
-
-    const firstPage = async (tab, resultIndex) => {
-      const result = tab.results[resultIndex]
-      if (result.type !== 'select' || result.currentPage === 1) return
-
-      const newResult = await executeSingleSql(tab.sessionId, tab.sqlText, 1, result.pageSize)
-      tab.results[resultIndex] = { ...newResult, sortColumn: result.sortColumn, sortOrder: result.sortOrder }
-    }
-
-    const lastPage = async (tab, resultIndex) => {
-      const result = tab.results[resultIndex]
-      if (result.type !== 'select' || result.currentPage === result.totalPages) return
-
-      const newResult = await executeSingleSql(tab.sessionId, tab.sqlText, result.totalPages, result.pageSize)
-      tab.results[resultIndex] = { ...newResult, sortColumn: result.sortColumn, sortOrder: result.sortOrder }
-    }
-
-    const prevPage = async (tab, resultIndex) => {
-      const result = tab.results[resultIndex]
-      if (result.type !== 'select' || result.currentPage === 1) return
-
-      const newResult = await executeSingleSql(tab.sessionId, tab.sqlText, result.currentPage - 1, result.pageSize)
-      tab.results[resultIndex] = { ...newResult, sortColumn: result.sortColumn, sortOrder: result.sortOrder }
-    }
-
-    const nextPage = async (tab, resultIndex) => {
-      const result = tab.results[resultIndex]
-      if (result.type !== 'select' || result.currentPage === result.totalPages) return
-
-      const newResult = await executeSingleSql(tab.sessionId, tab.sqlText, result.currentPage + 1, result.pageSize)
-      tab.results[resultIndex] = { ...newResult, sortColumn: result.sortColumn, sortOrder: result.sortOrder }
-    }
-
-    const goToPage = async (tab, resultIndex, page) => {
-      const result = tab.results[resultIndex]
-      if (result.type !== 'select' || page < 1 || page > result.totalPages) return
-
-      const newResult = await executeSingleSql(tab.sessionId, tab.sqlText, page, result.pageSize)
-      tab.results[resultIndex] = { ...newResult, sortColumn: result.sortColumn, sortOrder: result.sortOrder }
-    }
-
-    const changePageSize = async (tab, resultIndex) => {
-      const result = tab.results[resultIndex]
-      if (result.type !== 'select') return
-
-      const newResult = await executeSingleSql(tab.sessionId, tab.sqlText, 1, result.pageSize)
-      tab.results[resultIndex] = { ...newResult, sortColumn: result.sortColumn, sortOrder: result.sortOrder }
-    }
-
+    // 导出结果
     const exportResult = (result) => {
-      if (!result.data) return
+      if (!result.data || result.data.length === 0) {
+        alert('没有数据可导出')
+        return
+      }
 
       const csv = [
         result.columns.join(','),
         ...result.data.map(row =>
           result.columns.map(col => {
-            const val = row[col]
-            return val === null ? '' : `"${String(val).replace(/"/g, '""')}"`
+            const value = row[col]
+            return value === null ? '' : String(value).replace(/"/g, '""')
           }).join(',')
         )
       ].join('\n')
 
-      const blob = new Blob([csv], { type: 'text/csv' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `query_result_${Date.now()}.csv`
-      a.click()
-      URL.revokeObjectURL(url)
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.download = `query_result_${Date.now()}.csv`
+      link.click()
     }
 
-    // AI相关方法
-    const getCurrentSession = () => {
-      return currentTab.value?.sessionId
-    }
-
-    const getTables = () => {
-      // 返回当前数据库的表列表
-      const tab = currentTab.value
-      if (!tab) return []
-
-      // 从connectionStore获取表列表
-      const session = connectionStore.getSession(tab.sessionId)
-      if (session && tab.database) {
-        // 表存储在session.tables[database]中
-        return session.tables?.[tab.database] || []
-      }
-      return []
-    }
-
-    const onExecuteAiSql = (sql) => {
-      const tab = currentTab.value
-      if (tab) {
-        // 将SQL插入到当前tab
-        tab.sqlText = sql
-        markTabModified(tab)
-
-        // 自动执行SQL
-        nextTick(() => {
-          executeQuery()
+    // 刷新结果
+    const handleResultRefresh = ({ result, tabIndex }) => {
+      const tab = tabs.value[activeTabIndex.value]
+      if (result.sql) {
+        // 重新执行单个SQL
+        executeSingleSql(tab.sessionId, result.sql).then(newResult => {
+          // 更新结果
+          Object.assign(result, newResult)
+        }).catch(e => {
+          result.error = e.message
         })
       }
     }
 
-    const handleSidebarResize = (width) => {
-      sidebarWidth.value = width
+    // 错误诊断
+    const diagnoseError = (tab) => {
+      if (!tab.error) return
+
+      const diagnosisMessage = `请帮我诊断这个SQL错误：
+
+错误信息：
+${tab.error}
+
+执行的SQL：
+\`\`\`sql
+${tab.sqlText}
+\`\`\`
+
+请分析：
+1. 错误的原因是什么？
+2. 如何修复这个错误？
+3. 有什么改进建议？`
+
+      if (rightSidebarRef.value) {
+        if (rightSidebarRef.value.ensureAiTabOpen) {
+          rightSidebarRef.value.ensureAiTabOpen()
+        }
+        if (rightSidebarRef.value.sendMessage) {
+          rightSidebarRef.value.sendMessage(diagnosisMessage)
+        }
+      }
     }
 
-    
-    // 查询历史处理方法
-    const onHistorySelect = (sql) => {
-      const tab = currentTab.value
+    // 历史记录相关
+    const handleSessionConnected = (event) => {
+      const { sessionId, database } = event.detail
+      if (tabs.value[activeTabIndex.value]) {
+        tabs.value[activeTabIndex.value].sessionId = sessionId
+        tabs.value[activeTabIndex.value].database = database || ''
+      }
+    }
+
+    const onHistorySelect = (historyItem) => {
+      const tab = tabs.value[activeTabIndex.value]
       if (tab) {
-        tab.sqlText = sql
+        tab.sqlText = historyItem.sql
         markTabModified(tab)
       }
     }
 
-    const onHistoryCopy = (sql) => {
-      navigator.clipboard.writeText(sql)
+    const onHistoryCopy = (historyItem) => {
+      navigator.clipboard.writeText(historyItem.sql)
     }
 
-    const onHistoryExecute = async (sql) => {
-      const tab = currentTab.value
+    const onHistoryExecute = (historyItem) => {
+      const tab = tabs.value[activeTabIndex.value]
       if (tab) {
-        tab.sqlText = sql
-        await executeSql(tab)
+        tab.sqlText = historyItem.sql
+        executeSql(tab)
       }
     }
 
     const onHistoryClear = () => {
-      console.log('查询历史已清空')
+      // 清空历史记录
     }
 
     const onQueryHistoryReady = (ref) => {
       queryHistoryRef.value = ref
     }
 
-    // 加载AI配置
-    const loadAiConfig = async () => {
-      try {
-        const response = await fetch('/api/ai/configs')
-        const configs = await response.json()
-        if (configs.length > 0) {
-          selectedAiConfig.value = configs.find(c => c.enabled) || configs[0]
-        }
-      } catch (error) {
-        console.error('加载AI配置失败:', error)
+    const onExecuteAiSql = (sql) => {
+      const tab = tabs.value[activeTabIndex.value]
+      if (tab) {
+        tab.sqlText = sql
+        executeSql(tab)
       }
     }
 
-    // 键盘快捷键
-    const handleKeydown = (e) => {
-      if (e.ctrlKey && e.key === 'Enter') {
-        executeSql(currentTab.value)
-      }
-      if (e.key === 'F5') {
-        e.preventDefault()
-        executeSql(currentTab.value)
-      }
-      if (e.ctrlKey && e.key === 't') {
-        e.preventDefault()
-        newTab()
-      }
-      if (e.ctrlKey && e.key === 'w') {
-        e.preventDefault()
-        closeTab(activeTabIndex.value)
-      }
+    const handleSidebarResize = (width) => {
+      // 处理侧边栏大小调整
     }
 
-    // 生命周期
-    onMounted(async () => {
-      window.addEventListener('keydown', handleKeydown)
-      connectionStore.loadConnections()
-      loadTabsFromStorage()
-      loadAiConfig()
-      // 尝试自动连接
-      await autoConnect()
-    })
-
-    onUnmounted(() => {
-      window.removeEventListener('keydown', handleKeydown)
-    })
-
-    // 监听Tab变化
-    watch(() => currentTab.value.sqlText, () => {
-      markTabModified(currentTab.value)
-    })
-
-    // 右侧边栏宽度处理
     const handleRightSidebarResize = (width) => {
-      // 使用CSS变量动态控制主内容区的右边距
-      const appLayout = document.querySelector('.app-layout')
-      if (appLayout) {
-        if (width === 40) {
-          // 折叠状态，但仍需要40px给图标栏
-          appLayout.style.setProperty('--right-sidebar-width', '40px')
-        } else {
-          // 展开状态，需要400px给整个边栏
-          appLayout.style.setProperty('--right-sidebar-width', '400px')
-        }
-      }
+      // 处理右侧边栏大小调整
     }
 
-    // 返回所有需要在模板中使用的数据和方法
     return {
       tabs,
       activeTabIndex,
       activeSessions,
-      currentTab,
-      sidebarWidth,
-      selectedAiConfig,
       rightSidebarRef,
-      queryHistoryRef,
-      getCurrentSession,
-      getTables,
-      newTab,
-      closeTab,
       switchTab,
-      onTabConnectionChange,
-      onTabDatabaseChange,
-      getTabDatabases,
+      closeTab,
+      newTab,
       executeSql,
       clearEditor,
       formatSql,
-      formatCellValue,
-      sortResult,
-      getPaginatedData,
-      getVisiblePages,
-      firstPage,
-      lastPage,
-      prevPage,
-      nextPage,
-      goToPage,
-      changePageSize,
-      commitTransaction,
-      rollbackTransaction,
-      exportResult,
-      diagnoseError,
+      onTabConnectionChange,
+      onTabDatabaseChange,
+      getTabDatabases,
       handleAnalyzeClick,
-      analyzeResult,
-      formatAnalysis,
-      formatDiagnosis,
-      onExecuteAiSql,
-      handleSidebarResize,
+      exportResult,
+      handleResultRefresh,
+      diagnoseError,
       onHistorySelect,
       onHistoryCopy,
       onHistoryExecute,
       onHistoryClear,
       onQueryHistoryReady,
+      onExecuteAiSql,
+      handleSidebarResize,
       handleRightSidebarResize,
-      saveLastConnection,
-      loadLastConnection,
-      autoConnect
+      commitTransaction,
+      rollbackTransaction
     }
   }
 }
 </script>
 
 <style scoped>
+@import '../styles/theme.css';
+
 .app-layout {
   display: flex;
-  height: 100%;
-  position: relative;
+  height: 100vh;
   overflow: hidden;
 }
 
@@ -1146,92 +761,94 @@ ${JSON.stringify(sampleData, null, 2)}
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-width: 0;
   overflow: hidden;
-  transition: margin-right 0.3s ease;
-  margin-right: var(--right-sidebar-width, 0px);
 }
 
-/* 主内容区域样式 */
-.main-content {
-  width: 100%;
-  height: 100vh;
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-/* AI侧边栏样式调整 */
-.ai-sidebar {
-  position: fixed !important;
-}
-
-/* Tab样式 */
+/* Tab栏 */
 .tab-bar {
   background-color: var(--bg-tertiary);
   border-bottom: 1px solid var(--border-primary);
-  flex-shrink: 0;
+  padding: 0 var(--spacing-sm);
 }
 
 .tab-list {
   display: flex;
   align-items: center;
-  padding: 0 10px;
-  overflow-x: auto;
+  gap: 2px;
 }
 
 .tab-item {
   display: flex;
   align-items: center;
+  gap: 6px;
   padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
-  user-select: none;
-  white-space: nowrap;
-  gap: 5px;
+  color: var(--text-secondary);
+  transition: var(--transition-fast);
+  position: relative;
 }
 
 .tab-item:hover {
-  background-color: var(--bg-hover);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .tab-item.active {
   background-color: var(--bg-primary);
-  border-bottom-color: var(--accent-primary);
+  color: var(--accent-primary);
+  border-bottom: 2px solid var(--accent-primary);
 }
 
 .tab-title {
   font-size: 13px;
-  color: var(--text-primary);
+  font-weight: 500;
 }
 
 .modified-indicator {
   color: var(--accent-primary);
-  font-size: 10px;
+  font-size: 8px;
 }
 
 .tab-close {
-  background: none;
+  padding: 2px;
   border: none;
+  background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  padding: 2px;
-  border-radius: 2px;
-  font-size: 12px;
+  border-radius: var(--radius-xs);
+  opacity: 0.7;
+  transition: var(--transition-fast);
 }
 
 .tab-close:hover {
+  opacity: 1;
   background-color: var(--bg-hover);
-  color: var(--text-primary);
 }
 
 .tab-new {
-  margin-left: 10px;
   padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
 }
 
+.tab-new:hover {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* Tab内容 */
 .tab-content {
   flex: 1;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .tab-pane {
@@ -1240,43 +857,43 @@ ${JSON.stringify(sampleData, null, 2)}
   flex-direction: column;
 }
 
-/* Tab工具栏 */
+/* 工具栏 */
 .tab-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
-  background-color: var(--bg-tertiary);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border-primary);
-  flex-shrink: 0;
+  gap: var(--spacing-md);
 }
 
 .toolbar-left,
 .toolbar-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--spacing-sm);
 }
 
 .connection-select,
 .database-select {
   padding: 4px 8px;
-  background-color: var(--bg-primary);
   border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xs);
+  background-color: var(--bg-primary);
   color: var(--text-primary);
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  min-width: 150px;
+  font-size: 13px;
 }
 
 .transaction-status {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm);
   padding: 4px 8px;
   background-color: var(--warning-bg);
-  color: var(--warning);
+  border: 1px solid var(--warning-border);
   border-radius: var(--radius-sm);
+  color: var(--warning);
   font-size: 12px;
 }
 
@@ -1284,393 +901,14 @@ ${JSON.stringify(sampleData, null, 2)}
   color: var(--warning);
 }
 
-.btn-danger {
-  background-color: var(--error-bg);
-  color: var(--error);
-}
-
-.btn-danger:hover {
-  background-color: var(--error);
-  color: white;
-}
-
-/* 编辑器部分 */
-.editor-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.editor-wrapper {
-  flex: 1;
-  overflow: hidden;
-}
-
-/* 错误信息 */
-.error-section {
-  padding: 15px;
-  background-color: var(--error-bg);
-  border-top: 1px solid var(--error-border);
-}
-
-.error-section h4 {
-  margin: 0 0 10px 0;
-  color: var(--error);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.error-message {
-  color: var(--text-primary);
-  background-color: var(--bg-primary);
-  padding: 10px;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-family-mono);
-  white-space: pre-wrap;
-  margin: 0;
-}
-
-.error-diagnosis {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border-secondary);
-}
-
-.ai-diagnose-btn {
-  background-color: var(--warning-bg);
-  color: var(--warning);
-  border-color: var(--warning);
-}
-
-.ai-diagnose-btn:hover {
-  background-color: var(--warning);
-  color: white;
-}
-
-.diagnosis-result {
-  margin-top: 10px;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-}
-
-.diagnosis-header {
-  padding: 8px 12px;
-  background-color: var(--bg-tertiary);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--border-primary);
-}
-
-.diagnosis-header h5 {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.diagnosis-content {
-  padding: 12px;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.diagnosis-content :deep(h1),
-.diagnosis-content :deep(h2),
-.diagnosis-content :deep(h3),
-.diagnosis-content :deep(h4),
-.diagnosis-content :deep(h5),
-.diagnosis-content :deep(h6) {
-  margin: 10px 0 5px 0;
-  color: var(--text-primary);
-}
-
-.diagnosis-content :deep(code) {
-  background-color: var(--bg-tertiary);
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-family: var(--font-family-mono);
-  font-size: 12px;
-}
-
-.diagnosis-content :deep(pre) {
-  background-color: var(--bg-tertiary);
-  padding: 10px;
-  border-radius: var(--radius-sm);
-  overflow-x: auto;
-  margin: 10px 0;
-}
-
-.diagnosis-content :deep(pre code) {
-  background: none;
-  padding: 0;
-}
-
-.diagnosis-content :deep(ul),
-.diagnosis-content :deep(ol) {
-  margin: 8px 0;
-  padding-left: 20px;
-}
-
-.diagnosis-content :deep(li) {
-  margin: 4px 0;
-}
-
-.diagnosis-content :deep(strong) {
-  color: var(--accent-primary);
-}
-
-.ai-analysis-section {
-  margin-top: 10px;
-  background-color: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-}
-
-.analysis-header {
-  padding: 8px 12px;
-  background-color: var(--bg-quaternary);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--border-primary);
-}
-
-.analysis-header h5 {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.analysis-content {
-  padding: 12px;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.analysis-content :deep(h1),
-.analysis-content :deep(h2),
-.analysis-content :deep(h3),
-.analysis-content :deep(h4),
-.analysis-content :deep(h5),
-.analysis-content :deep(h6) {
-  margin: 10px 0 5px 0;
-  color: var(--text-primary);
-}
-
-.analysis-content :deep(code) {
-  background-color: var(--bg-secondary);
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-family: var(--font-family-mono);
-  font-size: 12px;
-}
-
-.analysis-content :deep(pre) {
-  background-color: var(--bg-secondary);
-  padding: 10px;
-  border-radius: var(--radius-sm);
-  overflow-x: auto;
-  margin: 10px 0;
-}
-
-.analysis-content :deep(pre code) {
-  background: none;
-  padding: 0;
-}
-
-.analysis-content :deep(ul),
-.analysis-content :deep(ol) {
-  margin: 8px 0;
-  padding-left: 20px;
-}
-
-.analysis-content :deep(li) {
-  margin: 4px 0;
-}
-
-.analysis-content :deep(strong) {
-  color: var(--accent-primary);
-}
-
-.ai-analyze-btn {
-  background-color: var(--info-bg);
-  color: var(--info);
-  border-color: var(--info);
-}
-
-.ai-analyze-btn:hover {
-  background-color: var(--info);
-  color: white;
-}
-
-/* 结果容器 */
-.results-container {
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0;
-}
-
-.result-section {
-  background-color: var(--bg-secondary);
-  border-top: 1px solid var(--border-primary);
-  margin-bottom: 10px;
-}
-
-.result-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 15px;
-  background-color: var(--bg-tertiary);
-  border-bottom: 1px solid var(--border-primary);
-}
-
-.result-header h4 {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 13px;
-}
-
-.execution-time {
-  font-size: 11px;
-  color: var(--text-secondary);
-  margin-left: 10px;
-}
-
-.result-actions {
-  display: flex;
-  gap: 5px;
-}
-
-.result-table-wrapper {
-  overflow: auto;
-}
-
-.result-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.result-table th,
-.result-table td {
-  padding: 8px 12px;
-  text-align: left;
-  border-bottom: 1px solid var(--border-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 200px;
-}
-
-.result-table th {
-  background-color: var(--bg-tertiary);
-  color: var(--text-primary);
-  font-weight: 500;
-  cursor: pointer;
-  user-select: none;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-
-.result-table th:hover {
-  background-color: var(--bg-hover);
-}
-
-.sort-icon {
-  margin-left: 5px;
-  opacity: 0.5;
-}
-
-.result-table tbody tr:hover {
-  background-color: var(--bg-hover);
-}
-
-.update-result,
-.empty-result {
-  padding: 40px;
-  text-align: center;
-  color: var(--text-secondary);
-}
-
-.success-icon {
-  color: var(--success);
-  margin-right: 8px;
-}
-
-/* 分页组件 */
-.pagination-component {
-  padding: 15px;
-  background-color: var(--bg-tertiary);
-  border-top: 1px solid var(--border-primary);
-}
-
-.pagination-info {
-  margin-bottom: 10px;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.page-numbers {
-  display: flex;
-  gap: 2px;
-}
-
-.page-numbers .btn.active {
-  background-color: var(--accent-primary);
-  color: white;
-}
-
-.page-size-select {
-  padding: 4px 8px;
-  font-size: 12px;
-}
-
-.page-jump {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 12px;
-}
-
-.page-input {
-  width: 50px;
-  padding: 4px;
-  font-size: 12px;
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-sm);
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-}
-
-/* 通用按钮样式 */
 .btn {
   padding: 6px 12px;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-xs);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 13px;
   transition: var(--transition-fast);
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 4px;
 }
@@ -1698,22 +936,82 @@ ${JSON.stringify(sampleData, null, 2)}
   background-color: var(--btn-secondary-hover);
 }
 
-.btn-small {
-  padding: 4px 8px;
-  font-size: 11px;
+.btn-danger {
+  background-color: var(--btn-danger-bg);
+  color: var(--btn-danger-text);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: var(--btn-danger-hover);
 }
 
 .btn-compact {
   padding: 4px 8px;
+}
+
+.btn-icon {
+  padding: 4px;
+}
+
+.btn-text {
   font-size: 12px;
 }
 
-.btn-compact .btn-text {
-  margin-left: 4px;
+/* 编辑器区域 */
+.editor-section {
+  flex: 1;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
 }
 
-.btn-compact svg {
-  width: 12px !important;
-  height: 12px !important;
+.editor-wrapper {
+  flex: 1;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+/* 错误信息 */
+.error-section {
+  padding: var(--spacing-md);
+  background-color: var(--error-bg);
+  border-bottom: 1px solid var(--error-border);
+}
+
+.error-section h4 {
+  margin: 0 0 var(--spacing-sm) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--error);
+  font-size: 14px;
+}
+
+.error-message {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--error-border);
+  border-radius: var(--radius-xs);
+  padding: var(--spacing-sm);
+  margin: 0 0 var(--spacing-sm) 0;
+  color: var(--error);
+  font-family: var(--font-family-mono);
+  font-size: 12px;
+  overflow: auto;
+  max-height: 150px;
+}
+
+.error-diagnosis {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.ai-diagnose-btn {
+  background-color: var(--info-bg);
+  color: var(--info);
+  border: 1px solid var(--info-border);
+}
+
+.ai-diagnose-btn:hover:not(:disabled) {
+  background-color: var(--info);
+  color: white;
 }
 </style>

@@ -50,36 +50,36 @@ public class ConnectionManagerService {
             throw new SQLException("Connection not found or closed");
         }
 
-        // 添加分页逻辑
-        String paginatedSql = sql;
-        boolean needsCount = true;
-        Long totalCount = 0L;
+        // 如果page或pageSize为null，不应用分页，获取所有数据
+        boolean applyPagination = (page != null && pageSize != null && pageSize > 0);
+        String finalSql = sql;
+        Long totalCount = null;
 
-        // 检查是否已有LIMIT子句
-        String upperSql = sql.toUpperCase().trim();
-        if (!upperSql.contains(" LIMIT ")) {
-            // 先查询总数
-            String countSql = "SELECT COUNT(*) FROM (" + sql + ") AS total_count";
-            try (Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery(countSql)) {
-                if (rs.next()) {
-                    totalCount = rs.getLong(1);
+        if (applyPagination) {
+            // 添加分页逻辑
+            String upperSql = sql.toUpperCase().trim();
+            if (!upperSql.contains(" LIMIT ")) {
+                // 先查询总数
+                String countSql = "SELECT COUNT(*) FROM (" + sql + ") AS total_count";
+                try (Statement stmt = conn.createStatement();
+                     ResultSet rs = stmt.executeQuery(countSql)) {
+                    if (rs.next()) {
+                        totalCount = rs.getLong(1);
+                    }
                 }
-            }
 
-            // 添加LIMIT子句
-            if (page != null && pageSize != null && pageSize > 0) {
+                // 添加LIMIT子句
                 int offset = (page - 1) * pageSize;
-                paginatedSql = sql + " LIMIT " + pageSize + " OFFSET " + offset;
+                finalSql = sql + " LIMIT " + pageSize + " OFFSET " + offset;
+            } else {
+                // 已有LIMIT，查询实际数据量作为总数
+                totalCount = null;
             }
-        } else {
-            // 已有LIMIT，查询实际数据量作为总数
-            needsCount = false;
         }
 
-        // 执行分页查询
+        // 执行查询
         try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(paginatedSql)) {
+             ResultSet rs = stmt.executeQuery(finalSql)) {
 
             List<Map<String, Object>> data = resultSetToList(rs);
             List<String> columns = new ArrayList<>();
@@ -88,14 +88,14 @@ public class ConnectionManagerService {
                 columns.addAll(data.get(0).keySet());
             }
 
-            // 如果没有LIMIT子句，使用实际返回的数据量作为总数
-            if (needsCount == false) {
+            // 如果没有分页或没有计算总数，使用实际返回的数据量
+            if (totalCount == null) {
                 totalCount = (long) data.size();
             }
 
             QueryResult result = new QueryResult(data, columns, totalCount);
-            if (page != null) result.setCurrentPage(page);
-            if (pageSize != null) result.setPageSize(pageSize);
+            if (applyPagination && page != null) result.setCurrentPage(page);
+            if (applyPagination && pageSize != null) result.setPageSize(pageSize);
 
             return result;
         }
