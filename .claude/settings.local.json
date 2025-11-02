@@ -37,7 +37,9 @@
       "Bash(curl -s \"http://localhost:8080/api/ai/chat/stream?message=test&configId=test\")",
       "Bash(timeout 10 curl \"http://localhost:8080/api/ai/chat/stream?message=讲解mysql&configId=test\")",
       "Bash(curl -X POST http://localhost:8080/api/ai/free-chat -H \"Content-Type: application/json\" -d '{\"\"message\"\": \"\"test\"\", \"\"configId\"\": \"\"test\"\"}' -v)",
-      "Bash(curl -X POST http://localhost:8080/api/ai/chat/free -H \"Content-Type: application/json\" -d '{\"\"message\"\": \"\"test\"\", \"\"configId\"\": \"\"test\"\"}' -v)"
+      "Bash(curl -X POST http://localhost:8080/api/ai/chat/free -H \"Content-Type: application/json\" -d '{\"\"message\"\": \"\"test\"\", \"\"configId\"\": \"\"test\"\"}' -v)",
+      "Bash(findstr :8080)",
+      "Bash(curl -X POST http://localhost:8080/api/ai/chat/stream -H \"Content-Type: application/json\" -H \"Accept: text/event-stream\" -d '{\"\"message\"\":\"\"hello\"\",\"\"configId\"\":\"\"test\"\"}' -v)"
     ],
     "deny": [],
     "ask": []

@@ -352,6 +352,84 @@ export default {
       return tab
     }
 
+    // 保存最后连接状态
+    const saveLastConnection = (sessionId, database) => {
+      const lastConnection = {
+        sessionId,
+        database,
+        timestamp: Date.now()
+      }
+      localStorage.setItem('last_connection', JSON.stringify(lastConnection))
+    }
+
+    // 加载最后连接状态
+    const loadLastConnection = () => {
+      const saved = localStorage.getItem('last_connection')
+      if (saved) {
+        try {
+          return JSON.parse(saved)
+        } catch (e) {
+          console.error('加载最后连接失败', e)
+          return null
+        }
+      }
+      return null
+    }
+
+    // 自动连接最后使用的数据库
+    const autoConnect = async () => {
+      const lastConn = loadLastConnection()
+      if (!lastConn) return
+
+      // 检查是否过期（24小时）
+      const now = Date.now()
+      const dayInMs = 24 * 60 * 60 * 1000
+      if (now - lastConn.timestamp > dayInMs) {
+        console.log('最后连接已过期')
+        return
+      }
+
+      // 检查会话是否仍然有效
+      const session = connectionStore.getSession(lastConn.sessionId)
+      if (!session) {
+        console.log('会话已失效')
+        return
+      }
+
+      // 自动连接到数据库
+      try {
+        const response = await fetch(`/api/sql/connect/${lastConn.sessionId}/${lastConn.database}`, {
+          method: 'POST'
+        })
+
+        if (response.ok) {
+          console.log('自动连接成功')
+          // 为当前tab设置连接
+          if (tabs.value.length > 0) {
+            tabs.value[activeTabIndex.value].sessionId = lastConn.sessionId
+            tabs.value[activeTabIndex.value].database = lastConn.database
+
+            // 确保连接在store中是活跃状态
+            if (!connectionStore.getActiveSessions().find(s => s.sessionId === lastConn.sessionId)) {
+              connectionStore.addActiveSession(lastConn.sessionId, session.connectionInfo)
+            }
+
+            // 触发事件通知其他组件（如ConnectionTree）
+            const event = new CustomEvent('session-connected', {
+              detail: {
+                sessionId: lastConn.sessionId,
+                database: lastConn.database,
+                autoConnect: true
+              }
+            })
+            window.dispatchEvent(event)
+          }
+        }
+      } catch (error) {
+        console.error('自动连接失败', error)
+      }
+    }
+
     const newTab = () => {
       const tab = createNewTab()
       activeTabIndex.value = tabs.value.length - 1
@@ -430,6 +508,8 @@ export default {
     const onTabDatabaseChange = (tab) => {
       if (tab.sessionId && tab.database) {
         connectionStore.switchDatabase(tab.sessionId, tab.database)
+        // 保存最后连接状态
+        saveLastConnection(tab.sessionId, tab.database)
       }
       markTabModified(tab)
     }
@@ -926,11 +1006,13 @@ export default {
     }
 
     // 生命周期
-    onMounted(() => {
+    onMounted(async () => {
       window.addEventListener('keydown', handleKeydown)
       connectionStore.loadConnections()
       loadTabsFromStorage()
       loadAiConfig()
+      // 尝试自动连接
+      await autoConnect()
     })
 
     onUnmounted(() => {
@@ -992,7 +1074,10 @@ export default {
       onHistoryExecute,
       onHistoryClear,
       onQueryHistoryReady,
-      onAiSidebarToggle
+      onAiSidebarToggle,
+      saveLastConnection,
+      loadLastConnection,
+      autoConnect
     }
   }
 }

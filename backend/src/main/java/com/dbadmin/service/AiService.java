@@ -22,6 +22,7 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Service
@@ -711,7 +712,7 @@ public class AiService {
     }
 
     // 流式聊天
-    public void streamChat(String message, AiConfig config, String systemPrompt, List<Map<String, String>> history, SseEmitter emitter) throws Exception {
+    public void streamChat(String message, AiConfig config, String systemPrompt, List<Map<String, String>> history, ResponseBodyEmitter emitter) throws Exception {
         if (!config.getEnabled() || config.getApiKey() == null || config.getApiKey().isEmpty()) {
             throw new Exception("AI服务未配置或已禁用");
         }
@@ -758,9 +759,7 @@ public class AiService {
 
         // 先发送一个初始事件，确保连接建立
         try {
-            emitter.send(SseEmitter.event()
-                .name("connected")
-                .data("{\"status\": \"connected\"}"));
+            emitter.send("data: {\"status\": \"connected\"}\n\n");
         } catch (Exception e) {
             log.error("发送初始连接事件失败", e);
             return;
@@ -800,9 +799,7 @@ public class AiService {
                                 String data = line.substring(6).trim();
 
                                 if (data.equals("[DONE]")) {
-                                    emitter.send(SseEmitter.event()
-                                        .name("end")
-                                        .data("{\"done\": true}"));
+                                    emitter.send("data: {\"done\": true}\n\n");
                                     break;
                                 }
 
@@ -818,9 +815,7 @@ public class AiService {
                                         String contentText = content.asText();
                                         if (!contentText.isEmpty()) {
                                             log.debug("发送内容: {}", contentText);
-                                            emitter.send(SseEmitter.event()
-                                                .name("message")
-                                                .data("{\"content\": \"" + escapeJson(contentText) + "\"}"));
+                                            emitter.send("data: {\"content\": \"" + escapeJson(contentText) + "\"}\n\n");
                                         }
                                     }
                                 } catch (Exception e) {
@@ -830,16 +825,12 @@ public class AiService {
                         }
                     }
                 } else {
-                    emitter.send(SseEmitter.event()
-                        .name("error")
-                        .data("{\"error\": \"AI服务返回错误: " + response.statusCode() + "\"}"));
+                    emitter.send("data: {\"error\": \"AI服务返回错误: " + response.statusCode() + "\"}\n\n");
                 }
             } catch (Exception e) {
                 log.error("流式聊天失败", e);
                 try {
-                    emitter.send(SseEmitter.event()
-                        .name("error")
-                        .data("{\"error\": \"" + e.getMessage().replace("\"", "\\\"") + "\"}"));
+                    emitter.send("data: {\"error\": \"" + e.getMessage().replace("\"", "\\\"") + "\"}\n\n");
                 } catch (IOException ioException) {
                     log.error("发送错误失败", ioException);
                 }

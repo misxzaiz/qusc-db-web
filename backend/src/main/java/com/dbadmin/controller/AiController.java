@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -324,23 +324,24 @@ public class AiController {
     }
 
     // 流式聊天API（支持历史）
-    @GetMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter streamChat(@RequestParam String message,
-                                 @RequestParam(required = false) String configId,
-                                 @RequestParam(required = false) String systemPrompt,
-                                 @RequestParam(required = false) String history) {
+    @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public ResponseBodyEmitter streamChat(@RequestBody Map<String, Object> request) {
+        String message = (String) request.get("message");
+        String configId = (String) request.get("configId");
+        String systemPrompt = (String) request.get("systemPrompt");
+
         log.info("收到流式聊天请求: message={}, configId={}", message, configId);
 
-        SseEmitter emitter = new SseEmitter(60000L); // 增加超时时间到60秒
+        ResponseBodyEmitter emitter = new ResponseBodyEmitter(60000L); // 增加超时时间到60秒
 
         // 设置超时和完成回调
         emitter.onTimeout(() -> {
-            log.info("SSE连接超时");
+            log.info("流连接超时");
             emitter.complete();
         });
 
         emitter.onCompletion(() -> {
-            log.info("SSE连接完成");
+            log.info("流连接完成");
         });
 
         // 在新线程中处理
@@ -353,13 +354,9 @@ public class AiController {
                 // 解析历史记录
                 @SuppressWarnings("unchecked")
                 List<Map<String, String>> historyList = new ArrayList<>();
-                if (history != null && !history.isEmpty()) {
+                List<Map<String, Object>> historyData = (List<Map<String, Object>>) request.get("history");
+                if (historyData != null && !historyData.isEmpty()) {
                     try {
-                        // 前端传递的是JSON字符串，需要解析
-                        ObjectMapper mapper = new ObjectMapper();
-                        List<Map<String, Object>> historyData = mapper.readValue(history,
-                            mapper.getTypeFactory().constructCollectionType(List.class, Map.class));
-
                         for (Map<String, Object> item : historyData) {
                             historyList.add(Map.of(
                                 "role", (String) item.get("role"),
@@ -377,11 +374,11 @@ public class AiController {
             } catch (Exception e) {
                 log.error("流式聊天处理失败", e);
                 try {
-                    emitter.send(SseEmitter.event()
-                        .name("error")
-                        .data("{\"error\": \"" + e.getMessage() + "\"}"));
+                    emitter.send("data: {\"error\": \"" + e.getMessage() + "\"}\n\n");
                 } catch (IOException ioException) {
                     log.error("发送错误事件失败", ioException);
+                } finally {
+                    emitter.complete();
                 }
             }
         }).start();

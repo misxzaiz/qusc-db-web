@@ -107,14 +107,44 @@
       <!-- 输入区 -->
       <div class="input-area">
         <div class="input-wrapper">
-          <textarea
-            v-model="inputText"
-            :placeholder="selectedRole ? `以${selectedRole.name}身份...` : '输入问题...'"
-            rows="2"
-            @keydown.enter.prevent="onEnter"
-            :disabled="loading || streaming"
-            ref="messageInput"
-          ></textarea>
+          <div class="textarea-wrapper">
+            <textarea
+              v-model="inputText"
+              :placeholder="selectedRole ? `以${selectedRole.name}身份...` : '输入问题...'"
+              rows="2"
+              @keydown="handleInputKeydown"
+              @input="handleInputChange"
+              @click="handleInputClick"
+              :disabled="loading || streaming"
+              ref="messageInput"
+            ></textarea>
+
+            <!-- @表选择器 -->
+            <div
+              v-if="showTableSelector"
+              class="table-selector"
+              :style="{
+                left: tableSelectorPosition.x + 'px',
+                top: tableSelectorPosition.y + 'px'
+              }"
+            >
+              <div class="table-list" ref="tableList">
+                <div
+                  v-for="table in filteredTables"
+                  :key="table"
+                  class="table-item"
+                  @click="selectTable(table)"
+                >
+                  <span class="icon">📊</span>
+                  <span class="table-name">{{ table }}</span>
+                </div>
+                <div v-if="filteredTables.length === 0" class="empty">
+                  没有找到匹配的表
+                </div>
+              </div>
+            </div>
+          </div>
+
           <button
             class="send-btn"
             @click="sendMessage"
@@ -310,7 +340,14 @@ export default {
       ],
       // 角色管理
       defaultRoles: [],
-      customRoles: []
+      customRoles: [],
+      // @引用相关
+      showTableSelector: false,
+      tableSelectorPosition: { x: 0, y: 0 },
+      tableSearchQuery: '',
+      filteredTables: [],
+      selectedTables: new Set(),
+      tableSchemas: new Map()
     }
   },
   computed: {
@@ -589,6 +626,183 @@ export default {
       }
     },
 
+    // 处理输入键盘事件
+    handleInputKeydown(e) {
+      if (e.key === 'Escape') {
+        this.cancelTableSelection()
+        return
+      }
+      if (e.key === 'Enter' && !e.shiftKey) {
+        if (this.showTableSelector) {
+          e.preventDefault()
+          if (this.selectedTables.size > 0) {
+            this.confirmTableSelection()
+          } else {
+            this.cancelTableSelection()
+          }
+        }
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        this.navigateTableList(1)
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        this.navigateTableList(-1)
+      }
+    },
+
+    // 处理输入变化
+    async handleInputChange(e) {
+      const text = e.target.value
+      const cursorPos = e.target.selectionStart
+
+      // 查找@符号
+      const atIndex = text.lastIndexOf('@', cursorPos)
+      if (atIndex === -1 || this.loading || this.streaming) {
+        this.hideTableSelector()
+        return
+      }
+
+      // 提取@后的文本作为搜索查询
+      const searchQuery = text.substring(atIndex + 1, cursorPos)
+      if (searchQuery.includes(' ')) {
+        this.hideTableSelector()
+        return
+      }
+
+      // 显示表选择器并过滤
+      await this.showTableSelectorAt(atIndex, searchQuery)
+    },
+
+    // 处理输入点击
+    handleInputClick(e) {
+      const text = e.target.value
+      const cursorPos = e.target.selectionStart
+
+      const atIndex = text.lastIndexOf('@', cursorPos)
+      if (atIndex === -1) {
+        this.hideTableSelector()
+        return
+      }
+
+      this.showTableSelectorAt(atIndex)
+    },
+
+    // 在指定位置显示表选择器
+    async showTableSelectorAt(atIndex, searchQuery = '') {
+      const textarea = this.$refs.messageInput
+      const rect = textarea.getBoundingClientRect()
+      const lineHeight = 20 // 估算行高
+
+      // 计算光标位置
+      const lines = textarea.value.substring(0, atIndex).split('\n')
+      const line = lines.length - 1
+      const charInLine = lines[lines.length - 1].length
+
+      this.tableSelectorPosition = {
+        x: rect.left + charInLine * 8 + 10, // 估算字符宽度
+        y: rect.top + (line + 1) * lineHeight + 5
+      }
+
+      this.showTableSelector = true
+
+      // 加载表列表
+      await this.loadTables()
+
+      // 过滤表列表
+      if (searchQuery) {
+        this.filteredTables = this.filteredTables.filter(table =>
+          table.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      }
+    },
+
+    // 隐藏表选择器
+    hideTableSelector() {
+      this.showTableSelector = false
+      this.tableSearchQuery = ''
+      this.filteredTables = []
+    },
+
+    // 加载表列表
+    async loadTables() {
+      // 获取当前活动的tab
+      const sqlEditor = this.$parent
+      if (!sqlEditor || !sqlEditor.currentTab || !sqlEditor.currentTab.sessionId) {
+        return
+      }
+
+      const { sessionId, database } = sqlEditor.currentTab
+      if (!sessionId || !database) {
+        return
+      }
+
+      try {
+        const response = await fetch(`/api/sql/tables/${sessionId}?database=${database}`)
+        const data = await response.json()
+        this.filteredTables = data.tables || []
+      } catch (error) {
+        console.error('加载表列表失败', error)
+      }
+    },
+
+    // 选择表
+    async selectTable(table) {
+      // 加载表结构
+      if (!this.tableSchemas.has(table)) {
+        await this.loadTableSchema(table)
+      }
+
+      // 替换@引用为表名
+      const text = this.inputText
+      const cursorPos = this.$refs.messageInput.selectionStart
+
+      // 找到@符号的位置
+      const atPos = text.lastIndexOf('@', cursorPos)
+      if (atPos !== -1) {
+        const before = text.substring(0, atPos)
+        const after = text.substring(cursorPos)
+        this.inputText = before + `\`${table}\`` + after
+
+        // 设置光标位置
+        this.$nextTick(() => {
+          const newPos = before.length + `\`${table}\``.length
+          this.$refs.messageInput.selectionStart = newPos
+          this.$refs.messageInput.selectionEnd = newPos
+        })
+      }
+
+      // 添加到已选表集合
+      this.selectedTables.add(table)
+
+      // 隐藏选择器
+      this.hideTableSelector()
+    },
+
+    // 加载表结构
+    async loadTableSchema(tableName) {
+      // 获取当前活动的tab
+      const sqlEditor = this.$parent
+      if (!sqlEditor || !sqlEditor.currentTab || !sqlEditor.currentTab.sessionId) {
+        return
+      }
+
+      const { sessionId, database } = sqlEditor.currentTab
+      if (!sessionId || !database) {
+        return
+      }
+
+      try {
+        const response = await fetch(`/api/sql/table/${sessionId}/${database}/${tableName}/schema`)
+        const schema = await response.json()
+        this.tableSchemas.set(tableName, schema)
+      } catch (error) {
+        console.error(`加载表${tableName}结构失败`, error)
+      }
+    },
+
+    
     quickAction(type) {
       const prompts = {
         sql: '帮我生成SQL语句',
@@ -628,51 +842,104 @@ export default {
       try {
         // 准备历史记录和系统提示词
         const history = this.getFilteredHistory()
-        const systemPrompt = this.selectedRole ? this.selectedRole.systemPrompt : null
+        let systemPrompt = this.selectedRole ? this.selectedRole.systemPrompt : null
 
-        let url = `/api/ai/chat/stream?message=${encodeURIComponent(message)}`
-        if (this.selectedConfig) url += `&configId=${this.selectedConfig}`
-        if (systemPrompt) url += `&systemPrompt=${encodeURIComponent(systemPrompt)}`
-        if (history.length > 0) url += `&history=${encodeURIComponent(JSON.stringify(history))}`
-
-        console.log('发起流式请求:', url)
-        console.log('历史记录条数:', history.length)
-        console.log('使用角色:', this.selectedRole?.name)
-
-        if (this.eventSource) this.eventSource.close()
-        this.eventSource = new EventSource(url)
-
-        this.eventSource.onopen = (e) => {
-          console.log('SSE连接已建立')
+        // 如果有选中的表，添加表结构信息到系统提示词
+        if (this.selectedTables.size > 0) {
+          let schemaInfo = '\n\n以下是相关的数据库表结构信息：\n'
+          this.selectedTables.forEach(tableName => {
+            const schema = this.tableSchemas.get(tableName)
+            if (schema) {
+              schemaInfo += `\n表名：${tableName}\n`
+              schemaInfo += `表结构：\n${JSON.stringify(schema.columns, null, 2)}\n`
+            }
+          })
+          systemPrompt = (systemPrompt || '') + schemaInfo
         }
 
-        this.eventSource.addEventListener('connected', (e) => {
-          console.log('收到connected事件:', e.data)
-        })
+        // 准备请求数据
+        const requestData = {
+          message,
+          configId: this.selectedConfig,
+          systemPrompt,
+          history
+        }
 
-        this.eventSource.addEventListener('message', (e) => {
-          console.log('收到SSE消息:', e.data)
-          try {
-            const data = JSON.parse(e.data)
-            if (data.content) {
-              this.streamContent += data.content
-              this.scrollToBottom()
-            } else if (data.done) {
-              this.finishStream()
-            }
-          } catch (err) {
-            console.error('解析消息失败', err, e.data)
+        console.log('发起流式请求:', requestData)
+        console.log('历史记录条数:', history.length)
+        console.log('使用角色:', this.selectedRole?.name)
+        console.log('选中的表:', Array.from(this.selectedTables))
+
+        if (this.eventSource) this.eventSource.close()
+
+        // 使用fetch处理流式响应
+        this.streaming = true
+        fetch('/api/ai/chat/stream', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'text/event-stream',
+            'Cache-Control': 'no-cache'
+          },
+          body: JSON.stringify(requestData)
+        }).then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`)
           }
-        })
 
-        this.eventSource.addEventListener('end', () => {
-          console.log('收到结束事件')
-          this.finishStream()
-        })
+          const reader = response.body.getReader()
+          const decoder = new TextDecoder()
+          let buffer = ''
 
-        this.eventSource.addEventListener('error', (e) => {
-          console.error('SSE错误:', e)
-          this.addError('连接中断')
+          function processText(text) {
+            buffer += text
+            const lines = buffer.split('\n')
+            buffer = lines.pop() || '' // 保留最后一个不完整的行
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6)
+                if (data === '[DONE]') {
+                  this.finishStream()
+                  return
+                }
+                try {
+                  const parsed = JSON.parse(data)
+                  if (parsed.content) {
+                    this.streamContent += parsed.content
+                    this.scrollToBottom()
+                  }
+                } catch (e) {
+                  console.error('解析数据失败', e, data)
+                }
+              }
+            }
+          }
+
+          function read() {
+            reader.read().then(({ done, value }) => {
+              if (done) {
+                if (buffer) {
+                  processText.call(this, buffer + '\n')
+                }
+                this.finishStream()
+                return
+              }
+
+              const text = decoder.decode(value, { stream: true })
+              processText.call(this, text)
+              read.call(this)
+            }).catch(error => {
+              console.error('流读取错误', error)
+              this.addError('连接中断')
+              this.streaming = false
+            })
+          }
+
+          read.call(this)
+        }).catch(error => {
+          console.error('流式请求失败', error)
+          this.addError('请求失败')
           this.streaming = false
         })
       } catch (error) {
@@ -705,7 +972,20 @@ export default {
       try {
         // 准备历史记录和系统提示词
         const history = this.getFilteredHistory()
-        const systemPrompt = this.selectedRole ? this.selectedRole.systemPrompt : null
+        let systemPrompt = this.selectedRole ? this.selectedRole.systemPrompt : null
+
+        // 如果有选中的表，添加表结构信息到系统提示词
+        if (this.selectedTables.size > 0) {
+          let schemaInfo = '\n\n以下是相关的数据库表结构信息：\n'
+          this.selectedTables.forEach(tableName => {
+            const schema = this.tableSchemas.get(tableName)
+            if (schema) {
+              schemaInfo += `\n表名：${tableName}\n`
+              schemaInfo += `表结构：\n${JSON.stringify(schema.columns, null, 2)}\n`
+            }
+          })
+          systemPrompt = (systemPrompt || '') + schemaInfo
+        }
 
         const response = await fetch('/api/ai/chat/free', {
           method: 'POST',
@@ -1422,5 +1702,49 @@ export default {
   flex: 1;
   font-size: 12px;
   color: var(--warning);
+}
+
+/* 引用选择器样式 */
+.table-selector {
+  position: fixed;
+  background: white;
+  border: 1px solid var(--border-primary);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 1000;
+  min-width: 180px;
+  font-size: 13px;
+}
+
+.table-selector .table-list {
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.table-selector .table-item {
+  padding: 6px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.15s;
+}
+
+.table-selector .table-item:hover {
+  background: var(--bg-highlight);
+}
+
+.table-selector .table-item .icon {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.table-selector .empty {
+  padding: 12px;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 12px;
 }
 </style>

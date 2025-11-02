@@ -194,4 +194,20 @@ public class SqlController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    @GetMapping("/table/{sessionId}/{database}/{table}/schema")
+    public ResponseEntity<?> getTableSchemaWithDatabase(
+            @PathVariable String sessionId,
+            @PathVariable String database,
+            @PathVariable String table) {
+        try {
+            // 先切换到指定数据库
+            connectionManager.switchDatabase(sessionId, database);
+            // 获取表结构
+            Map<String, Object> schema = connectionManager.getTableSchema(sessionId, table);
+            return ResponseEntity.ok(schema);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }
