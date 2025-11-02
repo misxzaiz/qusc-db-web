@@ -102,6 +102,10 @@
                 @execute-sql="(sql) => handleExecuteSql(sql, msg)"
                 @copy-sql="handleCopySql"
                 @open-in-new-tab="handleOpenInNewTab"
+                @execute-batch-sql="$emit('execute-batch-sql', $event)"
+                @batch-sql-execute="$emit('batch-sql-execute', $event)"
+                @batch-sql-cancelled="$emit('batch-sql-cancelled', $event)"
+                @batch-sql-completed="$emit('batch-sql-completed', $event)"
               />
             </div>
           </div>

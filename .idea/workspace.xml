@@ -4,8 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="chore(frontend): 移除 MarkdownRenderer 中的调试日志&#10;&#10;- 删除了多个用于调试的 console.log语句&#10;- 清理了 SQL 代码块检测逻辑中的临时测试代码&#10;- 移除了组件挂载和事件监听器设置时的调试输出&#10;- 简化了 addSqlButtonsToCodeBlocks 方法中的日志记录&#10;- 去除了代码块内容和 SQL 检测相关的调试信息打印">
+    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(markdown): 支持多条SQL语句批量执行- 在 MarkdownRenderer.vue 中新增批量SQL执行事件发射器&#10;- 实现 executeMultipleSql 方法支持多条SQL逐条执行&#10;- 添加批量执行确认对话框和风险提示机制- 创建新Tab页来展示批量执行结果和状态&#10;- 在 RightTabSidebar.vue 中传递批量执行相关事件&#10;- SqlEditor.vue 中新增批量执行Tab管理和状态跟踪&#10;- 支持批量执行过程中的取消操作和结果统计&#10;- 添加批量执行结果的详细状态显示（成功/失败/取消）">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/MarkdownRenderer.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/MarkdownRenderer.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/components/RightTabSidebar.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/RightTabSidebar.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -74,14 +77,6 @@
       <option name="presentableId" value="Default" />
       <updated>1761843015910</updated>
       <workItem from="1761843018540" duration="15714000" />
-    </task>
-    <task id="LOCAL-00001" summary="chore(deps): 更新前端依赖配置- 为多个依赖包添加或更新 .eslintrc 配置文件- 统一配置 eslint 规则，包括 func-name-matching、id-length、new-cap 等&#10;- 为测试目录添加特定的 eslint 覆盖规则&#10;- 更新 .nycrc 覆盖率配置文件&#10;- 添加 package-lock.json 文件锁定依赖版本- 引入 codemirror 相关依赖用于代码编辑器功能&#10;- 更新 vue 和相关编译器核心依赖到最新版本&#10;- 添加 element-plus 图标库支持- 升级 axios 到 1.13.1 版本&#10;- 引入 proxy-from-env 处理代理环境变量- 添加 call-bind-apply-helpers 等底层工具库- 更新 es-define-property、dunder-proto 等 es-* 系列包&#10;- 锁定 @babel/parser、@babel/types 等解析器版本&#10;- 添加 @codemirror/lang-sql 支持 SQL 语法高亮&#10;- 更新 rollup 和 esbuild 构建工具依赖&#10;- 添加 @vue/devtools-api 开发者工具支持&#10;- 引入 csstype 类型定义文件&#10;- 添加 crelt 虚拟 DOM 工具库&#10;- 更新 source-map-js 和 magic-string 工具库版本">
-      <option name="closed" value="true" />
-      <created>1761845237838</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1761845237838</updated>
     </task>
     <task id="LOCAL-00002" summary="feat(editor): 引入SQL代码编辑器组件并优化样式系统- 集成 CodeMirror 6 SQL 编辑器，支持语法高亮和自动补全&#10;- 添加 One Dark 主题支持&#10;- 实现SQL格式化功能- 增加查询历史记录功能，支持时间显示和点击加载&#10;- 添加结果导出为 CSV 功能- 统一使用CSS变量重构全局样式系统- 移除内联样式，引入独立主题文件-优化按钮、表单、卡片等UI组件样式&#10;- 改进响应式设计和交互效果- 增强可访问性和用户体验">
       <option name="closed" value="true" />
@@ -459,7 +454,23 @@
       <option name="project" value="LOCAL" />
       <updated>1762094123772</updated>
     </task>
-    <option name="localTasksCounter" value="49" />
+    <task id="LOCAL-00049" summary="refactor(frontend):重命名SQL执行API方法名&#10;&#10;- 将sqlApi.executeSql方法重命名为sqlApi.execute&#10;- 更新RightTabSidebar.vue">
+      <option name="closed" value="true" />
+      <created>1762094300744</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
+      <option name="project" value="LOCAL" />
+      <updated>1762094300744</updated>
+    </task>
+    <task id="LOCAL-00050" summary="feat(markdown): 支持多条SQL语句执行和风险确认&#10;&#10;- 新增多条SQL语句分割和逐条执行功能- 实现中高风险SQL语句执行前">
+      <option name="closed" value="true" />
+      <created>1762095036985</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1762095036987</updated>
+    </task>
+    <option name="localTasksCounter" value="51" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -501,9 +512,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="feat(ai): 实现AI聊天中表结构上下文注入功能&#10;&#10;- 后端接口支持传入tableContexts参数，包含表名和建表SQL&#10;- AiService中处理表结构信息，将其附加到用户消息中&#10;- 前端实现@表名自动识别并生成表标签&#10;- 新增表结构获取接口getTableCreateSql&#10;- 优化前端表标签交互和样式显示&#10;- 调整配置选择器位置和输入框布局&#10;- 改进消息发送快捷键处理逻辑" />
-    <MESSAGE value="feat(ai): 调整AI配置选择器位置和优化输入区布局&#10;&#10;- 将AI配置选择器从输入区移动至顶部AI配置栏&#10;- 更新配置选择器样式为紧凑型设计&#10;- 移除输入区@表名自动创建标签逻辑&#10;- 优化表标签交互和样式显示- 改进消息发送快捷键处理逻辑" />
-    <MESSAGE value="feat(ai):重构AI诊断和分析功能集成到侧边栏&#10;&#10;- 修改sendMessage方法支持定义消息发送自- 移除SQL编辑器中的内联AI诊断结果显示&#10;- 添加AI分析按钮禁用状态和提示信息- 集成AI错误诊断和查询结果分析到AI助手&#10;- 添加AI侧边栏引用和相关图标库&#10;- 优化AI消息格式和内容展示&#10;- 更新组件引用和方法导出" />
     <MESSAGE value="feat(ai):重构AI侧边栏交互并添加右侧固定图标栏&#10;&#10;- 在 AiSidebar2.vue 中添加 visible 控制显示状态&#10;- 默认展开 AI 侧边栏并控制其可见性&#10;- 移除 SqlEditor.vue 中的旧 AI 侧边栏类名控制逻辑- 添加 RightIconBar 组件用于固定右侧图标栏&#10;- 实现通过右侧图标栏控制 AI侧边栏开关&#10;- 调整主内容区域样式以适应新的布局结构&#10;- 更新组件引用和事件处理方法以支持新交互" />
     <MESSAGE value="feat(ai): 移除旧版AI助手侧边栏组件&#10;&#10;- 删除了完整的 AiSidebar2.vue 组件文件&#10;- 移除了所有相关的模板、脚本和样式代码&#10;- 清理了与旧版AI助手相关的功能实现&#10;- 为新版AI助手功能重构做准备" />
     <MESSAGE value="feat(ai): 移除旧版AI助手侧边栏组件- 删除了完整的 AiSidebar2.vue 组件文件&#10;- 移除了所有相关的模板、脚本和样式代码&#10;- 清理了与旧版AI助手相关的功能实现- 为新版AI助手功能重构做准备" />
@@ -526,7 +534,10 @@
     <MESSAGE value="feat(backend):优化数据库连接和SQL查询处理&#10;&#10;- 在ConnectionManagerService中添加Unicode支持和字符编码配置&#10;- 移除重复的serverTimezone属性设置- 在SqlController中改进SQL查询解析逻辑，支持注释移除&#10;- 更新WebConfig中的CORS配置，限制允许的源地址&#10;-优化Claude本地配置文件中的调试命令权限设置" />
     <MESSAGE value="feat(frontend): 添加SQL代码执行和-结果展示功能 在MarkdownRenderer组件中实现SQL代码块识别和高亮&#10;- 添加SQL风险分析和确认对话框机制- 实现SQL代码块的操作按钮（复制、执行、新标签页打开）- 在RightTabSidebar中添加SQL执行结果展示区域&#10;- 支持SQL执行成功/失败状态显示和数据预览&#10;- 添加SQL执行时间统计和影响行数显示&#10;- 实现从AI回复中提取SQL并在新标签页执行的功能&#10;- 添加代码块复制成功提示和SQL执行风险警告&#10;-优化SQL代码块样式和交互体验- 添加调试日志和错误处理机制" />
     <MESSAGE value="chore(frontend): 移除 MarkdownRenderer 中的调试日志&#10;&#10;- 删除了多个用于调试的 console.log语句&#10;- 清理了 SQL 代码块检测逻辑中的临时测试代码&#10;- 移除了组件挂载和事件监听器设置时的调试输出&#10;- 简化了 addSqlButtonsToCodeBlocks 方法中的日志记录&#10;- 去除了代码块内容和 SQL 检测相关的调试信息打印" />
-    <option name="LAST_COMMIT_MESSAGE" value="chore(frontend): 移除 MarkdownRenderer 中的调试日志&#10;&#10;- 删除了多个用于调试的 console.log语句&#10;- 清理了 SQL 代码块检测逻辑中的临时测试代码&#10;- 移除了组件挂载和事件监听器设置时的调试输出&#10;- 简化了 addSqlButtonsToCodeBlocks 方法中的日志记录&#10;- 去除了代码块内容和 SQL 检测相关的调试信息打印" />
+    <MESSAGE value="refactor(frontend):重命名SQL执行API方法名&#10;&#10;- 将sqlApi.executeSql方法重命名为sqlApi.execute&#10;- 更新RightTabSidebar.vue" />
+    <MESSAGE value="feat(markdown): 支持多条SQL语句执行和风险确认&#10;&#10;- 新增多条SQL语句分割和逐条执行功能- 实现中高风险SQL语句执行前" />
+    <MESSAGE value="feat(markdown): 支持多条SQL语句批量执行- 在 MarkdownRenderer.vue 中新增批量SQL执行事件发射器&#10;- 实现 executeMultipleSql 方法支持多条SQL逐条执行&#10;- 添加批量执行确认对话框和风险提示机制- 创建新Tab页来展示批量执行结果和状态&#10;- 在 RightTabSidebar.vue 中传递批量执行相关事件&#10;- SqlEditor.vue 中新增批量执行Tab管理和状态跟踪&#10;- 支持批量执行过程中的取消操作和结果统计&#10;- 添加批量执行结果的详细状态显示（成功/失败/取消）" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(markdown): 支持多条SQL语句批量执行- 在 MarkdownRenderer.vue 中新增批量SQL执行事件发射器&#10;- 实现 executeMultipleSql 方法支持多条SQL逐条执行&#10;- 添加批量执行确认对话框和风险提示机制- 创建新Tab页来展示批量执行结果和状态&#10;- 在 RightTabSidebar.vue 中传递批量执行相关事件&#10;- SqlEditor.vue 中新增批量执行Tab管理和状态跟踪&#10;- 支持批量执行过程中的取消操作和结果统计&#10;- 添加批量执行结果的详细状态显示（成功/失败/取消）" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="XDebuggerManager">

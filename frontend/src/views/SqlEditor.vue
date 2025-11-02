@@ -127,6 +127,8 @@
           <div class="results-section">
             <ResultTabs
               :results="tab.results"
+              :is-batch-execution="tab.isBatchExecution || false"
+              :batch-results="tab.batchResults || []"
               @analyze="handleAnalyzeClick"
               @export="exportResult"
               @refresh="handleResultRefresh"
@@ -143,6 +145,10 @@
       :get-current-tab-info="getCurrentTabInfo"
       @execute-sql="onExecuteAiSql"
       @open-in-new-tab="onOpenAiSqlInNewTab"
+      @execute-batch-sql="onExecuteBatchSql"
+      @batch-sql-execute="onBatchSqlExecute"
+      @batch-sql-cancelled="onBatchSqlCancelled"
+      @batch-sql-completed="onBatchSqlCompleted"
       @resize="handleRightSidebarResize"
     />
   </div>
@@ -756,6 +762,120 @@ ${tab.sqlText}
       })
     }
 
+    // 批量执行处理
+    const onExecuteBatchSql = (batchData) => {
+      // 创建批量执行Tab
+      const batchTab = {
+        id: batchData.id,
+        title: `批量执行 (${batchData.total}条)`,
+        sqlText: batchData.sqlList.join('\n\n'),
+        results: [],
+        error: null,
+        executing: false,
+        modified: false,
+        sessionId: tabs.value[activeTabIndex.value]?.sessionId || '',
+        database: tabs.value[activeTabIndex.value]?.database || '',
+        inTransaction: false,
+        isBatchExecution: true,
+        batchResults: new Array(batchData.total).fill(null).map(() => ({
+          sql: '',
+          status: 'pending',
+          result: null,
+          error: null,
+          executionTime: null
+        }))
+      }
+
+      tabs.value.push(batchTab)
+      activeTabIndex.value = tabs.value.length - 1
+
+      // 存储批量执行信息
+      batchTab.batchId = batchData.id
+      batchTab.totalSql = batchData.total
+      batchTab.currentSqlIndex = 0
+    }
+
+    // 处理单条批量SQL执行
+    const onBatchSqlExecute = async (data) => {
+      const tab = tabs.value.find(t => t.batchId === data.batchId)
+      if (!tab) return
+
+      const index = data.index
+      tab.batchResults[index] = {
+        sql: data.sql,
+        status: 'executing',
+        result: null,
+        error: null,
+        executionTime: null
+      }
+
+      // 执行SQL
+      try {
+        const startTime = Date.now()
+        await executeSqlInTab(tab, data.sql)
+        const executionTime = Date.now() - startTime
+
+        tab.batchResults[index] = {
+          sql: data.sql,
+          status: 'success',
+          result: tab.results[tab.results.length - 1] || null,
+          error: null,
+          executionTime
+        }
+      } catch (error) {
+        tab.batchResults[index] = {
+          sql: data.sql,
+          status: 'error',
+          result: null,
+          error: error.message || '执行失败',
+          executionTime: null
+        }
+      }
+    }
+
+    // 批量执行取消
+    const onBatchSqlCancelled = (data) => {
+      const tab = tabs.value.find(t => t.batchId === data.batchId)
+      if (!tab) return
+
+      // 标记后续SQL为已取消
+      for (let i = data.index; i < tab.batchResults.length; i++) {
+        tab.batchResults[i] = {
+          ...tab.batchResults[i],
+          status: 'cancelled'
+        }
+      }
+    }
+
+    // 批量执行完成
+    const onBatchSqlCompleted = (data) => {
+      const tab = tabs.value.find(t => t.batchId === data.batchId)
+      if (!tab) return
+
+      // 更新Tab标题，显示执行统计
+      const successCount = tab.batchResults.filter(r => r.status === 'success').length
+      const errorCount = tab.batchResults.filter(r => r.status === 'error').length
+      tab.title = `批量执行 (成功: ${successCount}, 失败: ${errorCount})`
+    }
+
+    // 在Tab中执行单条SQL（用于批量执行）
+    const executeSqlInTab = async (tab, sql) => {
+      if (!tab.sessionId || !sql.trim()) {
+        throw new Error('会话ID或SQL不能为空')
+      }
+
+      const result = await executeSingleSql(tab.sessionId, sql)
+
+      // 将结果添加到Tab的结果列表
+      tab.results.push({
+        ...result,
+        sql: sql,
+        timestamp: new Date()
+      })
+
+      return result
+    }
+
     const handleSidebarResize = (width) => {
       // 处理侧边栏大小调整
     }
@@ -884,6 +1004,10 @@ ${tab.sqlText}
       onQueryHistoryReady,
       onExecuteAiSql,
       onOpenAiSqlInNewTab,
+      onExecuteBatchSql,
+      onBatchSqlExecute,
+      onBatchSqlCancelled,
+      onBatchSqlCompleted,
       handleSidebarResize,
       handleRightSidebarResize,
       commitTransaction,

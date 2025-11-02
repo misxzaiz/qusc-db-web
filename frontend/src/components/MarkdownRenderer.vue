@@ -67,7 +67,7 @@ export default {
       default: true
     }
   },
-  emits: ['execute-sql', 'copy-sql', 'open-in-new-tab'],
+  emits: ['execute-sql', 'copy-sql', 'open-in-new-tab', 'execute-batch-sql', 'batch-sql-execute', 'batch-sql-cancelled', 'batch-sql-completed'],
   data() {
     return {
       showConfirmDialog: false,
@@ -378,10 +378,17 @@ export default {
     },
 
     async executeMultipleSql(sqlStatements) {
-      this.showToast(`开始执行${sqlStatements.length}条SQL语句`, 'info')
-      let successCount = 0
-      let errorCount = 0
+      // 发出批量执行事件，创建新Tab
+      const batchId = `batch-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      this.$emit('execute-batch-sql', {
+        id: batchId,
+        sqlList: sqlStatements,
+        total: sqlStatements.length
+      })
 
+      this.showToast(`开始在新的Tab中执行${sqlStatements.length}条SQL语句`, 'info')
+
+      // 逐条执行SQL
       for (let i = 0; i < sqlStatements.length; i++) {
         const sql = sqlStatements[i]
 
@@ -394,31 +401,32 @@ export default {
             const confirmed = await this.confirmSqlExecution(sql, riskLevel, `第${i + 1}/${sqlStatements.length}条SQL`)
             if (!confirmed) {
               this.showToast(`第${i + 1}条SQL执行已取消`, 'info')
+              // 通知取消执行
+              this.$emit('batch-sql-cancelled', { batchId, index: i })
               break
             }
           }
 
-          // 直接发出执行事件，不等待结果
-          this.$emit('execute-sql', sql)
-          successCount++
+          // 发出单条执行事件到新Tab
+          this.$emit('batch-sql-execute', {
+            batchId,
+            index: i,
+            sql,
+            total: sqlStatements.length
+          })
 
           // 添加延迟避免过快执行
           if (i < sqlStatements.length - 1) {
             await new Promise(resolve => setTimeout(resolve, 500))
           }
         } catch (error) {
-          errorCount++
           console.error(`第${i + 1}条SQL执行失败:`, error)
           // 继续执行下一条，而不是中断
         }
       }
 
-      // 显示执行结果统计
-      if (errorCount === 0) {
-        this.showToast(`已提交执行所有${successCount}条SQL语句`, 'success')
-      } else {
-        this.showToast(`执行完成：成功${successCount}条，失败${errorCount}条`, 'warning')
-      }
+      // 通知批量执行完成
+      this.$emit('batch-sql-completed', { batchId })
     },
 
     confirmSqlExecution(sql, riskLevel, prefix = '') {
