@@ -1,5 +1,5 @@
 <template>
-  <div class="ai-sidebar" :class="{ expanded: isExpanded }">
+  <div class="ai-sidebar" :class="{ expanded: isExpanded }" v-show="visible">
     <div class="ai-header">
       <button class="toggle-btn" @click="toggleSidebar" :title="isExpanded ? '收起' : '展开'">
         <font-awesome-icon icon="comments" />
@@ -328,6 +328,7 @@ export default {
   emits: ['execute-sql', 'toggle'],
   data() {
     return {
+      visible: false,
       isExpanded: false,
       messages: [],
       inputText: '',
@@ -376,6 +377,8 @@ export default {
     }
   },
   mounted() {
+    this.visible = true
+    this.isExpanded = true // 默认展开
     this.loadConfigs()
     this.loadRoles()
     this.loadHistory()

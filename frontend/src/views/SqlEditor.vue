@@ -11,7 +11,7 @@
     />
 
     <!-- 主内容区 -->
-    <div class="main-content" :class="{ 'ai-sidebar-open': isAiSidebarOpen }">
+    <div class="main-content">
       <!-- Tab栏 -->
       <div class="tab-bar">
         <div class="tab-list">
@@ -267,8 +267,19 @@
       </div>
     </div>
 
+    <!-- 右侧固定图标栏 -->
+    <RightIconBar
+      :is-ai-sidebar-open="isAiSidebarOpen"
+      @toggle-ai="onToggleAiSidebar"
+    />
+
     <!-- 右侧AI边栏 -->
-    <AiSidebar ref="aiSidebarRef" @execute-sql="onExecuteAiSql" @resize="handleAiResize" @toggle="onAiSidebarToggle" />
+    <AiSidebar
+      v-show="isAiSidebarOpen"
+      ref="aiSidebarRef"
+      @execute-sql="onExecuteAiSql"
+      @resize="handleAiResize"
+    />
   </div>
 </template>
 
@@ -278,6 +289,7 @@ import { connectionStore } from '../stores/connectionStore'
 import SqlCodeEditor from '../components/SqlCodeEditor.vue'
 import TabSidebar from '../components/TabSidebar.vue'
 import AiSidebar from '../components/AiSidebar2.vue'
+import RightIconBar from '../components/RightIconBar.vue'
 import { faBrain } from '@fortawesome/free-solid-svg-icons'
 import { library } from '@fortawesome/fontawesome-svg-core'
 
@@ -289,7 +301,8 @@ export default {
   components: {
     SqlCodeEditor,
     TabSidebar,
-    AiSidebar
+    AiSidebar,
+    RightIconBar
   },
 
   setup() {
@@ -1044,9 +1057,14 @@ ${JSON.stringify(sampleData, null, 2)}
       markTabModified(currentTab.value)
     })
 
-    // AI侧边栏开关处理
+    // AI侧边栏开关处理（来自AiSidebar组件）
     const onAiSidebarToggle = (isOpen) => {
       isAiSidebarOpen.value = isOpen
+    }
+
+    // AI侧边栏开关处理（来自RightIconBar组件）
+    const onToggleAiSidebar = () => {
+      isAiSidebarOpen.value = !isAiSidebarOpen.value
     }
 
     // 返回所有需要在模板中使用的数据和方法
@@ -1097,6 +1115,7 @@ ${JSON.stringify(sampleData, null, 2)}
       onHistoryClear,
       onQueryHistoryReady,
       onAiSidebarToggle,
+      onToggleAiSidebar,
       saveLastConnection,
       loadLastConnection,
       autoConnect
@@ -1122,9 +1141,12 @@ ${JSON.stringify(sampleData, null, 2)}
   transition: margin-right 0.3s ease;
 }
 
-/* 当AI侧边栏展开时，主内容区域右边距 */
-.main-content.ai-sidebar-open {
-  margin-right: 400px;
+/* 主内容区域样式 */
+.main-content {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  transition: all 0.3s ease;
 }
 
 /* AI侧边栏样式调整 */

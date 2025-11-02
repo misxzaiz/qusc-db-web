@@ -4,10 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(ai): 调整AI配置选择器位置和优化输入区布局&#10;&#10;- 将AI配置选择器从输入区移动至顶部AI配置栏&#10;- 更新配置选择器样式为紧凑型设计&#10;- 移除输入区@表名自动创建标签逻辑&#10;- 优化表标签交互和样式显示- 改进消息发送快捷键处理逻辑">
-      <change beforePath="$PROJECT_DIR$/.claude/settings.local.json" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/settings.local.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/node_modules/.vite/deps/_metadata.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/node_modules/.vite/deps/_metadata.json" afterDir="false" />
+    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(ai):重构AI诊断和分析功能集成到侧边栏&#10;&#10;- 修改sendMessage方法支持定义消息发送自- 移除SQL编辑器中的内联AI诊断结果显示&#10;- 添加AI分析按钮禁用状态和提示信息- 集成AI错误诊断和查询结果分析到AI助手&#10;- 添加AI侧边栏引用和相关图标库&#10;- 优化AI消息格式和内容展示&#10;- 更新组件引用和方法导出">
       <change beforePath="$PROJECT_DIR$/frontend/src/components/AiSidebar2.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/AiSidebar2.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" afterDir="false" />
     </list>
@@ -295,7 +292,15 @@
       <option name="project" value="LOCAL" />
       <updated>1762060839334</updated>
     </task>
-    <option name="localTasksCounter" value="28" />
+    <task id="LOCAL-00028" summary="feat(ai):重构AI诊断和分析功能集成到侧边栏&#10;&#10;- 修改sendMessage方法支持定义消息发送自- 移除SQL编辑器中的内联AI诊断结果显示&#10;- 添加AI分析按钮禁用状态和提示信息- 集成AI错误诊断和查询结果分析到AI助手&#10;- 添加AI侧边栏引用和相关图标库&#10;- 优化AI消息格式和内容展示&#10;- 更新组件引用和方法导出">
+      <option name="closed" value="true" />
+      <created>1762063341052</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1762063341052</updated>
+    </task>
+    <option name="localTasksCounter" value="29" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -327,7 +332,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="chore(deps): 更新前端依赖配置- 为多个依赖包添加或更新 .eslintrc 配置文件- 统一配置 eslint 规则，包括 func-name-matching、id-length、new-cap 等&#10;- 为测试目录添加特定的 eslint 覆盖规则&#10;- 更新 .nycrc 覆盖率配置文件&#10;- 添加 package-lock.json 文件锁定依赖版本- 引入 codemirror 相关依赖用于代码编辑器功能&#10;- 更新 vue 和相关编译器核心依赖到最新版本&#10;- 添加 element-plus 图标库支持- 升级 axios 到 1.13.1 版本&#10;- 引入 proxy-from-env 处理代理环境变量- 添加 call-bind-apply-helpers 等底层工具库- 更新 es-define-property、dunder-proto 等 es-* 系列包&#10;- 锁定 @babel/parser、@babel/types 等解析器版本&#10;- 添加 @codemirror/lang-sql 支持 SQL 语法高亮&#10;- 更新 rollup 和 esbuild 构建工具依赖&#10;- 添加 @vue/devtools-api 开发者工具支持&#10;- 引入 csstype 类型定义文件&#10;- 添加 crelt 虚拟 DOM 工具库&#10;- 更新 source-map-js 和 magic-string 工具库版本" />
     <MESSAGE value="feat(editor): 引入SQL代码编辑器组件并优化样式系统- 集成 CodeMirror 6 SQL 编辑器，支持语法高亮和自动补全&#10;- 添加 One Dark 主题支持&#10;- 实现SQL格式化功能- 增加查询历史记录功能，支持时间显示和点击加载&#10;- 添加结果导出为 CSV 功能- 统一使用CSS变量重构全局样式系统- 移除内联样式，引入独立主题文件-优化按钮、表单、卡片等UI组件样式&#10;- 改进响应式设计和交互效果- 增强可访问性和用户体验" />
     <MESSAGE value="feat(sql): 实现数据库切换功能&#10;&#10;- 新增获取数据库列表接口&#10;- 新增切换数据库接口&#10;- 新增获取当前数据库接口- 前端支持数据库选择和切换&#10;- 连接时数据库字段改为可选&#10;-优化连接流程，先加载数据库再加载表&#10;- 添加数据库列表刷新功能- 完善错误处理和用户提示" />
     <MESSAGE value="feat(sql): 支持按数据库筛选数据表- 修改后端 getTables 接口，新增 database 参数用于指定数据库- 更新前端 getTables 方法，支持传递 database 参数&#10;-优化连接管理器，使用 connectionStore 替代 connectionStorage&#10;- 重构 SQL 编辑器界面，引入 ConnectionTree 组件&#10;- 新增连接对话框，支持创建和测试数据库连接&#10;- 改进查询历史记录功能，增加执行时间显示- 调整界面布局，优化工具栏和连接信息展示&#10;- 完善 USE语句执行逻辑，自动更新当前数据库状态" />
@@ -352,7 +356,8 @@
     <MESSAGE value="feat(ai):重构AI流式聊天接口和前端交互- 后端AiController将流式聊天接口从GET改为POST方法&#10;- 使用ResponseBodyEmitter替代SseEmitter处理流式响应&#10;- 修改历史记录参数传递方式，通过request body接收- 更新事件发送格式为标准SSE格式(data: ...\\n\\n)&#10;- 前端AiSidebar2实现@表引用功能，支持表结构自动注入&#10;- 添加表选择器UI和相关交互逻辑- 实现表结构获取接口getTableSchemaWithDatabase&#10;- SqlEditor增加自动连接最后使用数据库功能&#10;- 更新Claude测试配置和调试命令" />
     <MESSAGE value="feat(ai): 实现AI聊天中表结构上下文注入功能&#10;&#10;- 后端接口支持传入tableContexts参数，包含表名和建表SQL&#10;- AiService中处理表结构信息，将其附加到用户消息中&#10;- 前端实现@表名自动识别并生成表标签&#10;- 新增表结构获取接口getTableCreateSql&#10;- 优化前端表标签交互和样式显示&#10;- 调整配置选择器位置和输入框布局&#10;- 改进消息发送快捷键处理逻辑" />
     <MESSAGE value="feat(ai): 调整AI配置选择器位置和优化输入区布局&#10;&#10;- 将AI配置选择器从输入区移动至顶部AI配置栏&#10;- 更新配置选择器样式为紧凑型设计&#10;- 移除输入区@表名自动创建标签逻辑&#10;- 优化表标签交互和样式显示- 改进消息发送快捷键处理逻辑" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(ai): 调整AI配置选择器位置和优化输入区布局&#10;&#10;- 将AI配置选择器从输入区移动至顶部AI配置栏&#10;- 更新配置选择器样式为紧凑型设计&#10;- 移除输入区@表名自动创建标签逻辑&#10;- 优化表标签交互和样式显示- 改进消息发送快捷键处理逻辑" />
+    <MESSAGE value="feat(ai):重构AI诊断和分析功能集成到侧边栏&#10;&#10;- 修改sendMessage方法支持定义消息发送自- 移除SQL编辑器中的内联AI诊断结果显示&#10;- 添加AI分析按钮禁用状态和提示信息- 集成AI错误诊断和查询结果分析到AI助手&#10;- 添加AI侧边栏引用和相关图标库&#10;- 优化AI消息格式和内容展示&#10;- 更新组件引用和方法导出" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(ai):重构AI诊断和分析功能集成到侧边栏&#10;&#10;- 修改sendMessage方法支持定义消息发送自- 移除SQL编辑器中的内联AI诊断结果显示&#10;- 添加AI分析按钮禁用状态和提示信息- 集成AI错误诊断和查询结果分析到AI助手&#10;- 添加AI侧边栏引用和相关图标库&#10;- 优化AI消息格式和内容展示&#10;- 更新组件引用和方法导出" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
 </project>
