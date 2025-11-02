@@ -92,8 +92,3 @@ npm run dev
 │   └── vite.config.js
 ```
 
-## 注意事项
-
-1. 确保 MySQL 服务已启动
-2. 首次运行后端会自动创建 database_connections 表（使用内存数据库 H2）
-3. 生产环境建议配置外部数据库存储连接信息
