@@ -156,12 +156,7 @@ public class AiController {
         providers.put("Iflow", Map.of(
             "name", "心流",
             "baseUrl", "https://apis.iflow.cn/v1",
-            "models", new String[]{"Iflow-chat", "Iflow-pro"}
-        ));
-        providers.put("openai", Map.of(
-            "name", "OpenAI",
-            "baseUrl", "https://api.openai.com/v1",
-            "models", new String[]{"gpt-3.5-turbo", "gpt-4", "gpt-4-turbo-preview"}
+            "models", new String[]{"glm-4.6"}
         ));
         providers.put("custom", Map.of(
             "name", "自定义",

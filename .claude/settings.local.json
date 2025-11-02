@@ -32,7 +32,10 @@
       "Bash(java -cp \"target/classes;C:/Users/28409/.m2/repository/org/springframework/boot/spring-boot-starter-web/3.2.0/spring-boot-starter-web-3.2.0.jar;C:/Users/28409/.m2/repository/org/springframework/boot/spring-boot/3.2.0/spring-boot-3.2.0.jar;C:/Users/28409/.m2/repository/org/springframework/boot/spring-boot-autoconfigure/3.2.0/spring-boot-autoconfigure-3.2.0.jar\" com.dbadmin.DbAdminApplication)",
       "Bash(netstat -ano)",
       "Bash(curl -v \"http://localhost:8080/api/ai/chat/stream?message=hello&configId=test\")",
-      "Bash(timeout 5 curl \"http://localhost:8080/api/ai/chat/stream?message=hello&configId=test\")"
+      "Bash(timeout 5 curl \"http://localhost:8080/api/ai/chat/stream?message=hello&configId=test\")",
+      "Bash(curl -s \"http://localhost:8080/api/ai/chat/stream?message=测试&configId=test\")",
+      "Bash(curl -s \"http://localhost:8080/api/ai/chat/stream?message=test&configId=test\")",
+      "Bash(timeout 10 curl \"http://localhost:8080/api/ai/chat/stream?message=讲解mysql&configId=test\")"
     ],
     "deny": [],
     "ask": []

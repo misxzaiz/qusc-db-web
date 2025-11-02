@@ -15,6 +15,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletableFuture;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Service
@@ -26,8 +33,11 @@ public class AiService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // 添加一个专用的流式RestTemplate
-    private final RestTemplate streamingRestTemplate = new RestTemplate();
+    // Java 11 HttpClient for true streaming
+    private final HttpClient httpClient = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_1_1)
+            .connectTimeout(java.time.Duration.ofSeconds(10))
+            .build();
 
     // 预定义的AI提供商配置
     private static final Map<String, AiProviderConfig> PROVIDERS = new HashMap<>();
@@ -43,16 +53,10 @@ public class AiService {
         // 心流 (Iflow)
         PROVIDERS.put("Iflow", new AiProviderConfig(
             "https://apis.iflow.cn/v1",
-            "Iflow-chat",
+            "glm-4.6",
             "心流AI"
         ));
 
-        // OpenAI
-        PROVIDERS.put("openai", new AiProviderConfig(
-            "https://api.openai.com/v1",
-            "gpt-3.5-turbo",
-            "OpenAI"
-        ));
     }
 
     public String generateSql(String userInput, AiConfig config) throws Exception {
@@ -755,46 +759,73 @@ public class AiService {
             return;
         }
 
-        // 使用新线程处理流式请求
-        new Thread(() -> {
-            boolean isCompleted = false;
+        // 使用Java 11 HttpClient进行真正的流式处理
+        CompletableFuture.runAsync(() -> {
             try {
                 log.info("发送流式请求到: {}", url);
                 log.debug("请求体: {}", objectMapper.writeValueAsString(requestBody));
 
-                // 直接使用流式处理
-                ResponseEntity<String> response = streamingRestTemplate.exchange(
-                    url,
-                    HttpMethod.POST,
-                    entity,
-                    String.class
+                // 创建HTTP请求
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .header("Content-Type", "application/json")
+                        .header("Authorization", "Bearer " + config.getApiKey())
+                        .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(requestBody)))
+                        .build();
+
+                // 发送请求并处理流式响应
+                HttpResponse<java.io.InputStream> response = httpClient.send(
+                        request,
+                        HttpResponse.BodyHandlers.ofInputStream()
                 );
 
-                log.debug("AI流式响应状态: {}", response.getStatusCode());
+                log.debug("AI流式响应状态: {}", response.statusCode());
 
-                if (response.getStatusCode() == HttpStatus.OK) {
-                    String responseBody = response.getBody();
+                if (response.statusCode() == 200) {
+                    try (java.io.InputStream inputStream = response.body();
+                         java.io.BufferedReader reader = new java.io.BufferedReader(
+                                 new java.io.InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
 
-                    if (responseBody != null && !responseBody.isEmpty()) {
-                        // 实时处理流式数据
-                        isCompleted = processStreamingResponseRealTime(responseBody, emitter);
-                    } else {
-                        try {
-                            emitter.send(SseEmitter.event()
-                                .name("error")
-                                .data("{\"error\": \"响应为空\"}"));
-                        } catch (Exception e) {
-                            log.debug("发送错误失败", e);
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            // 处理SSE格式的每一行
+                            if (line.startsWith("data: ")) {
+                                String data = line.substring(6).trim();
+
+                                if (data.equals("[DONE]")) {
+                                    emitter.send(SseEmitter.event()
+                                        .name("end")
+                                        .data("{\"done\": true}"));
+                                    break;
+                                }
+
+                                // 解析JSON并发送内容
+                                try {
+                                    JsonNode jsonNode = objectMapper.readTree(data);
+                                    JsonNode choices = jsonNode.path("choices");
+
+                                    if (choices.isArray() && choices.size() > 0) {
+                                        JsonNode delta = choices.get(0).path("delta");
+                                        JsonNode content = delta.path("content");
+
+                                        String contentText = content.asText();
+                                        if (!contentText.isEmpty()) {
+                                            log.debug("发送内容: {}", contentText);
+                                            emitter.send(SseEmitter.event()
+                                                .name("message")
+                                                .data("{\"content\": \"" + escapeJson(contentText) + "\"}"));
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    log.debug("解析JSON失败: {}", data);
+                                }
+                            }
                         }
                     }
                 } else {
-                    try {
-                        emitter.send(SseEmitter.event()
-                            .name("error")
-                            .data("{\"error\": \"AI服务返回错误: " + response.getStatusCode() + "\"}"));
-                    } catch (Exception e) {
-                        log.debug("发送错误失败", e);
-                    }
+                    emitter.send(SseEmitter.event()
+                        .name("error")
+                        .data("{\"error\": \"AI服务返回错误: " + response.statusCode() + "\"}"));
                 }
             } catch (Exception e) {
                 log.error("流式聊天失败", e);
@@ -806,21 +837,13 @@ public class AiService {
                     log.error("发送错误失败", ioException);
                 }
             } finally {
-                // 延迟完成，确保所有数据都已发送
                 try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                if (!isCompleted) {
-                    try {
-                        emitter.complete();
-                    } catch (Exception e) {
-                        log.debug("完成emitter失败，可能已经完成", e);
-                    }
+                    emitter.complete();
+                } catch (Exception e) {
+                    log.debug("完成emitter失败", e);
                 }
             }
-        }).start();
+        });
     }
 
     private boolean processStreamingResponseRealTime(String responseBody, SseEmitter emitter) {

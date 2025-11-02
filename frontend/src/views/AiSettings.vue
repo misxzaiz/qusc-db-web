@@ -142,7 +142,6 @@
           <ul>
             <li><strong>DeepSeek</strong> - 需要API Key，地址: https://api.deepseek.com</li>
                         <li><strong>心流</strong> - 需要API Key，地址: https://apis.iflow.cn/v1</li>
-            <li><strong>OpenAI</strong> - 需要API Key，地址: https://api.openai.com/v1</li>
             <li><strong>自定义</strong> - 支持任何OpenAI兼容的API</li>
           </ul>
 
@@ -158,7 +157,6 @@
           <ul>
             <li><strong>DeepSeek</strong>: 访问 <a href="https://platform.deepseek.com" target="_blank">https://platform.deepseek.com</a> 注册并获取API Key</li>
                         <li><strong>心流</strong>: 访问 <a href="https://www.iflow.cn/" target="_blank">https://www.iflow.cn/</a> 注册并获取API Key</li>
-            <li><strong>OpenAI</strong>: 访问 <a href="https://platform.openai.com" target="_blank">https://platform.openai.com</a> 创建API Key</li>
           </ul>
 
           <h3>常见错误</h3>
@@ -356,7 +354,6 @@ export default {
       const names = {
         deepseek: 'DeepSeek',
         Iflow: '心流',
-        openai: 'OpenAI',
         custom: '自定义'
       }
       return names[provider] || provider
