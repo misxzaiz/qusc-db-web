@@ -11,7 +11,7 @@
     />
 
     <!-- 主内容区 -->
-    <div class="main-content">
+    <div class="main-content" :class="{ 'sidebar-expanded': isRightSidebarExpanded }">
       <!-- Tab栏 -->
       <div class="tab-bar">
         <div class="tab-list">
@@ -199,6 +199,11 @@ export default {
 
       // 监听连接事件
       window.addEventListener('session-connected', handleSessionConnected)
+
+      // 初始化右侧边栏状态（默认折叠）
+      nextTick(() => {
+        isRightSidebarExpanded.value = false
+      })
     })
 
     onUnmounted(() => {
@@ -713,8 +718,11 @@ ${tab.sqlText}
       // 处理侧边栏大小调整
     }
 
+    const isRightSidebarExpanded = ref(false)
+
     const handleRightSidebarResize = (width) => {
       // 处理右侧边栏大小调整
+      isRightSidebarExpanded.value = width > 40
     }
 
     return {
@@ -722,6 +730,7 @@ ${tab.sqlText}
       activeTabIndex,
       activeSessions,
       rightSidebarRef,
+      isRightSidebarExpanded,
       switchTab,
       closeTab,
       newTab,
@@ -764,6 +773,14 @@ ${tab.sqlText}
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  /* 为右侧边栏预留空间 */
+  padding-right: 40px; /* 默认右侧边栏宽度 */
+  transition: padding-right 0.3s ease;
+}
+
+/* 当右侧边栏展开时，增加padding */
+.main-content.sidebar-expanded {
+  padding-right: 400px;
 }
 
 /* Tab栏 */
