@@ -136,6 +136,32 @@
               @keydown="handleKeyDown"
               @input="handleInput"
             ></textarea>
+
+            <!-- @表选择器 -->
+            <div
+              v-if="tableSelectorVisible"
+              class="table-selector"
+              :style="{
+                left: tableSelectorPosition.x + 'px',
+                top: tableSelectorPosition.y + 'px'
+              }"
+            >
+              <div class="table-list" ref="tableList">
+                <div
+                  v-for="table in filteredTables"
+                  :key="table"
+                  class="table-item"
+                  @click="selectTable(table)"
+                >
+                  <span class="icon">📊</span>
+                  <span class="table-name">{{ table }}</span>
+                </div>
+                <div v-if="filteredTables.length === 0" class="empty">
+                  没有找到匹配的表
+                </div>
+              </div>
+            </div>
+
             <button
               class="send-btn"
               @click="sendMessage"
@@ -285,6 +311,15 @@ export default {
   computed: {
     currentRoleAvatar() {
       return this.selectedRole?.avatar || '🤖'
+    },
+
+    filteredTables() {
+      if (!this.tableSearchQuery) {
+        return this.availableTables
+      }
+      return this.availableTables.filter(table =>
+        table.toLowerCase().includes(this.tableSearchQuery.toLowerCase())
+      )
     }
   },
 
@@ -581,9 +616,74 @@ export default {
     },
 
     showTableSelector(atIndex, searchText) {
-      // 显示表选择器的逻辑
-      console.log('显示表选择器')
-    }
+      console.log('=== showTableSelector 开始 ===')
+      console.log('searchText:', searchText)
+
+      this.tableSearchQuery = searchText
+
+      // 获取当前连接的表列表
+      const parent = this.$parent
+      console.log('parent:', parent)
+      console.log('parent.getTables:', typeof parent.getTables)
+
+      if (parent && typeof parent.getTables === 'function') {
+        this.availableTables = parent.getTables()
+        console.log('获取到的表列表:', this.availableTables)
+      } else {
+        console.log('无法获取getTables方法')
+        this.availableTables = []
+      }
+
+      // 计算位置
+      const textarea = this.$refs.messageInput
+      if (textarea) {
+        const rect = textarea.getBoundingClientRect()
+        const lineHeight = 20 // 估算的行高
+        const lineIndex = this.inputText.substring(0, atIndex).split('\n').length - 1
+
+        this.tableSelectorPosition = {
+          x: rect.left + 10, // @符号的大概位置
+          y: rect.top + (lineIndex + 1) * lineHeight + 10
+        }
+
+        this.tableSelectorVisible = true
+      }
+    },
+
+    selectTable(tableName) {
+      const textarea = this.$refs.messageInput
+      if (!textarea) return
+
+      // 查找@符号位置
+      const cursorPos = textarea.selectionStart
+      const text = this.inputText
+      const atIndex = text.lastIndexOf('@', cursorPos - 1)
+
+      if (atIndex !== -1) {
+        // 替换@符号后的内容为表名
+        const beforeAt = text.substring(0, atIndex)
+        const afterCursor = text.substring(cursorPos)
+        this.inputText = beforeAt + tableName + ' ' + afterCursor
+
+        // 设置光标位置
+        this.$nextTick(() => {
+          const newPos = beforeAt.length + tableName.length + 1
+          textarea.setSelectionRange(newPos, newPos)
+          textarea.focus()
+        })
+      }
+
+      // 添加到引用表列表
+      if (!this.referencedTables.has(tableName)) {
+        this.referencedTables.set(tableName, {
+          tableName,
+          active: true,
+          createSql: null
+        })
+      }
+
+      this.tableSelectorVisible = false
+    },
   }
 }
 </script>
@@ -860,6 +960,50 @@ export default {
 
 .input-container {
   border-top: 1px solid var(--border-primary);
+}
+
+/* @表选择器样式 */
+.table-selector {
+  position: fixed;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 1000;
+  min-width: 180px;
+  font-size: 13px;
+}
+
+.table-list {
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.table-item {
+  padding: 6px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.15s;
+}
+
+.table-item:hover {
+  background-color: var(--bg-highlight);
+}
+
+.table-item .icon {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.table-selector .empty {
+  padding: 12px;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 12px;
 }
 
 .table-tags-bar {
