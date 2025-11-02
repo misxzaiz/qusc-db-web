@@ -17,6 +17,14 @@
       </div>
     </div>
 
+    <!-- AI配置选择器 -->
+    <div v-if="isExpanded" class="ai-config-bar">
+      <select v-model="selectedConfig" @change="onConfigChange" class="compact-select">
+        <option v-for="config in aiConfigs" :key="config.id" :value="config.id">
+          {{ config.name }}
+        </option>
+      </select>
+    </div>
     <div v-if="isExpanded" class="ai-content">
 
       <!-- 角色选择 -->
@@ -98,14 +106,6 @@
 
       <!-- 输入区 -->
       <div class="input-area">
-        <!-- 配置选择器 -->
-        <div class="config-selector">
-          <select v-model="selectedConfig" @change="onConfigChange" class="config-select">
-            <option v-for="config in aiConfigs" :key="config.id" :value="config.id">
-              {{ config.name }}
-            </option>
-          </select>
-        </div>
 
         <!-- 表标签栏 -->
         <div v-if="referencedTables.size > 0" class="table-tags-bar">
@@ -689,9 +689,6 @@ export default {
       const text = e.target.value
       const cursorPos = e.target.selectionStart
 
-      // 处理@表名自动创建标签
-      this.handleAtTables(text)
-
       // 查找@符号
       const atIndex = text.lastIndexOf('@', cursorPos)
       if (atIndex === -1 || this.loading || this.streaming) {
@@ -879,14 +876,7 @@ export default {
       return tables
     },
 
-    // 处理@表名自动创建标签
-    handleAtTables(text) {
-      const tables = this.extractAtTables(text)
-      tables.forEach(table => {
-        this.createTableTag(table, true) // 默认激活
-      })
-    },
-
+    
     
     quickAction(type) {
       const prompts = {
@@ -900,9 +890,6 @@ export default {
 
     async sendMessage() {
       if (!this.inputText.trim() || this.loading || this.streaming) return
-
-      // 处理@表名自动创建标签
-      this.handleAtTables(this.inputText)
 
       this.messages.push({
         role: 'user',
@@ -1261,21 +1248,29 @@ export default {
   overflow: hidden;
 }
 
-.config-selector {
-  padding: 6px 10px;
+/* AI配置栏 */
+.ai-config-bar {
+  padding: 4px 10px;
   border-bottom: 1px solid var(--border-primary);
-  max-height: 32px;
+  display: flex;
+  align-items: center;
+  height: 32px;
 }
 
-.config-select {
+.compact-select {
   width: 100%;
-  padding: 4px 8px;
-  background-color: var(--bg-primary);
+  padding: 2px 6px;
+  background-color: var(--bg-secondary);
   border: 1px solid var(--border-primary);
-  border-radius: var(--radius-sm);
+  border-radius: 3px;
   color: var(--text-primary);
-  font-size: 12px;
-  max-height: 24px;
+  font-size: 11px;
+  height: 24px;
+}
+
+.compact-select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
 }
 
 .role-bar {
