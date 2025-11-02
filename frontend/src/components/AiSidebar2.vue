@@ -888,17 +888,19 @@ export default {
       this.$refs.messageInput?.focus()
     },
 
-    async sendMessage() {
-      if (!this.inputText.trim() || this.loading || this.streaming) return
+    async sendMessage(customMessage = null) {
+      const message = customMessage || this.inputText
+      if (!message.trim() || this.loading || this.streaming) return
 
       this.messages.push({
         role: 'user',
-        content: this.inputText,
+        content: message,
         timestamp: new Date()
       })
 
-      const message = this.inputText
-      this.inputText = ''
+      if (!customMessage) {
+        this.inputText = ''
+      }
       this.scrollToBottom()
 
       if (this.useStream) {

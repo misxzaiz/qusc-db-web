@@ -113,18 +113,7 @@
                 {{ tab.diagnosing ? '诊断中...' : 'AI诊断' }}
               </button>
 
-              <div v-if="tab.errorDiagnosis" class="diagnosis-result">
-                <div class="diagnosis-header">
-                  <h5>
-                    <font-awesome-icon icon="brain" />
-                    AI诊断结果
-                  </h5>
-                  <button class="btn btn-small" @click="tab.errorDiagnosis = null">
-                    <font-awesome-icon icon="times" />
-                  </button>
-                </div>
-                <div class="diagnosis-content" v-html="formatDiagnosis(tab.errorDiagnosis)"></div>
-              </div>
+              <!-- AI诊断结果现在在AI侧边栏显示 -->
             </div>
           </div>
 
@@ -140,11 +129,15 @@
                   <button
                     v-if="result.type === 'select'"
                     class="btn btn-small ai-analyze-btn"
-                    @click="analyzeResult(tab, result)"
+                    @click.stop="handleAnalyzeClick(tab, result)"
                     :disabled="result.analyzing"
                   >
                     <font-awesome-icon icon="brain" />
                     {{ result.analyzing ? '分析中...' : 'AI解析' }}
+                  </button>
+                  <button v-else class="btn btn-small" disabled title="只支持SELECT查询">
+                    <font-awesome-icon icon="brain" />
+                    AI解析 (非SELECT)
                   </button>
                   <button class="btn btn-small" @click="exportResult(result)">
                     <font-awesome-icon icon="download" />
@@ -267,19 +260,7 @@
                 执行成功
               </div>
 
-              <!-- AI分析结果 -->
-              <div v-if="result.aiAnalysis" class="ai-analysis-section">
-                <div class="analysis-header">
-                  <h5>
-                    <font-awesome-icon icon="brain" />
-                    AI分析结果
-                  </h5>
-                  <button class="btn btn-small" @click="result.aiAnalysis = null">
-                    <font-awesome-icon icon="times" />
-                  </button>
-                </div>
-                <div class="analysis-content" v-html="formatAnalysis(result.aiAnalysis)"></div>
-              </div>
+              <!-- AI分析结果现在在AI侧边栏显示 -->
             </div>
           </div>
         </div>
@@ -287,7 +268,7 @@
     </div>
 
     <!-- 右侧AI边栏 -->
-    <AiSidebar @execute-sql="onExecuteAiSql" @resize="handleAiResize" @toggle="onAiSidebarToggle" />
+    <AiSidebar ref="aiSidebarRef" @execute-sql="onExecuteAiSql" @resize="handleAiResize" @toggle="onAiSidebarToggle" />
   </div>
 </template>
 
@@ -297,6 +278,10 @@ import { connectionStore } from '../stores/connectionStore'
 import SqlCodeEditor from '../components/SqlCodeEditor.vue'
 import TabSidebar from '../components/TabSidebar.vue'
 import AiSidebar from '../components/AiSidebar2.vue'
+import { faBrain } from '@fortawesome/free-solid-svg-icons'
+import { library } from '@fortawesome/fontawesome-svg-core'
+
+library.add(faBrain)
 
 export default {
   name: 'SqlEditor',
@@ -325,6 +310,9 @@ export default {
 
     // QueryHistory组件引用
     const queryHistoryRef = ref(null)
+
+    // AI侧边栏引用
+    const aiSidebarRef = ref(null)
 
     // 计算属性
     const activeSessions = computed(() => {
@@ -691,68 +679,100 @@ export default {
       markTabModified(tab)
     }
 
-    // AI错误诊断
+    // AI错误诊断 - 使用AI助手
     const diagnoseError = async (tab) => {
       if (!tab.error || !tab.sqlText) return
 
-      tab.diagnosing = true
-      try {
-        const response = await fetch('/api/ai/analyze-error', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            sql: tab.sqlText,
-            error: tab.error,
-            configId: selectedAiConfig.value?.id
-          })
-        })
+      // 打开AI侧边栏
+      isAiSidebarOpen.value = true
 
-        const data = await response.json()
-        if (data.analysis) {
-          tab.errorDiagnosis = data.analysis
-        }
-      } catch (error) {
-        console.error('错误诊断失败:', error)
-        alert('诊断失败: ' + (error.response?.data?.error || error.message))
-      } finally {
-        tab.diagnosing = false
+      // 等待AI侧边栏加载完成
+      await nextTick()
+
+      // 构建诊断消息
+      const diagnosticMessage = `请帮我分析这个SQL错误：
+
+SQL语句：
+\`\`\`sql
+${tab.sqlText}
+\`\`\`
+
+错误信息：
+${tab.error}
+
+请告诉我：
+1. 错误的原因
+2. 如何修复
+3. 修复后的正确SQL`
+
+      // 使用AI助手发送消息
+      if (aiSidebarRef.value && aiSidebarRef.value.sendMessage) {
+        aiSidebarRef.value.sendMessage(diagnosticMessage)
       }
+
+      // 清除之前的诊断结果
+      tab.errorDiagnosis = null
+      tab.diagnosing = false
     }
 
-    // AI分析查询结果
+    // 处理AI分析按钮点击
+    const handleAnalyzeClick = (tab, result) => {
+      analyzeResult(tab, result)
+    }
+
+    // AI分析查询结果 - 使用AI助手
     const analyzeResult = async (tab, result) => {
       if (!tab.sqlText || !result.data) return
 
-      result.analyzing = true
-      try {
-        const response = await fetch('/api/ai/analyze-query-result', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            sql: tab.sqlText,
-            result: {
-              columns: result.columns,
-              data: result.data.slice(0, 10), // 只发送前10行
-              totalCount: result.totalCount
-            },
-            configId: selectedAiConfig.value?.id
-          })
-        })
+      // 打开AI侧边栏
+      isAiSidebarOpen.value = true
 
-        const data = await response.json()
-        if (data.analysis) {
-          result.aiAnalysis = data.analysis
+      // 等待AI侧边栏加载完成
+      await nextTick()
+
+      // 再等待一下确保组件完全渲染
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      // 构建分析消息
+      const sampleData = result.data.slice(0, 5) // 只显示前5行示例
+      // 处理columns可能是字符串数组或对象数组的情况
+      const columnsInfo = result.columns.map(col => {
+        if (typeof col === 'string') {
+          return col
+        } else if (col && col.name) {
+          return `${col.name}${col.type ? ` (${col.type})` : ''}`
+        } else {
+          return String(col)
         }
-      } catch (error) {
-        console.error('分析失败:', error)
-        alert('分析失败: ' + (error.response?.data?.error || error.message))
-      } finally {
-        result.analyzing = false
+      }).join(', ')
+
+      const analysisMessage = `请帮我分析这个SQL查询结果：
+
+SQL语句：
+\`\`\`sql
+${tab.sqlText}
+\`\`\`
+
+查询结果概览：
+- 总行数：${result.totalCount}
+- 列信息：${columnsInfo}
+- 示例数据：
+${JSON.stringify(sampleData, null, 2)}
+
+请分析：
+1. 这个查询的主要目的是什么？
+2. 查询结果有什么特点或规律？
+3. 是否有优化的建议？
+4. 数据质量如何？`
+
+      // 使用AI助手发送消息
+      if (aiSidebarRef.value && aiSidebarRef.value.sendMessage) {
+        aiSidebarRef.value.sendMessage(analysisMessage)
       }
+
+      // 清除之前的分析结果
+      result.aiAnalysis = null
+      result.analyzing = false
     }
 
     // 格式化AI分析结果
@@ -1039,6 +1059,7 @@ export default {
       aiWidth,
       selectedAiConfig,
       isAiSidebarOpen,
+      aiSidebarRef,
       queryHistoryRef,
       newTab,
       closeTab,
@@ -1063,6 +1084,7 @@ export default {
       rollbackTransaction,
       exportResult,
       diagnoseError,
+      handleAnalyzeClick,
       analyzeResult,
       formatAnalysis,
       formatDiagnosis,
