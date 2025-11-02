@@ -88,8 +88,10 @@ public class SqlController {
      * 判断是否为SELECT查询
      */
     private boolean isSelectQuery(String sql) {
+        // 移除单行注释（--）和多行注释（/* */）
+        String withoutComments = sql.replaceAll("--.*", "").replaceAll("/\\*.*?\\*/", "");
         // 使用正则表达式匹配以SELECT开头的语句（排除WITH子句）
-        String normalized = sql.toUpperCase().replaceAll("\\s+", " ").trim();
+        String normalized = withoutComments.toUpperCase().replaceAll("\\s+", " ").trim();
 
         // 检查是否是返回结果集的语句
         Pattern resultPattern = Pattern.compile("^(SELECT|SHOW|DESCRIBE|DESC|EXPLAIN|HELP|WITH)\\b");

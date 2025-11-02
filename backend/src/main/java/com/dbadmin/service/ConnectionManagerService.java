@@ -432,14 +432,13 @@ public class ConnectionManagerService {
             database = "";
         }
 
-        String url = String.format("jdbc:mysql://%s:%d/%s?useSSL=%s&allowPublicKeyRetrieval=true",
+        String url = String.format("jdbc:mysql://%s:%d/%s?useSSL=%s&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&serverTimezone=UTC",
                 info.getHost(), info.getPort(), database,
                 "REQUIRED".equalsIgnoreCase(info.getSslMode()) ? "true" : "false");
 
         Properties props = new Properties();
         props.setProperty("user", info.getUsername());
         props.setProperty("password", info.getPassword());
-        props.setProperty("serverTimezone", "UTC");
 
         return DriverManager.getConnection(url, props);
     }
