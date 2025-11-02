@@ -4,7 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(ai): 重构AI聊天组件，支持多角色和流式输出- 移除旧版AiChat.vue组件&#10;- 新增支持角色管理和流式输出的AiChat2.vue组件&#10;- 实现基于EventSource的流式消息处理- 添加角色选择和管理功能&#10;- 支持Markdown格式消息渲染&#10;- 集成数据库表结构引用功能&#10;- 保存和加载聊天历史记录&#10;- 支持快捷">
+    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="refactor(ui): 将emoji替换为FontAwesomeIcon组件&#10;&#10;- 统一使用FontAwesomeIcon组件替代原有的emoji字符&#10;- 更新角色头像显示逻辑，支持图标名称配置&#10;- 调整消息气泡中的用户和AI头像显示方式&#10;- 修改表选择器中的图标展示形式-优化新建角色表单中的头像输入提示文本&#10;- 确保所有图标显示的一致性和可维护性">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/components/RightTabSidebar.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/RightTabSidebar.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -403,7 +404,15 @@
       <option name="project" value="LOCAL" />
       <updated>1762069269470</updated>
     </task>
-    <option name="localTasksCounter" value="42" />
+    <task id="LOCAL-00042" summary="refactor(ui): 将emoji替换为FontAwesomeIcon组件&#10;&#10;- 统一使用FontAwesomeIcon组件替代原有的emoji字符&#10;- 更新角色头像显示逻辑，支持图标名称配置&#10;- 调整消息气泡中的用户和AI头像显示方式&#10;- 修改表选择器中的图标展示形式-优化新建角色表单中的头像输入提示文本&#10;- 确保所有图标显示的一致性和可维护性">
+      <option name="closed" value="true" />
+      <created>1762069471850</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1762069471850</updated>
+    </task>
+    <option name="localTasksCounter" value="43" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -445,7 +454,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="feat(connection-tree):优化数据库节点布局和样式&#10;&#10;- 调整数据库节点结构，使用 div 包裹元素以支持更好的布局" />
     <MESSAGE value="feat(ai): 新增AI生成CRUD、测试数据和执行计划分析功能- 在前端AI服务中添加generateCrud、generateTestData和explainQueryPlan方法&#10;- 在后端AiController中实现对应的CRUD、测试数据生成和执行计划解释接口&#10;- 在AiService中增加generateCrud、generateTestData和explainQueryPlan业务逻辑&#10;- 更新前端AiSidebar组件，支持多种AI功能选择和特殊输入字段&#10;- 添加CRUD生成、测试数据生成和执行计划分析的UI界面和交互逻辑&#10;- 在ConnectionManagerService中实现分页查询和事务管理功能- 更新SqlController以支持分页查询和事务控制命令&#10;- 在SqlEditor中实现多标签页和事务状态显示功能" />
     <MESSAGE value="feat(ai-chat):重构AI聊天界面和功能&#10;&#10;-重新设计聊天头部布局，优化配置选择器和操作按钮&#10;- 添加快捷工具栏，包含生成、解释、优化、分析等常用功能&#10;-重构表引用面板，采用卡片式布局展示数据库表信息&#10;- 改进输入区域，支持Shift+Enter换行和Enter发送&#10;- 添加数据库上下文状态显示，展示当前数据库和表数量&#10;- 实现附加表结构功能，可将数据库上下文添加到输入中&#10;-优化整体界面样式和交互体验&#10;- 完善表结构加载逻辑，增加错误处理和降级机制" />
     <MESSAGE value="feat(backend): 实现AI聊天和角色管理功能- 添加流式聊天API支持SSE实时通信&#10;- 实现AI角色预设和自定义角色管理&#10;- 新增自由聊天接口支持历史记录AI- 完善配置更新和删除功能&#10;-优化AI服务层流式响应处理逻辑&#10;- 添加详细的日志记录和错误处理&#10;- 支持多种AI提供商配置管理" />
@@ -470,7 +478,8 @@
     <MESSAGE value="feat(editor): 添加@表选择器功能支持智能表名引用&#10;&#10;- 在RightTabSidebar.vue中实现@符号触发的表选择器UI- 添加表名搜索和过滤功能，支持快速查找数据库表- 实现表选择器定位逻辑，根据光标位置动态显示&#10;- 集成表名选择后的文本替换和光标定位功能- 添加表引用状态管理，跟踪已引用的表列表&#10;- 在aiApi.js中新增getTableStructure方法获取表结构- 实现表选择器键盘导航支持上下键选择和回车确认&#10;- 添加发送按钮流式输出控制，支持停止操作-优化表选择器" />
     <MESSAGE value="refactor(api):重构表结构获取逻辑并清理调试代码&#10;&#10;- 将 getTableStructure 方法从 aiApi.js 移动到 sqlApi.js&#10;- 在 SqlEditor.vue 和 RightTabSidebar.vue 中更新调用逻辑&#10;- 移除开发阶段的 console.log 调试输出&#10;- 优化 getTables 方法中的条件判断逻辑&#10;- 清理无用的注释和冗余代码结构" />
     <MESSAGE value="feat(ai): 重构AI聊天组件，支持多角色和流式输出- 移除旧版AiChat.vue组件&#10;- 新增支持角色管理和流式输出的AiChat2.vue组件&#10;- 实现基于EventSource的流式消息处理- 添加角色选择和管理功能&#10;- 支持Markdown格式消息渲染&#10;- 集成数据库表结构引用功能&#10;- 保存和加载聊天历史记录&#10;- 支持快捷" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(ai): 重构AI聊天组件，支持多角色和流式输出- 移除旧版AiChat.vue组件&#10;- 新增支持角色管理和流式输出的AiChat2.vue组件&#10;- 实现基于EventSource的流式消息处理- 添加角色选择和管理功能&#10;- 支持Markdown格式消息渲染&#10;- 集成数据库表结构引用功能&#10;- 保存和加载聊天历史记录&#10;- 支持快捷" />
+    <MESSAGE value="refactor(ui): 将emoji替换为FontAwesomeIcon组件&#10;&#10;- 统一使用FontAwesomeIcon组件替代原有的emoji字符&#10;- 更新角色头像显示逻辑，支持图标名称配置&#10;- 调整消息气泡中的用户和AI头像显示方式&#10;- 修改表选择器中的图标展示形式-优化新建角色表单中的头像输入提示文本&#10;- 确保所有图标显示的一致性和可维护性" />
+    <option name="LAST_COMMIT_MESSAGE" value="refactor(ui): 将emoji替换为FontAwesomeIcon组件&#10;&#10;- 统一使用FontAwesomeIcon组件替代原有的emoji字符&#10;- 更新角色头像显示逻辑，支持图标名称配置&#10;- 调整消息气泡中的用户和AI头像显示方式&#10;- 修改表选择器中的图标展示形式-优化新建角色表单中的头像输入提示文本&#10;- 确保所有图标显示的一致性和可维护性" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
 </project>

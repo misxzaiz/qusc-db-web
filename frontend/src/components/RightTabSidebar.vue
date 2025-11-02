@@ -226,34 +226,65 @@
     </div>
 
     <!-- 创建角色弹窗 -->
-    <div v-if="showCreateRole" class="modal-overlay" @click.self="showCreateRole = false">
+    <div v-if="showCreateRole" class="modal-overlay" @click.self="closeCreateRole">
       <div class="modal">
         <div class="modal-header">
-          <h3>创建AI角色</h3>
-          <button class="close-btn" @click="showCreateRole = false">
+          <h3>{{ roleGenerationMode ? 'AI生成角色' : '创建AI角色' }}</h3>
+          <button class="close-btn" @click="closeCreateRole">
             <font-awesome-icon icon="times" />
           </button>
         </div>
         <div class="modal-content">
-          <div class="form-group">
-            <label>角色名称</label>
-            <input v-model="newRole.name" placeholder="例如：SQL专家" />
+          <!-- AI生成模式 -->
+          <div v-if="roleGenerationMode">
+            <div class="form-group">
+              <label>描述你想要创建的角色</label>
+              <textarea
+                v-model="roleGenerationPrompt"
+                placeholder="例如：一个专业的SQL专家，擅长优化查询和解释复杂SQL语句"
+                rows="4"
+                :disabled="isGeneratingRole"
+              ></textarea>
+            </div>
+            <div class="form-actions">
+              <button class="btn-secondary" @click="switchToManualMode" :disabled="isGeneratingRole">
+                手动创建
+              </button>
+              <button
+                class="btn-primary"
+                @click="generateRoleWithAI"
+                :disabled="!roleGenerationPrompt.trim() || isGeneratingRole"
+              >
+                <font-awesome-icon v-if="isGeneratingRole" icon="spinner" spin />
+                {{ isGeneratingRole ? '生成中...' : '生成角色' }}
+              </button>
+            </div>
           </div>
-          <div class="form-group">
-            <label>头像</label>
-            <input v-model="newRole.avatar" placeholder="例如：robot" />
-          </div>
-          <div class="form-group">
-            <label>描述</label>
-            <textarea v-model="newRole.description" placeholder="简短描述角色特点"></textarea>
-          </div>
-          <div class="form-group">
-            <label>系统提示词</label>
-            <textarea v-model="newRole.systemPrompt" placeholder="定义角色的行为和说话方式"></textarea>
-          </div>
-          <div class="form-actions">
-            <button class="btn-secondary" @click="generateRolePrompt">AI生成</button>
-            <button class="btn-primary" @click="createRole">创建</button>
+
+          <!-- 手动创建模式 -->
+          <div v-else>
+            <div class="form-group">
+              <label>角色名称</label>
+              <input v-model="newRole.name" placeholder="例如：SQL专家" />
+            </div>
+            <div class="form-group">
+              <label>头像</label>
+              <input v-model="newRole.avatar" placeholder="例如：robot" />
+            </div>
+            <div class="form-group">
+              <label>描述</label>
+              <textarea v-model="newRole.description" placeholder="简短描述角色特点"></textarea>
+            </div>
+            <div class="form-group">
+              <label>系统提示词</label>
+              <textarea v-model="newRole.systemPrompt" placeholder="定义角色的行为和说话方式"></textarea>
+            </div>
+            <div class="form-actions">
+              <button class="btn-secondary" @click="switchToAIMode">
+                AI生成
+              </button>
+              <button class="btn-primary" @click="createRole">创建</button>
+            </div>
           </div>
         </div>
       </div>
@@ -298,6 +329,9 @@ export default {
       showRoleManager: false,
       showCreateRole: false,
       showPrompts: false,
+      roleGenerationMode: true, // true为AI生成模式，false为手动创建模式
+      roleGenerationPrompt: '', // AI生成角色的输入提示
+      isGeneratingRole: false, // 是否正在生成角色
       referencedTables: new Map(),
       tableSelectorVisible: false,
       tableSelectorPosition: { x: 0, y: 0 },
@@ -634,9 +668,86 @@ export default {
       localStorage.setItem('ai_roles', JSON.stringify(this.roles))
     },
 
-    generateRolePrompt() {
-      // AI生成角色提示词的逻辑
-      console.log('AI生成角色提示词')
+    async generateRoleWithAI() {
+      if (!this.roleGenerationPrompt.trim() || this.isGeneratingRole) return
+
+      this.isGeneratingRole = true
+
+      try {
+        // 构建生成角色的提示词
+        const prompt = `你是一个专业的AI角色设计师，请根据以下描述生成一个AI角色。
+
+用户需求：${this.roleGenerationPrompt}
+
+请生成一个JSON格式的角色配置，包含以下字段：
+{
+  "name": "角色名称（简洁专业，2-5个字）",
+  "avatar": "FontAwesome图标名称（小写，如robot、user、code、database、chart-bar等）",
+  "description": "角色简短描述（一句话概括角色特点）",
+  "systemPrompt": "系统提示词（详细描述，包含：1.专业背景 2.核心能力 3.沟通风格 4.回答特点 5.使用场景）"
+}
+
+要求：
+1. 角色名称要专业且易于理解
+2. 选择符合角色特点的图标
+3. 系统提示词要详细具体，让AI知道如何扮演这个角色
+4. 确保返回的是有效的JSON格式
+
+请只返回JSON，不要包含其他文字。`
+
+        // 使用AI生成
+        const response = await aiApi.freeChat(prompt, this.selectedConfig)
+
+        if (response.data && response.data.response) {
+          // 尝试解析JSON
+          try {
+            const jsonMatch = response.data.response.match(/\{[\s\S]*\}/)
+            if (jsonMatch) {
+              const roleData = JSON.parse(jsonMatch[0])
+
+              // 填充到表单
+              this.newRole = {
+                name: roleData.name || '',
+                avatar: roleData.avatar || 'robot',
+                description: roleData.description || '',
+                systemPrompt: roleData.systemPrompt || ''
+              }
+
+              // 切换到手动模式供用户调整
+              this.roleGenerationMode = false
+            }
+          } catch (parseError) {
+            console.error('解析AI生成的角色数据失败', parseError)
+            alert('AI生成失败，请重试或手动创建')
+          }
+        }
+      } catch (error) {
+        console.error('AI生成角色失败', error)
+        alert('AI生成失败：' + (error.message || '未知错误'))
+      } finally {
+        this.isGeneratingRole = false
+      }
+    },
+
+    switchToManualMode() {
+      this.roleGenerationMode = false
+    },
+
+    switchToAIMode() {
+      this.roleGenerationMode = true
+      this.roleGenerationPrompt = ''
+    },
+
+    closeCreateRole() {
+      this.showCreateRole = false
+      this.roleGenerationMode = true
+      this.roleGenerationPrompt = ''
+      this.newRole = {
+        name: '',
+        avatar: '',
+        description: '',
+        systemPrompt: ''
+      }
     },
 
     toggleTableActive(tableName) {
@@ -1385,6 +1496,27 @@ export default {
 .form-group textarea {
   min-height: 80px;
   resize: vertical;
+}
+
+/* AI生成模式的特殊样式 */
+.form-group textarea[disabled] {
+  background-color: var(--bg-tertiary);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* 生成按钮动画 */
+.btn-primary:disabled {
+  position: relative;
+}
+
+.btn-primary:disabled .fa-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .form-actions {
