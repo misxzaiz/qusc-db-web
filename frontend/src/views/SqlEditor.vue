@@ -1038,10 +1038,10 @@ ${JSON.stringify(sampleData, null, 2)}
       const appLayout = document.querySelector('.app-layout')
       if (appLayout) {
         if (width === 40) {
-          // 折叠状态
-          appLayout.style.setProperty('--right-sidebar-width', '0px')
+          // 折叠状态，但仍需要40px给图标栏
+          appLayout.style.setProperty('--right-sidebar-width', '40px')
         } else {
-          // 展开状态，减去fixed定位的40px图标部分
+          // 展开状态，需要400px给整个边栏
           appLayout.style.setProperty('--right-sidebar-width', '400px')
         }
       }

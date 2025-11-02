@@ -184,7 +184,7 @@ export const aiApi = {
   streamChat(message, configId, systemPrompt = '', history = [], tableContexts = []) {
     // 先确保配置同步到后端
     return this.ensureSyncedToBackend().then(() => {
-      // 使用Server-Sent Events
+      // 使用fetch发送POST请求并处理流式响应
       const url = `/api/ai/chat/stream`
       const data = {
         message,
@@ -194,10 +194,6 @@ export const aiApi = {
         tableContexts
       }
 
-      // 创建EventSource
-      const eventSource = new EventSource()
-
-      // 使用fetch发送POST请求并处理流式响应
       return fetch(url, {
         method: 'POST',
         headers: {
