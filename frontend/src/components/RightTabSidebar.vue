@@ -258,6 +258,7 @@
 <script>
 import MarkdownRenderer from './MarkdownRenderer.vue'
 import { aiApi } from '../services/aiApi'
+import { sqlApi } from '../services/api'
 import { connectionStore } from '../stores/connectionStore'
 import { faMagic, faStop } from '@fortawesome/free-solid-svg-icons'
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -643,22 +644,14 @@ export default {
     },
 
     showTableSelector(atIndex, searchText) {
-      console.log('=== showTableSelector 开始 ===')
-      console.log('searchText:', searchText)
-
       this.tableSearchQuery = searchText
       this.selectedTableIndex = -1 // 重置选中索引
 
       // 获取当前连接的表列表
       const parent = this.$parent
-      console.log('parent:', parent)
-      console.log('parent.getTables:', typeof parent.getTables)
-
       if (parent && typeof parent.getTables === 'function') {
         this.availableTables = parent.getTables()
-        console.log('获取到的表列表:', this.availableTables)
       } else {
-        console.log('无法获取getTables方法')
         this.availableTables = []
       }
 
@@ -778,7 +771,7 @@ export default {
           return
         }
 
-        const response = await aiApi.getTableStructure(sessionId, database, tableName)
+        const response = await sqlApi.getTableCreate(sessionId, database, tableName)
 
         // 更新表结构信息
         const tableInfo = this.referencedTables.get(tableName)

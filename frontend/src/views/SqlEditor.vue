@@ -952,28 +952,16 @@ ${JSON.stringify(sampleData, null, 2)}
     }
 
     const getTables = () => {
-      console.log('=== getTables 开始 ===')
       // 返回当前数据库的表列表
       const tab = currentTab.value
-      console.log('当前tab:', tab)
-      if (!tab) {
-        console.log('没有当前tab')
-        return []
-      }
+      if (!tab) return []
 
       // 从connectionStore获取表列表
       const session = connectionStore.getSession(tab.sessionId)
-      console.log('session:', session)
-      console.log('tab.database:', tab.database)
-      console.log('session.tables:', session?.tables)
-
       if (session && tab.database) {
         // 表存储在session.tables[database]中
-        const tables = session.tables?.[tab.database] || []
-        console.log('获取到的tables:', tables)
-        return tables
+        return session.tables?.[tab.database] || []
       }
-      console.log('没有session或database')
       return []
     }
 

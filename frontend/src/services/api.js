@@ -62,5 +62,9 @@ export const sqlApi = {
 
   getCurrentDatabase(sessionId) {
     return api.get(`/sql/current-database/${sessionId}`)
+  },
+
+  getTableCreate(sessionId, database, table) {
+    return api.get(`/sql/table/${sessionId}/${database}/${table}/create`)
   }
 }

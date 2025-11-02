@@ -4,10 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(editor): 添加@表选择器功能支持智能表名引用&#10;&#10;- 在RightTabSidebar.vue中实现@符号触发的表选择器UI&#10;- 添加表名搜索和过滤功能，支持快速查找数据库表- 实现表选择器定位逻辑，根据光标位置动态显示&#10;- 集成表名选择后的文本替换和光标定位功能&#10;- 添加表引用状态管理，跟踪已引用的表列表- 在SqlEditor.vue中实现getTables方法提供表数据源- 添加相关CSS样式支持表选择器的视觉呈现&#10;-优化表选择器交互体验，支持点击选择和空状态显示">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(editor): 添加@表选择器功能支持智能表名引用&#10;&#10;- 在RightTabSidebar.vue中实现@符号触发的表选择器UI- 添加表名搜索和过滤功能，支持快速查找数据库表- 实现表选择器定位逻辑，根据光标位置动态显示&#10;- 集成表名选择后的文本替换和光标定位功能- 添加表引用状态管理，跟踪已引用的表列表&#10;- 在aiApi.js中新增getTableStructure方法获取表结构- 实现表选择器键盘导航支持上下键选择和回车确认&#10;- 添加发送按钮流式输出控制，支持停止操作-优化表选择器">
       <change beforePath="$PROJECT_DIR$/frontend/src/components/RightTabSidebar.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/RightTabSidebar.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/services/aiApi.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/aiApi.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/services/api.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/api.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -381,7 +382,15 @@
       <option name="project" value="LOCAL" />
       <updated>1762068052428</updated>
     </task>
-    <option name="localTasksCounter" value="39" />
+    <task id="LOCAL-00039" summary="feat(editor): 添加@表选择器功能支持智能表名引用&#10;&#10;- 在RightTabSidebar.vue中实现@符号触发的表选择器UI- 添加表名搜索和过滤功能，支持快速查找数据库表- 实现表选择器定位逻辑，根据光标位置动态显示&#10;- 集成表名选择后的文本替换和光标定位功能- 添加表引用状态管理，跟踪已引用的表列表&#10;- 在aiApi.js中新增getTableStructure方法获取表结构- 实现表选择器键盘导航支持上下键选择和回车确认&#10;- 添加发送按钮流式输出控制，支持停止操作-优化表选择器样式和交互体验，支持选中状态显示&#10;- 添加表结构加载逻辑，在选择表时自动获取创建语句">
+      <option name="closed" value="true" />
+      <created>1762068706087</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1762068706087</updated>
+    </task>
+    <option name="localTasksCounter" value="40" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -423,7 +432,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="3" />
     <MESSAGE value="refactor(layout):重构应用布局结构以改善响应式设计&#10;&#10;- 调整 App.vue 中的 flexbox 布局属性以增强主区域自适应能力- 移除 ConnectionTree.vue 中冗余的树形标题容器元素&#10;- 将 index.html 中的 flex 布局样式迁移至 App.vue 组件内&#10;- 修改 TabSidebar.vue 导航图标容器方向为横向排列并设定固定宽度-优化侧边栏面板显示逻辑，使用 CSS 类控制展开" />
     <MESSAGE value="4" />
     <MESSAGE value="feat(connection-tree):优化数据库节点布局和样式&#10;&#10;- 调整数据库节点结构，使用 div 包裹元素以支持更好的布局" />
@@ -448,7 +456,8 @@
     <MESSAGE value="feat(ai):优化AI聊天消息对齐样式&#10;&#10;- 统一用户和AI消息内容左对齐显示&#10;- 调整消息气泡样式以适应新的对齐方式&#10;- 保持消息气泡在容器内右侧显示的位置逻辑" />
     <MESSAGE value="feat(markdown): 支持流式渲染和不完整语法处理&#10;&#10;- 添加 streaming 属性支持实时渲染指示器- 自动补全未闭合的 Markdown 语法元素  -代码块、行内代码、粗体、斜体&#10;- 移除旧版流式输出控制按钮和状态显示&#10;- 统一使用流式消息处理逻辑&#10;- 删除冗余的 normalMessage 方法&#10;- 优化样式和动画效果" />
     <MESSAGE value="feat(editor): 添加@表选择器功能支持智能表名引用&#10;&#10;- 在RightTabSidebar.vue中实现@符号触发的表选择器UI&#10;- 添加表名搜索和过滤功能，支持快速查找数据库表- 实现表选择器定位逻辑，根据光标位置动态显示&#10;- 集成表名选择后的文本替换和光标定位功能&#10;- 添加表引用状态管理，跟踪已引用的表列表- 在SqlEditor.vue中实现getTables方法提供表数据源- 添加相关CSS样式支持表选择器的视觉呈现&#10;-优化表选择器交互体验，支持点击选择和空状态显示" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(editor): 添加@表选择器功能支持智能表名引用&#10;&#10;- 在RightTabSidebar.vue中实现@符号触发的表选择器UI&#10;- 添加表名搜索和过滤功能，支持快速查找数据库表- 实现表选择器定位逻辑，根据光标位置动态显示&#10;- 集成表名选择后的文本替换和光标定位功能&#10;- 添加表引用状态管理，跟踪已引用的表列表- 在SqlEditor.vue中实现getTables方法提供表数据源- 添加相关CSS样式支持表选择器的视觉呈现&#10;-优化表选择器交互体验，支持点击选择和空状态显示" />
+    <MESSAGE value="feat(editor): 添加@表选择器功能支持智能表名引用&#10;&#10;- 在RightTabSidebar.vue中实现@符号触发的表选择器UI- 添加表名搜索和过滤功能，支持快速查找数据库表- 实现表选择器定位逻辑，根据光标位置动态显示&#10;- 集成表名选择后的文本替换和光标定位功能- 添加表引用状态管理，跟踪已引用的表列表&#10;- 在aiApi.js中新增getTableStructure方法获取表结构- 实现表选择器键盘导航支持上下键选择和回车确认&#10;- 添加发送按钮流式输出控制，支持停止操作-优化表选择器" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(editor): 添加@表选择器功能支持智能表名引用&#10;&#10;- 在RightTabSidebar.vue中实现@符号触发的表选择器UI- 添加表名搜索和过滤功能，支持快速查找数据库表- 实现表选择器定位逻辑，根据光标位置动态显示&#10;- 集成表名选择后的文本替换和光标定位功能- 添加表引用状态管理，跟踪已引用的表列表&#10;- 在aiApi.js中新增getTableStructure方法获取表结构- 实现表选择器键盘导航支持上下键选择和回车确认&#10;- 添加发送按钮流式输出控制，支持停止操作-优化表选择器" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
 </project>
