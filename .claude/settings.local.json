@@ -42,7 +42,10 @@
       "Bash(curl -X POST http://localhost:8080/api/ai/chat/stream -H \"Content-Type: application/json\" -H \"Accept: text/event-stream\" -d '{\"\"message\"\":\"\"hello\"\",\"\"configId\"\":\"\"test\"\"}' -v)",
       "Bash(curl -s \"http://localhost:3001\")",
       "Bash(curl -X POST \"http://localhost:8080/api/ai/chat/stream\" -H \"Content-Type: application/json\" -H \"Accept: text/event-stream\" -d '{\"\"message\"\":\"\"test\"\",\"\"configId\"\":\"\"test\"\"}' -v)",
-      "Bash(curl -X POST \"http://localhost:8080/api/ai/chat/stream\" -H \"Content-Type: application/json\" -H \"Accept: text/event-stream\" -d '{\"\"\"\"message\"\"\"\":\"\"\"\"hello\"\"\"\",\"\"\"\"configId\"\"\"\":\"\"\"\"test\"\"\"\"}')"
+      "Bash(curl -X POST \"http://localhost:8080/api/ai/chat/stream\" -H \"Content-Type: application/json\" -H \"Accept: text/event-stream\" -d '{\"\"\"\"message\"\"\"\":\"\"\"\"hello\"\"\"\",\"\"\"\"configId\"\"\"\":\"\"\"\"test\"\"\"\"}')",
+      "Bash(curl -s http://localhost:8080/api/connections/test -X POST -H \"Content-Type: application/json\" -d \"{}\")",
+      "Bash(curl -s http://localhost:8080/api/connections/test -X POST -H \"Content-Type: application/json\" -d '{\"\"host\"\":\"\"localhost\"\",\"\"port\"\":3306,\"\"username\"\":\"\"root\"\",\"\"password\"\":\"\"test\"\"}')",
+      "Bash(curl -X POST http://localhost:3000/api/connections/test -H \"Content-Type: application/json\" -d '{\"\"host\"\":\"\"localhost\"\",\"\"port\"\":3306,\"\"username\"\":\"\"root\"\",\"\"password\"\":\"\"test\"\"}' -v)"
     ],
     "deny": [],
     "ask": []

@@ -5,8 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="refactor(ui): 将emoji替换为FontAwesomeIcon组件&#10;&#10;- 统一使用FontAwesomeIcon组件替代原有的emoji字符&#10;- 更新角色头像显示逻辑，支持图标名称配置&#10;- 调整消息气泡中的用户和AI头像显示方式&#10;- 修改表选择器中的图标展示形式-优化新建角色表单中的头像输入提示文本&#10;- 确保所有图标显示的一致性和可维护性">
+      <change beforePath="$PROJECT_DIR$/.claude/settings.local.json" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/settings.local.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/RightTabSidebar.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/RightTabSidebar.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

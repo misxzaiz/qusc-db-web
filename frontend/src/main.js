@@ -82,7 +82,9 @@ import {
   faStepForward,
   faStepBackward,
   faFastForward,
-  faFastBackward
+  faFastBackward,
+  faCogs,
+  faCube
 } from '@fortawesome/free-solid-svg-icons'
 import App from './App.vue'
 import ConnectionManager from './views/ConnectionManager.vue'
@@ -172,7 +174,9 @@ library.add(
   faStepForward,
   faStepBackward,
   faFastForward,
-  faFastBackward
+  faFastBackward,
+  faCogs,
+  faCube
 )
 
 const routes = [
