@@ -82,6 +82,11 @@
 
         <!-- 工具栏 -->
         <div class="toolbar">
+          <select v-model="answerMode" class="answer-mode-select" title="回答模式 (Alt+1/2/3)">
+            <option v-for="(mode, key) in answerModes" :key="key" :value="key">
+              {{ mode.name }}
+            </option>
+          </select>
           <button class="tool-btn" @click="showPrompts = !showPrompts" :class="{ active: showPrompts }" title="提示词">
             <font-awesome-icon icon="lightbulb" />
           </button>
@@ -310,7 +315,10 @@ import MarkdownRenderer from './MarkdownRenderer.vue'
 import { aiApi } from '../services/aiApi'
 import { sqlApi } from '../services/api'
 import { connectionStore } from '../stores/connectionStore'
-import { faMagic, faStop } from '@fortawesome/free-solid-svg-icons'
+import {
+  faMagic,
+  faStop
+} from '@fortawesome/free-solid-svg-icons'
 import { library } from '@fortawesome/fontawesome-svg-core'
 
 library.add(faMagic, faStop)
@@ -374,6 +382,21 @@ export default {
         optimize: '优化SQL',
         error: '分析错误'
       },
+      answerMode: 'medium', // 'concise', 'medium', 'detailed'
+      answerModes: {
+        concise: {
+          name: '简洁',
+          prompt: '请简洁回答，控制在1-2句话，直接给出核心信息。如果是代码或SQL，请用markdown代码块格式返回。'
+        },
+        medium: {
+          name: '中等',
+          prompt: '请提供适中的回答，包含必要的解释和说明。如果是代码或SQL，请用markdown代码块格式返回并给出简要说明。'
+        },
+        detailed: {
+          name: '详细',
+          prompt: '请提供详细的回答，包含深入解释、示例、注意事项等。如果是代码或SQL，请用markdown代码块格式返回并提供完整的说明和示例。'
+        }
+      },
       eventSource: null
     }
   },
@@ -398,6 +421,7 @@ export default {
     this.loadConfigs()
     this.loadRoles()
     this.loadHistory()
+    this.loadAnswerMode()
     // 初始宽度
     this.$emit('resize', this.isCollapsed ? 40 : 400)
   },
@@ -405,6 +429,9 @@ export default {
   watch: {
     isCollapsed() {
       this.$emit('resize', this.isCollapsed ? 40 : 400)
+    },
+    answerMode(newMode) {
+      localStorage.setItem('ai_answer_mode', newMode)
     }
   },
 
@@ -461,6 +488,13 @@ export default {
       this.saveHistory()
     },
 
+    loadAnswerMode() {
+      const saved = localStorage.getItem('ai_answer_mode')
+      if (saved && this.answerModes[saved]) {
+        this.answerMode = saved
+      }
+    },
+
     // 确保侧边栏展开并切换到AI标签
     ensureAiTabOpen() {
       if (this.isCollapsed) {
@@ -501,7 +535,9 @@ export default {
 
       try {
         const history = this.getFilteredHistory()
-        const systemPrompt = this.selectedRole?.systemPrompt || ''
+        const basePrompt = this.selectedRole?.systemPrompt || ''
+        const modePrompt = this.answerModes[this.answerMode].prompt
+        const systemPrompt = basePrompt ? `${basePrompt}\n\n${modePrompt}` : modePrompt
         const tableContexts = Array.from(this.referencedTables.values())
           .filter(info => info.active && info.createSql)
           .map(info => ({
@@ -633,6 +669,23 @@ export default {
           this.selectedTableIndex = -1
         }
         return
+      }
+
+      // 回答模式快捷键
+      if (event.altKey) {
+        if (event.key === '1') {
+          event.preventDefault()
+          this.answerMode = 'concise'
+          return
+        } else if (event.key === '2') {
+          event.preventDefault()
+          this.answerMode = 'medium'
+          return
+        } else if (event.key === '3') {
+          event.preventDefault()
+          this.answerMode = 'detailed'
+          return
+        }
       }
 
       if (event.key === 'Enter' && !event.shiftKey) {
@@ -1181,6 +1234,29 @@ export default {
   display: flex;
   gap: 8px;
   border-bottom: 1px solid var(--border-primary);
+  align-items: center;
+}
+
+/* 回答模式下拉菜单样式 */
+.answer-mode-select {
+  padding: 4px 8px;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 60px;
+}
+
+.answer-mode-select:hover {
+  background-color: var(--bg-highlight);
+}
+
+.answer-mode-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
 }
 
 .tool-btn {

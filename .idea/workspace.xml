@@ -4,10 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(sql): 调整默认分页大小为20条/页&#10;&#10;- 修改ResultTabs.vue中的默认分页选项为20条/页&#10;- 更新SqlEditor.vue中默认pageSize从50到20- 调整分页计算逻辑使用新的默认值20- 更新Claude本地设置添加新的Bash命令配置-修正IDEA工作区配置中的分支引用路径&#10;- 移除旧的AI助手侧边栏相关提交信息&#10;- 更新分页相关组件的初始化参数和计算方式- 完善分页查询时的参数传递和默认值处理">
+    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="refactor(components):重构结果标签页UI结构和样式&#10;&#10;- 重新组织SELECT、UPDATE和ERROR结果的布局结构&#10;- 统一各类结果的工具栏样式和交互元素排列&#10;- 移除冗余的结果头部组件，合并到工具栏中&#10;- 简化搜索功能，移除前端过滤逻辑&#10;- 调整CSS样式以优化空间利用和视觉层次&#10;- 更新分页相关计算方法以适应新结构&#10;- 改进错误信息显示区域的布局和滚动行为- 统一导出和AI解析按钮的位置和样式&#10;- 优化响应式设计以适应不同屏幕尺寸- 提升代码可维护性和组件">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/components/RightTabSidebar.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/RightTabSidebar.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/todo.md" beforeDir="false" afterPath="$PROJECT_DIR$/todo.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -91,14 +91,6 @@
       <workItem from="1761843018540" duration="15714000" />
       <workItem from="1762105731013" duration="1724000" />
       <workItem from="1762182700164" duration="684000" />
-    </task>
-    <task id="LOCAL-00006" summary="feat(connection):重构连接树组件支持已保存连接管理&#10;&#10;- 合并已保存连接和活跃会话到统一列表&#10;- 实现连接状态标识和自动展开功能&#10;-优化空状态提示信息和样式布局&#10;- 完善连接点击处理和会话选择逻辑&#10;- 移除旧的连接管理样式和结构&#10;- 调整组件数据结构和计算属性&#10;- 改进数据库和表节点的展示逻辑">
-      <option name="closed" value="true" />
-      <created>1761848964207</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1761848964207</updated>
     </task>
     <task id="LOCAL-00007" summary="feat(connection):优化连接树合并逻辑和点击处理&#10;&#10;- 保持已保存连接的原始顺序- 活跃会话优先使用实时数据&#10;- 分离无对应保存">
       <option name="closed" value="true" />
@@ -484,7 +476,15 @@
       <option name="project" value="LOCAL" />
       <updated>1762186365476</updated>
     </task>
-    <option name="localTasksCounter" value="55" />
+    <task id="LOCAL-00055" summary="refactor(components):重构结果标签页UI结构和样式&#10;&#10;- 重新组织SELECT、UPDATE和ERROR结果的布局结构&#10;- 统一各类结果的工具栏样式和交互元素排列&#10;- 移除冗余的结果头部组件，合并到工具栏中&#10;- 简化搜索功能，移除前端过滤逻辑&#10;- 调整CSS样式以优化空间利用和视觉层次&#10;- 更新分页相关计算方法以适应新结构&#10;- 改进错误信息显示区域的布局和滚动行为- 统一导出和AI解析按钮的位置和样式&#10;- 优化响应式设计以适应不同屏幕尺寸- 提升代码可维护性和组件结构清晰度">
+      <option name="closed" value="true" />
+      <created>1762188181670</created>
+      <option name="number" value="00055" />
+      <option name="presentableId" value="LOCAL-00055" />
+      <option name="project" value="LOCAL" />
+      <updated>1762188181670</updated>
+    </task>
+    <option name="localTasksCounter" value="56" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -526,7 +526,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="feat(ai): 新增流式聊天和普通聊天接口&#10;&#10;- 实现 streamChat 方法用于处理 Server-Sent Events 流式响应&#10;- 添加 freeChat 方法支持普通聊天请求&#10;- 优化右侧边栏宽度控制逻辑，使用 CSS 变量动态调整布局&#10;- 移除旧版 AI 助手侧边栏组件及相关代码&#10;-重构 AI 诊断功能并集成到新侧边栏中" />
     <MESSAGE value="refactor(ai): 切换聊天流式传输实现方式&#10;&#10;- 将Server-Sent Events替换为fetch POST请求处理流式响应- 移除EventSource相关代码逻辑&#10;- 更新SQL编辑器右侧边栏宽度计算逻辑&#10;-修正折叠状态下图标栏宽度设置问题" />
     <MESSAGE value="refactor(ai):优化AI助手聊天流式传输和界面交互&#10;&#10;- 将Server-Sent Events替换为fetch POST请求处理流式响应&#10;- 移除EventSource相关代码逻辑&#10;- 新增ensureAiTabOpen方法确保侧边栏展开并切换到AI标签&#10;- 更新SSE数据解析逻辑，支持data:前缀格式&#10;- 优化消息完成状态判断，支持done字段检测&#10;- 改进消息气泡样式，区分用户和AI消息对齐方式&#10;- 调整SQL编辑器调用AI助手流程，先展开侧边栏再发送消息&#10;- 添加流数据解析错误时的原始数据显示- 更新Claude配置中的AI服务测试命令" />
     <MESSAGE value="feat(ai):优化AI聊天流式处理逻辑&#10;&#10;- 重构 aiApi.js 中的 EventSource 模拟实现&#10;- 提前返回 mockEventSource，避免等待 fetch 完成&#10;- 改进流结束判断逻辑，打印日志替代 onmessage 通知- 增强错误处理，确保 fetch 错误能触发 onerror 回调&#10;- 在 RightTabSidebar.vue 中增加 AI 配置检查- 更新 streamChat 调用方式，使用 Promise 处理 eventSource&#10;- 简化 SSE 数据解析流程，移除前缀处理&#10;- 增加连接确认消息过滤和流式内容累积逻辑&#10;- 补充 eventSource 创建失败的错误捕获&#10;- 更新本地测试 curl 命令配置" />
@@ -551,7 +550,8 @@
     <MESSAGE value="feat(connection): 添加连接树右键菜单功能&#10;&#10;- 实现连接节点右键菜单，支持重新连接操作&#10;- 添加右键菜单显示逻辑和位置计算- 实现重新连接功能，包括断开和重连流程&#10;- 添加菜单样式和禁用状态处理&#10;- 完善事件监听清理机制" />
     <MESSAGE value="feat(sql): 实现后端分页查询功能&#10;&#10;- 后端查询添加30秒超时设置，提升查询稳定性&#10;- 前端结果页签添加分页加载状态提示&#10;- 分页按钮在加载时禁用，防止重复操作- 使用后端返回的总数和数据进行分页计算&#10;- 实现分页变更事件，通过父组件获取新页数据&#10;- 添加分页参数初始化和结果数据结构优化&#10;- 完善分页查询错误处理和用户提示机制" />
     <MESSAGE value="feat(sql): 调整默认分页大小为20条/页&#10;&#10;- 修改ResultTabs.vue中的默认分页选项为20条/页&#10;- 更新SqlEditor.vue中默认pageSize从50到20- 调整分页计算逻辑使用新的默认值20- 更新Claude本地设置添加新的Bash命令配置-修正IDEA工作区配置中的分支引用路径&#10;- 移除旧的AI助手侧边栏相关提交信息&#10;- 更新分页相关组件的初始化参数和计算方式- 完善分页查询时的参数传递和默认值处理" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(sql): 调整默认分页大小为20条/页&#10;&#10;- 修改ResultTabs.vue中的默认分页选项为20条/页&#10;- 更新SqlEditor.vue中默认pageSize从50到20- 调整分页计算逻辑使用新的默认值20- 更新Claude本地设置添加新的Bash命令配置-修正IDEA工作区配置中的分支引用路径&#10;- 移除旧的AI助手侧边栏相关提交信息&#10;- 更新分页相关组件的初始化参数和计算方式- 完善分页查询时的参数传递和默认值处理" />
+    <MESSAGE value="refactor(components):重构结果标签页UI结构和样式&#10;&#10;- 重新组织SELECT、UPDATE和ERROR结果的布局结构&#10;- 统一各类结果的工具栏样式和交互元素排列&#10;- 移除冗余的结果头部组件，合并到工具栏中&#10;- 简化搜索功能，移除前端过滤逻辑&#10;- 调整CSS样式以优化空间利用和视觉层次&#10;- 更新分页相关计算方法以适应新结构&#10;- 改进错误信息显示区域的布局和滚动行为- 统一导出和AI解析按钮的位置和样式&#10;- 优化响应式设计以适应不同屏幕尺寸- 提升代码可维护性和组件" />
+    <option name="LAST_COMMIT_MESSAGE" value="refactor(components):重构结果标签页UI结构和样式&#10;&#10;- 重新组织SELECT、UPDATE和ERROR结果的布局结构&#10;- 统一各类结果的工具栏样式和交互元素排列&#10;- 移除冗余的结果头部组件，合并到工具栏中&#10;- 简化搜索功能，移除前端过滤逻辑&#10;- 调整CSS样式以优化空间利用和视觉层次&#10;- 更新分页相关计算方法以适应新结构&#10;- 改进错误信息显示区域的布局和滚动行为- 统一导出和AI解析按钮的位置和样式&#10;- 优化响应式设计以适应不同屏幕尺寸- 提升代码可维护性和组件" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="XDebuggerManager">
