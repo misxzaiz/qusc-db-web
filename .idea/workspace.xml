@@ -4,11 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(sql):优化SQL执行和分页查询逻辑&#10;&#10;- 在执行SQL前清理末尾分号和空白字符&#10;- 统一查询和更新操作的SQL清理逻辑&#10;- 改进分页查询中的SQL处理流程-修复批量执行结果中SQL语句显示问题&#10;- 更新Claude配置添加SQL执行测试命令">
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/AtMention.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/AtMention.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/SqlCodeEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/SqlCodeEditor.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/services/api.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/api.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/stores/connectionStore.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/stores/connectionStore.js" afterDir="false" />
+    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(sql): 实现表结构缓存和智能SQL提示功能&#10;&#10;- 在connectionStore中添加表结构缓存机制&#10;- 新增getTableSchema和loadTableSchema方法用于管理表元数据&#10;-优化AtMention组件从缓存加载表列表和结构&#10;- 增强SqlCodeEditor的代码补全功能- 支持表名后输入点号(.)触发字段名补全&#10;- 支持SQL关键字后自动补全表名&#10;-从connectionStore获取表和字段信息用于提示&#10;- 添加异步加载表结构避免阻塞UI- 在api.js中新增getTableSchema接口方法">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -92,14 +89,6 @@
       <workItem from="1761843018540" duration="15714000" />
       <workItem from="1762105731013" duration="1724000" />
       <workItem from="1762182700164" duration="684000" />
-    </task>
-    <task id="LOCAL-00010" summary="feat(ai): 添加AI SQL助手功能&#10;&#10;- 新增AI配置管理界面和相关API接口&#10;- 实现SQL生成、解释和优化核心功能&#10;- 支持多种AI服务商（DeepSeek、心流、OpenAI等）&#10;- 添加前端聊天界面用于与AI交互- 集成LocalStorage存储AI配置信息&#10;- 提供AI模型参数配置和测试连接功能- 支持数据库表结构引用和快速操作按钮&#10;- 实现消息历史记录和SQL执行结果展示">
-      <option name="closed" value="true" />
-      <created>1761928121416</created>
-      <option name="number" value="00010" />
-      <option name="presentableId" value="LOCAL-00010" />
-      <option name="project" value="LOCAL" />
-      <updated>1761928121416</updated>
     </task>
     <task id="LOCAL-00011" summary="1">
       <option name="closed" value="true" />
@@ -485,7 +474,15 @@
       <option name="project" value="LOCAL" />
       <updated>1762190420616</updated>
     </task>
-    <option name="localTasksCounter" value="59" />
+    <task id="LOCAL-00059" summary="feat(sql): 实现表结构缓存和智能SQL提示功能&#10;&#10;- 在connectionStore中添加表结构缓存机制&#10;- 新增getTableSchema和loadTableSchema方法用于管理表元数据&#10;-优化AtMention组件从缓存加载表列表和结构&#10;- 增强SqlCodeEditor的代码补全功能- 支持表名后输入点号(.)触发字段名补全&#10;- 支持SQL关键字后自动补全表名&#10;-从connectionStore获取表和字段信息用于提示&#10;- 添加异步加载表结构避免阻塞UI- 在api.js中新增getTableSchema接口方法">
+      <option name="closed" value="true" />
+      <created>1762190812634</created>
+      <option name="number" value="00059" />
+      <option name="presentableId" value="LOCAL-00059" />
+      <option name="project" value="LOCAL" />
+      <updated>1762190812634</updated>
+    </task>
+    <option name="localTasksCounter" value="60" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -527,7 +524,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="feat(ai):优化AI聊天消息对齐样式&#10;&#10;- 统一用户和AI消息内容左对齐显示&#10;- 调整消息气泡样式以适应新的对齐方式&#10;- 保持消息气泡在容器内右侧显示的位置逻辑" />
     <MESSAGE value="feat(markdown): 支持流式渲染和不完整语法处理&#10;&#10;- 添加 streaming 属性支持实时渲染指示器- 自动补全未闭合的 Markdown 语法元素  -代码块、行内代码、粗体、斜体&#10;- 移除旧版流式输出控制按钮和状态显示&#10;- 统一使用流式消息处理逻辑&#10;- 删除冗余的 normalMessage 方法&#10;- 优化样式和动画效果" />
     <MESSAGE value="feat(editor): 添加@表选择器功能支持智能表名引用&#10;&#10;- 在RightTabSidebar.vue中实现@符号触发的表选择器UI&#10;- 添加表名搜索和过滤功能，支持快速查找数据库表- 实现表选择器定位逻辑，根据光标位置动态显示&#10;- 集成表名选择后的文本替换和光标定位功能&#10;- 添加表引用状态管理，跟踪已引用的表列表- 在SqlEditor.vue中实现getTables方法提供表数据源- 添加相关CSS样式支持表选择器的视觉呈现&#10;-优化表选择器交互体验，支持点击选择和空状态显示" />
     <MESSAGE value="feat(editor): 添加@表选择器功能支持智能表名引用&#10;&#10;- 在RightTabSidebar.vue中实现@符号触发的表选择器UI- 添加表名搜索和过滤功能，支持快速查找数据库表- 实现表选择器定位逻辑，根据光标位置动态显示&#10;- 集成表名选择后的文本替换和光标定位功能- 添加表引用状态管理，跟踪已引用的表列表&#10;- 在aiApi.js中新增getTableStructure方法获取表结构- 实现表选择器键盘导航支持上下键选择和回车确认&#10;- 添加发送按钮流式输出控制，支持停止操作-优化表选择器" />
@@ -552,7 +548,8 @@
     <MESSAGE value="feat(ai): 添加回答模式选择功能- 在右侧边栏工具栏中新增回答模式下拉选择框&#10;- 支持三种回答模式：简洁、中等、详细- 根据选择的模式动态调整系统提示词&#10;- 回答模式支持 Alt+1/2/3 快捷键切换&#10;- 记住用户选择的回答模式到本地存储- 添加回答模式相关的CSS样式和交互效果&#10;- 更新 FontAwesome 图标导入格式以提高可读性- 完善组件初始化时加载已保存的回答模式- 优化系统提示词组合逻辑，将角色提示与模式提示结合" />
     <MESSAGE value="feat(ai): 添加回答模式选择功能- 在右侧边栏工具栏中新增回答模式下拉选择框- 支持三种回答模式：简洁、中等、详细- 根据选择的模式动态调整系统提示词&#10;- 回答模式支持 Alt+1/2/3 快捷键切换&#10;- 记住用户选择的回答模式到本地存储- 添加回答模式相关的CSS样式和交互效果&#10;- 更新 FontAwesome 图标导入格式以提高可读性&#10;- 完善组件初始化时加载已保存的回答模式-优化系统提示词组合逻辑，将角色提示与模式提示结合" />
     <MESSAGE value="feat(sql):优化SQL执行和分页查询逻辑&#10;&#10;- 在执行SQL前清理末尾分号和空白字符&#10;- 统一查询和更新操作的SQL清理逻辑&#10;- 改进分页查询中的SQL处理流程-修复批量执行结果中SQL语句显示问题&#10;- 更新Claude配置添加SQL执行测试命令" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(sql):优化SQL执行和分页查询逻辑&#10;&#10;- 在执行SQL前清理末尾分号和空白字符&#10;- 统一查询和更新操作的SQL清理逻辑&#10;- 改进分页查询中的SQL处理流程-修复批量执行结果中SQL语句显示问题&#10;- 更新Claude配置添加SQL执行测试命令" />
+    <MESSAGE value="feat(sql): 实现表结构缓存和智能SQL提示功能&#10;&#10;- 在connectionStore中添加表结构缓存机制&#10;- 新增getTableSchema和loadTableSchema方法用于管理表元数据&#10;-优化AtMention组件从缓存加载表列表和结构&#10;- 增强SqlCodeEditor的代码补全功能- 支持表名后输入点号(.)触发字段名补全&#10;- 支持SQL关键字后自动补全表名&#10;-从connectionStore获取表和字段信息用于提示&#10;- 添加异步加载表结构避免阻塞UI- 在api.js中新增getTableSchema接口方法" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(sql): 实现表结构缓存和智能SQL提示功能&#10;&#10;- 在connectionStore中添加表结构缓存机制&#10;- 新增getTableSchema和loadTableSchema方法用于管理表元数据&#10;-优化AtMention组件从缓存加载表列表和结构&#10;- 增强SqlCodeEditor的代码补全功能- 支持表名后输入点号(.)触发字段名补全&#10;- 支持SQL关键字后自动补全表名&#10;-从connectionStore获取表和字段信息用于提示&#10;- 添加异步加载表结构避免阻塞UI- 在api.js中新增getTableSchema接口方法" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="XDebuggerManager">

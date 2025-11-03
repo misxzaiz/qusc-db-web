@@ -159,13 +159,32 @@ export default {
         // 检测表名加点号后的字段补全
         const tableMatch = beforeText.match(/(\b[a-zA-Z_][\w]*)\.$/)
         if (tableMatch) {
-          const tableName = tableMatch[1]
-          const columnOptions = this.getColumnCompletions(tableName)
-          if (columnOptions.length > 0) {
-            return {
-              from: word.from,
-              options: columnOptions,
-              span: /^[\w$]+$/
+          const aliasOrTable = tableMatch[1]
+
+          // 尝试从当前SQL语句中解析表别名映射
+          const tableMapping = this.parseTableAliases(beforeText)
+          const actualTableName = tableMapping[aliasOrTable.toLowerCase()] || aliasOrTable
+
+          // 调试信息
+          console.log('字段补全调试:', {
+            aliasOrTable,
+            tableMapping,
+            actualTableName,
+            sessionId: this.sessionId,
+            database: this.database
+          })
+
+          // 尝试原表名和小写表名
+          const possibleNames = [actualTableName, actualTableName.toLowerCase()]
+
+          for (const name of possibleNames) {
+            const columnOptions = this.getColumnCompletions(name)
+            if (columnOptions.length > 0) {
+              return {
+                from: word.from,
+                options: columnOptions,
+                span: /^[\w$]+$/
+              }
             }
           }
         }
@@ -341,23 +360,60 @@ export default {
     },
 
     getColumnCompletions(tableName) {
-      // 从connectionStore获取缓存的字段信息
-      const schema = connectionStore.getTableSchema(this.sessionId, this.database, tableName)
-      if (schema && schema.columns) {
-        return schema.columns.map(col => ({
-          label: col.name,
-          type: 'column',
-          apply: col.name,
-          info: `${col.type}${col.nullable ? '' : ' NOT NULL'}${col.comment ? ' - ' + col.comment : ''}`
-        }))
+      // 尝试原表名和小写表名
+      const possibleNames = [tableName, tableName.toLowerCase()]
+
+      for (const name of possibleNames) {
+        const schema = connectionStore.getTableSchema(this.sessionId, this.database, name)
+        if (schema && schema.columns) {
+          return schema.columns.map(col => ({
+            label: col.name,
+            type: 'column',
+            apply: col.name,
+            info: `${col.type}${col.nullable ? '' : ' NOT NULL'}${col.comment ? ' - ' + col.comment : ''}`
+          }))
+        }
       }
 
       // 如果没有缓存，异步加载表结构
       if (this.sessionId && this.database) {
-        connectionStore.loadTableSchema(this.sessionId, this.database, tableName)
+        connectionStore.loadTableSchema(this.sessionId, this.database, tableName.toLowerCase())
       }
 
       return []
+    },
+
+    // 解析SQL语句中的表别名映射
+    parseTableAliases(sqlText) {
+      const aliases = {}
+
+      // 获取当前SQL语句（从最后一个分号开始到当前位置）
+      const lastSemicolonIndex = sqlText.lastIndexOf(';')
+      const currentStatement = lastSemicolonIndex >= 0
+        ? sqlText.substring(lastSemicolonIndex + 1)
+        : sqlText
+
+      // 匹配 FROM table_name [AS] alias 和 JOIN table_name [AS] alias
+      const fromJoinPattern = /\b(FROM|JOIN)\s+([a-zA-Z_][\w]*)\s+(?:AS\s+)?([a-zA-Z_][\w]*)\b/gi
+      let match
+
+      while ((match = fromJoinPattern.exec(currentStatement)) !== null) {
+        const tableName = match[2]
+        const alias = match[3]
+        // 别名映射到实际的表名（都转为小写以便匹配）
+        aliases[alias.toLowerCase()] = tableName.toLowerCase()
+        // 也保存表名本身的映射
+        aliases[tableName.toLowerCase()] = tableName.toLowerCase()
+      }
+
+      // 匹配没有别名的情况：FROM table_name 或 JOIN table_name
+      const directTablePattern = /\b(FROM|JOIN)\s+([a-zA-Z_][\w]*)(?!\s+(?:AS\s+)?[a-zA-Z_][\w]*\b)/gi
+      while ((match = directTablePattern.exec(currentStatement)) !== null) {
+        const tableName = match[2]
+        aliases[tableName.toLowerCase()] = tableName.toLowerCase()
+      }
+
+      return aliases
     },
 
     focus() {
