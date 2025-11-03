@@ -20,7 +20,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 @RequestMapping("/api/ai")
-@CrossOrigin(origins = "http://localhost:3000")
 public class AiController {
 
     private static final Logger log = LoggerFactory.getLogger(AiController.class);

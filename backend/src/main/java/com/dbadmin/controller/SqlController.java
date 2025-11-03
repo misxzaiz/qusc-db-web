@@ -11,7 +11,6 @@ import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/api/sql")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001"})
 public class SqlController {
 
     @Autowired
@@ -38,8 +37,28 @@ public class SqlController {
     public ResponseEntity<?> executeSql(@RequestBody Map<String, Object> request) {
         String sessionId = (String) request.get("sessionId");
         String sql = (String) request.get("sql");
-        Integer page = (Integer) request.get("page");
-        Integer pageSize = (Integer) request.get("pageSize");
+
+        // JSON传输过来的值都是String类型，需要转换
+        Integer page = null;
+        Integer pageSize = null;
+
+        try {
+            Object pageObj = request.get("page");
+            if (pageObj != null) {
+                page = Integer.parseInt(pageObj.toString());
+            }
+        } catch (NumberFormatException e) {
+            page = 1; // 默认第一页
+        }
+
+        try {
+            Object pageSizeObj = request.get("pageSize");
+            if (pageSizeObj != null) {
+                pageSize = Integer.parseInt(pageSizeObj.toString());
+            }
+        } catch (NumberFormatException e) {
+            pageSize = 20; // 默认20条/页
+        }
 
         if (sessionId == null || sql == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "sessionId and sql are required"));

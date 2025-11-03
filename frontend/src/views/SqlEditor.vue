@@ -680,6 +680,9 @@ ${JSON.stringify(sampleData, null, 2)}
           // 设置加载状态
           result.loading = true
 
+          // 确保pageSize是数字类型
+          const pageSizeNum = parseInt(pageSize) || 20
+
           // 重新执行SQL，带新的分页参数
           const response = await fetch('/api/sql/execute', {
             method: 'POST',
@@ -689,8 +692,8 @@ ${JSON.stringify(sampleData, null, 2)}
             body: JSON.stringify({
               sessionId: tab.sessionId,
               sql: result.sql,
-              page: page || 1,
-              pageSize: pageSize || 20
+              page: parseInt(page) || 1,
+              pageSize: pageSizeNum
             })
           })
 
@@ -702,10 +705,10 @@ ${JSON.stringify(sampleData, null, 2)}
 
           // 更新结果数据
           result.data = data.data || []
-          result.currentPage = page
-          result.pageSize = pageSize
+          result.currentPage = parseInt(page) || 1
+          result.pageSize = pageSizeNum
           result.totalCount = data.totalCount || 0
-          result.totalPages = Math.ceil(result.totalCount / pageSize)
+          result.totalPages = Math.ceil(result.totalCount / pageSizeNum)
 
         } catch (error) {
           console.error('分页查询错误:', error)

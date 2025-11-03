@@ -558,7 +558,7 @@ export default {
         emit('page-change', {
           resultId: result.id,
           page: page,
-          pageSize: result.pageSize || 50
+          pageSize: result.pageSize || 20
         })
       }
     }
@@ -568,7 +568,7 @@ export default {
       emit('page-change', {
         resultId: result.id,
         page: 1,
-        pageSize: result.pageSize || 50
+        pageSize: result.pageSize || 20
       })
     }
 
