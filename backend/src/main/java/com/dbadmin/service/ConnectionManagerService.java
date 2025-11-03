@@ -61,10 +61,13 @@ public class ConnectionManagerService {
             if (!upperSql.contains(" LIMIT ")) {
                 // 先查询总数
                 String countSql = "SELECT COUNT(*) FROM (" + sql + ") AS total_count";
-                try (Statement stmt = conn.createStatement();
-                     ResultSet rs = stmt.executeQuery(countSql)) {
-                    if (rs.next()) {
-                        totalCount = rs.getLong(1);
+                try (Statement stmt = conn.createStatement()) {
+                    // 设置查询超时为30秒
+                    stmt.setQueryTimeout(30);
+                    try (ResultSet rs = stmt.executeQuery(countSql)) {
+                        if (rs.next()) {
+                            totalCount = rs.getLong(1);
+                        }
                     }
                 }
 
@@ -78,26 +81,29 @@ public class ConnectionManagerService {
         }
 
         // 执行查询
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(finalSql)) {
+        try (Statement stmt = conn.createStatement()) {
+            // 设置查询超时为30秒
+            stmt.setQueryTimeout(30);
+            try (ResultSet rs = stmt.executeQuery(finalSql)) {
 
-            List<Map<String, Object>> data = resultSetToList(rs);
-            List<String> columns = new ArrayList<>();
+                List<Map<String, Object>> data = resultSetToList(rs);
+                List<String> columns = new ArrayList<>();
 
-            if (!data.isEmpty()) {
-                columns.addAll(data.get(0).keySet());
+                if (!data.isEmpty()) {
+                    columns.addAll(data.get(0).keySet());
+                }
+
+                // 如果没有分页或没有计算总数，使用实际返回的数据量
+                if (totalCount == null) {
+                    totalCount = (long) data.size();
+                }
+
+                QueryResult result = new QueryResult(data, columns, totalCount);
+                if (applyPagination && page != null) result.setCurrentPage(page);
+                if (applyPagination && pageSize != null) result.setPageSize(pageSize);
+
+                return result;
             }
-
-            // 如果没有分页或没有计算总数，使用实际返回的数据量
-            if (totalCount == null) {
-                totalCount = (long) data.size();
-            }
-
-            QueryResult result = new QueryResult(data, columns, totalCount);
-            if (applyPagination && page != null) result.setCurrentPage(page);
-            if (applyPagination && pageSize != null) result.setPageSize(pageSize);
-
-            return result;
         }
     }
 

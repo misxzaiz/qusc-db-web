@@ -132,6 +132,7 @@
               @analyze="handleAnalyzeClick"
               @export="exportResult"
               @refresh="handleResultRefresh"
+              @page-change="handlePageChange"
             />
           </div>
         </div>
@@ -481,8 +482,8 @@ export default {
         body: JSON.stringify({
           sessionId,
           sql,
-          page: null,  // 不使用后端分页
-          pageSize: null
+          page: 1,  // 启用后端分页
+          pageSize: 50
         })
       })
 
@@ -504,6 +505,7 @@ export default {
       } else if (data.data) {
         // SELECT查询
         const result = {
+          id: `result-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           type: 'select',
           data: data.data || [],
           columns: data.columns || [],
@@ -511,11 +513,13 @@ export default {
           // 初始化分页属性
           pageSize: 50,
           currentPage: 1,
+          totalPages: Math.ceil((data.totalCount || data.data.length) / 50),
           searchText: '',
           filteredData: null,
           sortColumn: null,
           sortOrder: 'asc',
-          selectedRows: new Set()
+          selectedRows: new Set(),
+          loading: false
         }
         return result
       } else if (data.affectedRows !== undefined) {
@@ -663,6 +667,52 @@ ${JSON.stringify(sampleData, null, 2)}
         }).catch(e => {
           result.error = e.message
         })
+      }
+    }
+
+    // 处理分页变化
+    const handlePageChange = async ({ resultId, page, pageSize }) => {
+      const tab = tabs.value[activeTabIndex.value]
+      const result = tab.results.find(r => r.id === resultId)
+
+      if (result && result.sql) {
+        try {
+          // 设置加载状态
+          result.loading = true
+
+          // 重新执行SQL，带新的分页参数
+          const response = await fetch('/api/sql/execute', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              sessionId: tab.sessionId,
+              sql: result.sql,
+              page,
+              pageSize
+            })
+          })
+
+          if (!response.ok) {
+            throw new Error('分页查询失败')
+          }
+
+          const data = await response.json()
+
+          // 更新结果数据
+          result.data = data.data || []
+          result.currentPage = page
+          result.pageSize = pageSize
+          result.totalCount = data.totalCount || 0
+          result.totalPages = Math.ceil(result.totalCount / pageSize)
+
+        } catch (error) {
+          console.error('分页查询错误:', error)
+          alert('分页查询失败: ' + error.message)
+        } finally {
+          result.loading = false
+        }
       }
     }
 
@@ -1019,6 +1069,7 @@ ${tab.sqlText}
       handleAnalyzeClick,
       exportResult,
       handleResultRefresh,
+      handlePageChange,
       diagnoseError,
       onHistorySelect,
       onHistoryCopy,

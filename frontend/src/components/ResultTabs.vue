@@ -196,17 +196,23 @@
                 <span>第 {{ result.currentPage || 1 }} 页，共 {{ getTotalPages(result) }} 页</span>
               </div>
               <div class="pagination-controls">
+                <!-- 加载状态遮罩 -->
+                <div v-if="result.loading" class="pagination-loading">
+                  <font-awesome-icon icon="spinner" spin />
+                  <span>加载中...</span>
+                </div>
+
                 <button
                   class="btn btn-small"
                   @click="goToPage(result, 1)"
-                  :disabled="result.currentPage === 1"
+                  :disabled="result.currentPage === 1 || result.loading"
                 >
                   首页
                 </button>
                 <button
                   class="btn btn-small"
                   @click="goToPage(result, (result.currentPage || 1) - 1)"
-                  :disabled="result.currentPage === 1"
+                  :disabled="result.currentPage === 1 || result.loading"
                 >
                   <font-awesome-icon icon="angle-left" />
                 </button>
@@ -219,6 +225,7 @@
                     class="btn btn-small"
                     :class="{ active: page === (result.currentPage || 1) }"
                     @click="goToPage(result, page)"
+                    :disabled="result.loading"
                   >
                     {{ page }}
                   </button>
@@ -227,14 +234,14 @@
                 <button
                   class="btn btn-small"
                   @click="goToPage(result, (result.currentPage || 1) + 1)"
-                  :disabled="result.currentPage === getTotalPages(result)"
+                  :disabled="result.currentPage === getTotalPages(result) || result.loading"
                 >
                   <font-awesome-icon icon="angle-right" />
                 </button>
                 <button
                   class="btn btn-small"
                   @click="goToPage(result, getTotalPages(result))"
-                  :disabled="result.currentPage === getTotalPages(result)"
+                  :disabled="result.currentPage === getTotalPages(result) || result.loading"
                 >
                   末页
                 </button>
@@ -244,6 +251,7 @@
                   v-model="result.pageSize"
                   @change="changePageSize(result)"
                   class="page-size-select"
+                  :disabled="result.loading"
                 >
                   <option value="50">50条/页</option>
                   <option value="100">100条/页</option>
@@ -497,25 +505,22 @@ export default {
       return getFilteredData(result).length
     }
 
-    // 分页相关
+    // 分页相关 - 使用后端分页数据
     const needPagination = (result) => {
-      const data = getFilteredData(result)
-      return data.length > (result.pageSize || 50)
+      // 使用后端返回的总数判断
+      return result.totalCount && result.totalCount > (result.pageSize || 50)
     }
 
     const getTotalPages = (result) => {
-      const data = getFilteredData(result)
+      // 使用后端计算的总页数
+      if (result.totalPages) return result.totalPages
       const pageSize = result.pageSize || 50
-      return Math.ceil(data.length / pageSize)
+      return Math.ceil((result.totalCount || 0) / pageSize)
     }
 
     const getPaginatedData = (result) => {
-      const data = getFilteredData(result)
-      const pageSize = result.pageSize || 50
-      const currentPage = result.currentPage || 1
-      const start = (currentPage - 1) * pageSize
-      const end = start + pageSize
-      return data.slice(start, end)
+      // 直接使用后端返回的数据，不需要前端分页
+      return result.data || []
     }
 
     const getVisiblePages = (result) => {
@@ -546,15 +551,25 @@ export default {
       return rangeWithDots.filter(page => page !== '...' || rangeWithDots.length > 1)
     }
 
-    const goToPage = (result, page) => {
+    const goToPage = async (result, page) => {
       const total = getTotalPages(result)
       if (page >= 1 && page <= total) {
-        result.currentPage = page
+        // 触发事件，让父组件从后端获取新页数据
+        emit('page-change', {
+          resultId: result.id,
+          page: page,
+          pageSize: result.pageSize || 50
+        })
       }
     }
 
-    const changePageSize = (result) => {
-      result.currentPage = 1
+    const changePageSize = async (result) => {
+      // 触发事件，让父组件从后端获取新数据
+      emit('page-change', {
+        resultId: result.id,
+        page: 1,
+        pageSize: result.pageSize || 50
+      })
     }
 
     // 刷新数据
@@ -1228,5 +1243,31 @@ export default {
   display: flex;
   gap: var(--spacing-sm);
   justify-content: flex-end;
+}
+
+/* 分页加载状态 */
+.pagination-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-primary);
+  z-index: 10;
+}
+
+.pagination-loading svg {
+  font-size: 16px;
+  color: var(--accent-primary);
+}
+
+.pagination-controls {
+  position: relative;
 }
 </style>

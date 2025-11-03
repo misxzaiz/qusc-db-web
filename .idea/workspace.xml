@@ -4,7 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="" />
+    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(connection): 添加连接树右键菜单功能&#10;&#10;- 实现连接节点右键菜单，支持重新连接操作&#10;- 添加右键菜单显示逻辑和位置计算- 实现重新连接功能，包括断开和重连流程&#10;- 添加菜单样式和禁用状态处理&#10;- 完善事件监听清理机制">
+      <change afterPath="$PROJECT_DIR$/todo.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/ResultTabs.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/ResultTabs.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/SqlEditor.vue" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -13,6 +17,7 @@
   <component name="ChangesViewManager" show_ignored="true" />
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="UPDATE_TYPE" value="REBASE" />
   </component>
   <component name="HighlightingSettingsPerFile">
     <setting file="jar://$MAVEN_REPOSITORY$/org/springframework/spring-web/6.1.1/spring-web-6.1.1.jar!/org/springframework/web/client/RequestCallback.class" root0="SKIP_INSPECTION" />
@@ -85,15 +90,7 @@
       <updated>1761843015910</updated>
       <workItem from="1761843018540" duration="15714000" />
       <workItem from="1762105731013" duration="1724000" />
-      <workItem from="1762182700164" duration="1269000" />
-    </task>
-    <task id="LOCAL-00003" summary="feat(sql): 实现数据库切换功能&#10;&#10;- 新增获取数据库列表接口&#10;- 新增切换数据库接口&#10;- 新增获取当前数据库接口- 前端支持数据库选择和切换&#10;- 连接时数据库字段改为可选&#10;-优化连接流程，先加载数据库再加载表&#10;- 添加数据库列表刷新功能- 完善错误处理和用户提示">
-      <option name="closed" value="true" />
-      <created>1761846627780</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1761846627780</updated>
+      <workItem from="1762182700164" duration="684000" />
     </task>
     <task id="LOCAL-00004" summary="feat(sql): 支持按数据库筛选数据表- 修改后端 getTables 接口，新增 database 参数用于指定数据库- 更新前端 getTables 方法，支持传递 database 参数&#10;-优化连接管理器，使用 connectionStore 替代 connectionStorage&#10;- 重构 SQL 编辑器界面，引入 ConnectionTree 组件&#10;- 新增连接对话框，支持创建和测试数据库连接&#10;- 改进查询历史记录功能，增加执行时间显示- 调整界面布局，优化工具栏和连接信息展示&#10;- 完善 USE语句执行逻辑，自动更新当前数据库状态">
       <option name="closed" value="true" />
@@ -479,7 +476,15 @@
       <option name="project" value="LOCAL" />
       <updated>1762096036802</updated>
     </task>
-    <option name="localTasksCounter" value="52" />
+    <task id="LOCAL-00052" summary="feat(connection): 添加连接树右键菜单功能&#10;&#10;- 实现连接节点右键菜单，支持重新连接操作&#10;- 添加右键菜单显示逻辑和位置计算- 实现重新连接功能，包括断开和重连流程&#10;- 添加菜单样式和禁用状态处理&#10;- 完善事件监听清理机制">
+      <option name="closed" value="true" />
+      <created>1762184513182</created>
+      <option name="number" value="00052" />
+      <option name="presentableId" value="LOCAL-00052" />
+      <option name="project" value="LOCAL" />
+      <updated>1762184513182</updated>
+    </task>
+    <option name="localTasksCounter" value="53" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -506,7 +511,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="master" />
+                        <option value="origin/main" />
                       </list>
                     </value>
                   </entry>
@@ -521,7 +526,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="feat(ai):重构AI侧边栏交互并添加右侧固定图标栏&#10;&#10;- 在 AiSidebar2.vue 中添加 visible 控制显示状态&#10;- 默认展开 AI 侧边栏并控制其可见性&#10;- 移除 SqlEditor.vue 中的旧 AI 侧边栏类名控制逻辑- 添加 RightIconBar 组件用于固定右侧图标栏&#10;- 实现通过右侧图标栏控制 AI侧边栏开关&#10;- 调整主内容区域样式以适应新的布局结构&#10;- 更新组件引用和事件处理方法以支持新交互" />
     <MESSAGE value="feat(ai): 移除旧版AI助手侧边栏组件&#10;&#10;- 删除了完整的 AiSidebar2.vue 组件文件&#10;- 移除了所有相关的模板、脚本和样式代码&#10;- 清理了与旧版AI助手相关的功能实现&#10;- 为新版AI助手功能重构做准备" />
     <MESSAGE value="feat(ai): 移除旧版AI助手侧边栏组件- 删除了完整的 AiSidebar2.vue 组件文件&#10;- 移除了所有相关的模板、脚本和样式代码&#10;- 清理了与旧版AI助手相关的功能实现- 为新版AI助手功能重构做准备" />
     <MESSAGE value="feat(ai): 新增流式聊天和普通聊天接口&#10;&#10;- 实现 streamChat 方法用于处理 Server-Sent Events 流式响应&#10;- 添加 freeChat 方法支持普通聊天请求&#10;- 优化右侧边栏宽度控制逻辑，使用 CSS 变量动态调整布局&#10;- 移除旧版 AI 助手侧边栏组件及相关代码&#10;-重构 AI 诊断功能并集成到新侧边栏中" />
@@ -546,7 +550,8 @@
     <MESSAGE value="refactor(frontend):重命名SQL执行API方法名&#10;&#10;- 将sqlApi.executeSql方法重命名为sqlApi.execute&#10;- 更新RightTabSidebar.vue" />
     <MESSAGE value="feat(markdown): 支持多条SQL语句执行和风险确认&#10;&#10;- 新增多条SQL语句分割和逐条执行功能- 实现中高风险SQL语句执行前" />
     <MESSAGE value="feat(markdown): 支持多条SQL语句批量执行- 在 MarkdownRenderer.vue 中新增批量SQL执行事件发射器&#10;- 实现 executeMultipleSql 方法支持多条SQL逐条执行&#10;- 添加批量执行确认对话框和风险提示机制- 创建新Tab页来展示批量执行结果和状态&#10;- 在 RightTabSidebar.vue 中传递批量执行相关事件&#10;- SqlEditor.vue 中新增批量执行Tab管理和状态跟踪&#10;- 支持批量执行过程中的取消操作和结果统计&#10;- 添加批量执行结果的详细状态显示（成功/失败/取消）" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(markdown): 支持多条SQL语句批量执行- 在 MarkdownRenderer.vue 中新增批量SQL执行事件发射器&#10;- 实现 executeMultipleSql 方法支持多条SQL逐条执行&#10;- 添加批量执行确认对话框和风险提示机制- 创建新Tab页来展示批量执行结果和状态&#10;- 在 RightTabSidebar.vue 中传递批量执行相关事件&#10;- SqlEditor.vue 中新增批量执行Tab管理和状态跟踪&#10;- 支持批量执行过程中的取消操作和结果统计&#10;- 添加批量执行结果的详细状态显示（成功/失败/取消）" />
+    <MESSAGE value="feat(connection): 添加连接树右键菜单功能&#10;&#10;- 实现连接节点右键菜单，支持重新连接操作&#10;- 添加右键菜单显示逻辑和位置计算- 实现重新连接功能，包括断开和重连流程&#10;- 添加菜单样式和禁用状态处理&#10;- 完善事件监听清理机制" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(connection): 添加连接树右键菜单功能&#10;&#10;- 实现连接节点右键菜单，支持重新连接操作&#10;- 添加右键菜单显示逻辑和位置计算- 实现重新连接功能，包括断开和重连流程&#10;- 添加菜单样式和禁用状态处理&#10;- 完善事件监听清理机制" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="XDebuggerManager">
