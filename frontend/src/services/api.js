@@ -64,6 +64,10 @@ export const sqlApi = {
     return api.get(`/sql/current-database/${sessionId}`)
   },
 
+  getTableSchema(sessionId, tableName) {
+    return api.get(`/sql/table-schema/${sessionId}?tableName=${encodeURIComponent(tableName)}`)
+  },
+
   getTableCreate(sessionId, database, table) {
     return api.get(`/sql/table/${sessionId}/${database}/${table}/create`)
   }

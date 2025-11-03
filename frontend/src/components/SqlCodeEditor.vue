@@ -22,6 +22,7 @@ import { autocompletion } from '@codemirror/autocomplete'
 import { keymap } from '@codemirror/view'
 import { defaultKeymap, insertTab } from '@codemirror/commands'
 import AtMention from './AtMention.vue'
+import { connectionStore } from '../stores/connectionStore'
 
 export default {
   name: 'SqlCodeEditor',
@@ -153,13 +154,43 @@ export default {
         const word = context.matchBefore(/\w*/)
         if (!word || word.from == word.to) return null
 
+        const beforeText = context.state.doc.sliceString(0, word.from)
+
+        // 检测表名加点号后的字段补全
+        const tableMatch = beforeText.match(/(\b[a-zA-Z_][\w]*)\.$/)
+        if (tableMatch) {
+          const tableName = tableMatch[1]
+          const columnOptions = this.getColumnCompletions(tableName)
+          if (columnOptions.length > 0) {
+            return {
+              from: word.from,
+              options: columnOptions,
+              span: /^[\w$]+$/
+            }
+          }
+        }
+
+        // 检测FROM、JOIN、INSERT INTO、UPDATE等关键词后的表名补全
+        const keywordsPattern = /\b(FROM|JOIN|INNER\s+JOIN|LEFT\s+JOIN|RIGHT\s+JOIN|OUTER\s+JOIN|INSERT\s+INTO|UPDATE|DELETE\s+FROM|CREATE\s+TABLE|DROP\s+TABLE|ALTER\s+TABLE)\s+$/i
+        if (keywordsPattern.test(beforeText.slice(-50))) {
+          const tableOptions = this.getTableCompletions()
+          if (tableOptions.length > 0) {
+            return {
+              from: word.from,
+              options: tableOptions,
+              span: /^[\w$]+$/
+            }
+          }
+        }
+
+        // 默认SQL关键词补全
         return {
           from: word.from,
           options: sqlKeywords.map(keyword => ({
             label: keyword,
             type: 'keyword',
             apply: keyword.toUpperCase()
-          })).concat(this.getTableCompletions()),
+          })),
           span: /^[\w$]+$/
         }
       }
@@ -293,13 +324,40 @@ export default {
     },
 
     getTableCompletions() {
-      // 这里可以从父组件获取表名列表
-      const tables = this.$parent?.tables || []
-      return tables.map(table => ({
-        label: table,
-        type: 'table',
-        apply: table
-      }))
+      // 从connectionStore获取缓存的表名列表
+      const session = connectionStore.getSession(this.sessionId)
+      if (session && session.tables[this.database]) {
+        return session.tables[this.database].map(tableName => {
+          const schema = connectionStore.getTableSchema(this.sessionId, this.database, tableName)
+          return {
+            label: tableName,
+            type: 'table',
+            apply: tableName,
+            info: schema ? `${schema.columnCount} 列${schema.comment ? ' - ' + schema.comment : ''}` : '表'
+          }
+        })
+      }
+      return []
+    },
+
+    getColumnCompletions(tableName) {
+      // 从connectionStore获取缓存的字段信息
+      const schema = connectionStore.getTableSchema(this.sessionId, this.database, tableName)
+      if (schema && schema.columns) {
+        return schema.columns.map(col => ({
+          label: col.name,
+          type: 'column',
+          apply: col.name,
+          info: `${col.type}${col.nullable ? '' : ' NOT NULL'}${col.comment ? ' - ' + col.comment : ''}`
+        }))
+      }
+
+      // 如果没有缓存，异步加载表结构
+      if (this.sessionId && this.database) {
+        connectionStore.loadTableSchema(this.sessionId, this.database, tableName)
+      }
+
+      return []
     },
 
     focus() {

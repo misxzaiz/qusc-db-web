@@ -4,12 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(ai): 添加回答模式选择功能- 在右侧边栏工具栏中新增回答模式下拉选择框- 支持三种回答模式：简洁、中等、详细- 根据选择的模式动态调整系统提示词&#10;- 回答模式支持 Alt+1/2/3 快捷键切换&#10;- 记住用户选择的回答模式到本地存储- 添加回答模式相关的CSS样式和交互效果&#10;- 更新 FontAwesome 图标导入格式以提高可读性&#10;- 完善组件初始化时加载已保存的回答模式-优化系统提示词组合逻辑，将角色提示与模式提示结合">
-      <change beforePath="$PROJECT_DIR$/.claude/settings.local.json" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/settings.local.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/service/ConnectionManagerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/dbadmin/service/ConnectionManagerService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/target/classes/com/dbadmin/service/ConnectionManagerService.class" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/com/dbadmin/service/ConnectionManagerService.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/BatchExecutionResults.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/BatchExecutionResults.vue" afterDir="false" />
+    <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(sql):优化SQL执行和分页查询逻辑&#10;&#10;- 在执行SQL前清理末尾分号和空白字符&#10;- 统一查询和更新操作的SQL清理逻辑&#10;- 改进分页查询中的SQL处理流程-修复批量执行结果中SQL语句显示问题&#10;- 更新Claude配置添加SQL执行测试命令">
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/AtMention.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/AtMention.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/SqlCodeEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/SqlCodeEditor.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/services/api.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/api.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/stores/connectionStore.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/stores/connectionStore.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -93,14 +92,6 @@
       <workItem from="1761843018540" duration="15714000" />
       <workItem from="1762105731013" duration="1724000" />
       <workItem from="1762182700164" duration="684000" />
-    </task>
-    <task id="LOCAL-00009" summary="feat(ai): 集成AI助手功能支持SQL生成和优化- 后端添加RestTemplate Bean支持HTTP请求- 前端新增AI设置和聊天页面路由&#10;- SQL编辑器集成AI助手侧边栏和相关功能按钮&#10;- 实现AI SQL生成、解释和优化功能&#10;- 添加AI配置管理对话框和本地存储支持&#10;- 新增AI助手相关UI组件和样式&#10;- Claude配置添加AI服务测试命令">
-      <option name="closed" value="true" />
-      <created>1761927616046</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
-      <option name="project" value="LOCAL" />
-      <updated>1761927616046</updated>
     </task>
     <task id="LOCAL-00010" summary="feat(ai): 添加AI SQL助手功能&#10;&#10;- 新增AI配置管理界面和相关API接口&#10;- 实现SQL生成、解释和优化核心功能&#10;- 支持多种AI服务商（DeepSeek、心流、OpenAI等）&#10;- 添加前端聊天界面用于与AI交互- 集成LocalStorage存储AI配置信息&#10;- 提供AI模型参数配置和测试连接功能- 支持数据库表结构引用和快速操作按钮&#10;- 实现消息历史记录和SQL执行结果展示">
       <option name="closed" value="true" />
@@ -486,7 +477,15 @@
       <option name="project" value="LOCAL" />
       <updated>1762189892600</updated>
     </task>
-    <option name="localTasksCounter" value="58" />
+    <task id="LOCAL-00058" summary="feat(sql):优化SQL执行和分页查询逻辑&#10;&#10;- 在执行SQL前清理末尾分号和空白字符&#10;- 统一查询和更新操作的SQL清理逻辑&#10;- 改进分页查询中的SQL处理流程-修复批量执行结果中SQL语句显示问题&#10;- 更新Claude配置添加SQL执行测试命令">
+      <option name="closed" value="true" />
+      <created>1762190420616</created>
+      <option name="number" value="00058" />
+      <option name="presentableId" value="LOCAL-00058" />
+      <option name="project" value="LOCAL" />
+      <updated>1762190420616</updated>
+    </task>
+    <option name="localTasksCounter" value="59" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -528,7 +527,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="feat(ai):优化AI聊天流式处理逻辑&#10;&#10;- 重构 aiApi.js 中的 EventSource 模拟实现&#10;- 提前返回 mockEventSource，避免等待 fetch 完成&#10;- 改进流结束判断逻辑，打印日志替代 onmessage 通知- 增强错误处理，确保 fetch 错误能触发 onerror 回调&#10;- 在 RightTabSidebar.vue 中增加 AI 配置检查- 更新 streamChat 调用方式，使用 Promise 处理 eventSource&#10;- 简化 SSE 数据解析流程，移除前缀处理&#10;- 增加连接确认消息过滤和流式内容累积逻辑&#10;- 补充 eventSource 创建失败的错误捕获&#10;- 更新本地测试 curl 命令配置" />
     <MESSAGE value="feat(ai):优化AI聊天消息对齐样式&#10;&#10;- 统一用户和AI消息内容左对齐显示&#10;- 调整消息气泡样式以适应新的对齐方式&#10;- 保持消息气泡在容器内右侧显示的位置逻辑" />
     <MESSAGE value="feat(markdown): 支持流式渲染和不完整语法处理&#10;&#10;- 添加 streaming 属性支持实时渲染指示器- 自动补全未闭合的 Markdown 语法元素  -代码块、行内代码、粗体、斜体&#10;- 移除旧版流式输出控制按钮和状态显示&#10;- 统一使用流式消息处理逻辑&#10;- 删除冗余的 normalMessage 方法&#10;- 优化样式和动画效果" />
     <MESSAGE value="feat(editor): 添加@表选择器功能支持智能表名引用&#10;&#10;- 在RightTabSidebar.vue中实现@符号触发的表选择器UI&#10;- 添加表名搜索和过滤功能，支持快速查找数据库表- 实现表选择器定位逻辑，根据光标位置动态显示&#10;- 集成表名选择后的文本替换和光标定位功能&#10;- 添加表引用状态管理，跟踪已引用的表列表- 在SqlEditor.vue中实现getTables方法提供表数据源- 添加相关CSS样式支持表选择器的视觉呈现&#10;-优化表选择器交互体验，支持点击选择和空状态显示" />
@@ -553,7 +551,8 @@
     <MESSAGE value="refactor(components):重构结果标签页UI结构和样式&#10;&#10;- 重新组织SELECT、UPDATE和ERROR结果的布局结构&#10;- 统一各类结果的工具栏样式和交互元素排列&#10;- 移除冗余的结果头部组件，合并到工具栏中&#10;- 简化搜索功能，移除前端过滤逻辑&#10;- 调整CSS样式以优化空间利用和视觉层次&#10;- 更新分页相关计算方法以适应新结构&#10;- 改进错误信息显示区域的布局和滚动行为- 统一导出和AI解析按钮的位置和样式&#10;- 优化响应式设计以适应不同屏幕尺寸- 提升代码可维护性和组件" />
     <MESSAGE value="feat(ai): 添加回答模式选择功能- 在右侧边栏工具栏中新增回答模式下拉选择框&#10;- 支持三种回答模式：简洁、中等、详细- 根据选择的模式动态调整系统提示词&#10;- 回答模式支持 Alt+1/2/3 快捷键切换&#10;- 记住用户选择的回答模式到本地存储- 添加回答模式相关的CSS样式和交互效果&#10;- 更新 FontAwesome 图标导入格式以提高可读性- 完善组件初始化时加载已保存的回答模式- 优化系统提示词组合逻辑，将角色提示与模式提示结合" />
     <MESSAGE value="feat(ai): 添加回答模式选择功能- 在右侧边栏工具栏中新增回答模式下拉选择框- 支持三种回答模式：简洁、中等、详细- 根据选择的模式动态调整系统提示词&#10;- 回答模式支持 Alt+1/2/3 快捷键切换&#10;- 记住用户选择的回答模式到本地存储- 添加回答模式相关的CSS样式和交互效果&#10;- 更新 FontAwesome 图标导入格式以提高可读性&#10;- 完善组件初始化时加载已保存的回答模式-优化系统提示词组合逻辑，将角色提示与模式提示结合" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(ai): 添加回答模式选择功能- 在右侧边栏工具栏中新增回答模式下拉选择框- 支持三种回答模式：简洁、中等、详细- 根据选择的模式动态调整系统提示词&#10;- 回答模式支持 Alt+1/2/3 快捷键切换&#10;- 记住用户选择的回答模式到本地存储- 添加回答模式相关的CSS样式和交互效果&#10;- 更新 FontAwesome 图标导入格式以提高可读性&#10;- 完善组件初始化时加载已保存的回答模式-优化系统提示词组合逻辑，将角色提示与模式提示结合" />
+    <MESSAGE value="feat(sql):优化SQL执行和分页查询逻辑&#10;&#10;- 在执行SQL前清理末尾分号和空白字符&#10;- 统一查询和更新操作的SQL清理逻辑&#10;- 改进分页查询中的SQL处理流程-修复批量执行结果中SQL语句显示问题&#10;- 更新Claude配置添加SQL执行测试命令" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(sql):优化SQL执行和分页查询逻辑&#10;&#10;- 在执行SQL前清理末尾分号和空白字符&#10;- 统一查询和更新操作的SQL清理逻辑&#10;- 改进分页查询中的SQL处理流程-修复批量执行结果中SQL语句显示问题&#10;- 更新Claude配置添加SQL执行测试命令" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="XDebuggerManager">

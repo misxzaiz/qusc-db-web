@@ -30,6 +30,7 @@
 
 <script>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { connectionStore } from '../stores/connectionStore'
 
 export default {
   name: 'AtMention',
@@ -66,61 +67,40 @@ export default {
       )
     })
 
-    // 加载表列表
-    const loadTables = async () => {
+    // 加载表列表（使用缓存）
+    const loadTables = () => {
       if (!props.sessionId || !props.database) return
 
       loading.value = true
+
       try {
-        // 先获取表列表
-        const response = await fetch(`/api/sql/tables/${props.sessionId}?database=${props.database}`)
-        const data = await response.json()
+        // 直接从connectionStore获取缓存数据
+        const session = connectionStore.getSession(props.sessionId)
 
-        if (data.tables && data.tables.length > 0) {
-          // 先设置基础表名列表
-          tables.value = data.tables.map(tableName => ({
-            name: tableName,
-            columnCount: 0,
-            comment: ''
-          }))
-
-          // 然后异步获取每个表的详细信息
-          data.tables.forEach(async (tableName, index) => {
-            try {
-              const schemaResponse = await fetch(`/api/sql/table-schema/${props.sessionId}?tableName=${tableName}`)
-              const schema = await schemaResponse.json()
-
-              // 更新表信息
-              if (tables.value[index]) {
-                tables.value[index] = {
-                  name: tableName,
-                  columnCount: schema.columnCount || 0,
-                  comment: schema.comment || ''
-                }
-              }
-            } catch (e) {
-              console.error(`获取表 ${tableName} 结构失败:`, e)
+        if (session && session.tables[props.database]) {
+          tables.value = session.tables[props.database].map(tableName => {
+            const schema = connectionStore.getTableSchema(props.sessionId, props.database, tableName)
+            return {
+              name: tableName,
+              columnCount: schema?.columnCount || 0,
+              comment: schema?.comment || ''
             }
           })
+
+          // 如果表结构还没有加载，异步加载
+          session.tables[props.database].forEach(tableName => {
+            const schema = connectionStore.getTableSchema(props.sessionId, props.database, tableName)
+            if (!schema) {
+              connectionStore.loadTableSchema(props.sessionId, props.database, tableName)
+            }
+          })
+        } else {
+          console.warn('No tables found in cache for database:', props.database)
+          tables.value = []
         }
       } catch (error) {
-        console.error('加载表列表失败:', error)
-        // 如果获取失败，至少尝试从connectionStore获取
-        try {
-          const sessionResponse = await fetch('/api/connection/sessions')
-          const sessions = await sessionResponse.json()
-          const currentSession = sessions.find(s => s.sessionId === props.sessionId)
-
-          if (currentSession && currentSession.tables && currentSession.tables[props.database]) {
-            tables.value = currentSession.tables[props.database].map(tableName => ({
-              name: tableName,
-              columnCount: 0,
-              comment: ''
-            }))
-          }
-        } catch (e2) {
-          console.error('从store获取表列表也失败:', e2)
-        }
+        console.error('从缓存加载表列表失败:', error)
+        tables.value = []
       } finally {
         loading.value = false
       }

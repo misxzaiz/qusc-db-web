@@ -50,6 +50,7 @@ export const connectionStore = reactive({
       databases: [],
       currentDatabase: connectionInfo.database || null,
       tables: {}, // database -> [tables]
+      tableSchemas: {}, // database.table -> {columns: [], comment: '', columnCount: 0}
       views: {}, // database -> [views]
       procedures: {}, // database -> [procedures]
       functions: {}, // database -> [functions]
@@ -62,9 +63,11 @@ export const connectionStore = reactive({
     // 加载数据库列表
     await this.loadDatabases(sessionId)
 
-    // 如果有指定数据库，加载表列表
+    // 如果有指定数据库，加载表列表和结构
     if (connectionInfo.database) {
       await this.loadTables(sessionId, connectionInfo.database)
+      // 异步加载所有表结构（用于智能提示）
+      this.loadAllTableSchemas(sessionId, connectionInfo.database)
     }
 
     return sessionId
@@ -106,6 +109,69 @@ export const connectionStore = reactive({
     } catch (error) {
       console.error('加载表失败', error)
     }
+  },
+
+  // 加载表结构（包括字段信息）
+  async loadTableSchema(sessionId, databaseName, tableName) {
+    try {
+      const sessionData = this.sessions.get(sessionId)
+      if (!sessionData) return
+
+      const schemaKey = `${databaseName}.${tableName}`
+
+      // 检查是否已经缓存
+      if (sessionData.tableSchemas[schemaKey]) {
+        return sessionData.tableSchemas[schemaKey]
+      }
+
+      // 获取表结构
+      const response = await sqlApi.getTableSchema(sessionId, tableName)
+      if (response.data) {
+        const schemaInfo = {
+          tableName,
+          columns: response.data.columns || [],
+          comment: response.data.comment || '',
+          columnCount: response.data.columnCount || 0
+        }
+
+        // 缓存表结构
+        sessionData.tableSchemas[schemaKey] = schemaInfo
+        this.refresh()
+
+        return schemaInfo
+      }
+    } catch (error) {
+      console.error(`加载表 ${tableName} 结构失败`, error)
+    }
+  },
+
+  // 批量加载所有表结构（用于智能提示）
+  async loadAllTableSchemas(sessionId, databaseName) {
+    try {
+      const sessionData = this.sessions.get(sessionId)
+      if (!sessionData || !sessionData.tables[databaseName]) {
+        return
+      }
+
+      const tables = sessionData.tables[databaseName]
+      const promises = tables.map(tableName =>
+        this.loadTableSchema(sessionId, databaseName, tableName)
+      )
+
+      await Promise.allSettled(promises)
+      console.log(`已加载 ${databaseName} 数据库的所有表结构`)
+    } catch (error) {
+      console.error('批量加载表结构失败', error)
+    }
+  },
+
+  // 获取表结构（优先从缓存）
+  getTableSchema(sessionId, databaseName, tableName) {
+    const sessionData = this.sessions.get(sessionId)
+    if (!sessionData) return null
+
+    const schemaKey = `${databaseName}.${tableName}`
+    return sessionData.tableSchemas[schemaKey] || null
   },
 
   // 加载视图列表
@@ -159,6 +225,9 @@ export const connectionStore = reactive({
       // 确保加载新数据库的表列表
       if (!sessionData.tables[databaseName]) {
         await this.loadTables(sessionId, databaseName)
+        // 加载完表列表后，异步加载所有表结构（用于智能提示）
+        // 不等待，避免阻塞切换数据库
+        this.loadAllTableSchemas(sessionId, databaseName)
       }
     }
   },
