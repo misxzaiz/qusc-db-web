@@ -52,71 +52,29 @@
     <!-- 普通Tab内容 -->
     <div v-if="results.length > 0 && !isBatchExecutionTab" class="tab-content">
       <div v-for="(result, index) in results" :key="index" v-show="activeTabIndex === index" class="tab-pane">
-        <!-- 结果头部 -->
-        <div class="result-header">
-          <div class="result-info">
-            <h4>
-              <font-awesome-icon :icon="getResultIcon(result)" />
-              {{ getResultTitle(result, index) }}
-            </h4>
-            <div class="result-meta">
-              <span v-if="result.executionTime" class="execution-time">
-                <font-awesome-icon icon="clock" />
-                {{ result.executionTime }}ms
-              </span>
-              <span v-if="result.type === 'update'" class="affected-rows">
-                <font-awesome-icon icon="edit" />
-                {{ result.affectedRows }} 行受影响
-              </span>
-              <span v-if="result.type === 'select' && result.totalCount" class="total-count">
-                <font-awesome-icon icon="table" />
-                总计 {{ result.totalCount }} 行
-              </span>
-            </div>
-          </div>
-          <div class="result-actions">
-            <button
-              v-if="result.type === 'select'"
-              class="btn btn-small"
-              @click="$emit('analyze', { result, tabIndex: index })"
-              :disabled="result.analyzing"
-            >
-              <font-awesome-icon icon="brain" />
-              {{ result.analyzing ? '分析中...' : 'AI解析' }}
-            </button>
-            <button
-              class="btn btn-small"
-              @click="$emit('export', result)"
-            >
-              <font-awesome-icon icon="download" />
-              导出
-            </button>
-            <button
-              class="btn btn-small btn-icon"
-              @click="closeResult(index)"
-              title="关闭"
-            >
-              <font-awesome-icon icon="times" />
-            </button>
-          </div>
-        </div>
-
         <!-- SELECT结果表格 -->
         <div v-if="result.type === 'select'" class="select-result">
           <div v-if="result.data && result.data.length > 0" class="result-table-wrapper">
             <!-- 工具栏 -->
             <div class="table-toolbar">
               <div class="toolbar-left">
-                <input
-                  type="text"
-                  v-model="result.searchText"
-                  placeholder="搜索..."
-                  class="search-input"
-                  @input="handleSearch(result)"
-                />
-                <span class="record-info">
-                  显示 {{ getFilteredCount(result) }} / {{ result.data.length }} 条
-                </span>
+                <h4 class="result-title">
+                  <font-awesome-icon :icon="getResultIcon(result)" />
+                  {{ getResultTitle(result, index) }}
+                </h4>
+                <div class="result-meta">
+                  <span v-if="result.executionTime" class="execution-time">
+                    <font-awesome-icon icon="clock" />
+                    {{ result.executionTime }}ms
+                  </span>
+                  <span v-if="result.totalCount" class="total-count">
+                    <font-awesome-icon icon="table" />
+                    总计 {{ result.totalCount }} 行
+                  </span>
+                  <span class="record-info">
+                    显示 {{ result.data.length }} 条
+                  </span>
+                </div>
               </div>
               <div class="toolbar-right">
                 <button
@@ -125,6 +83,21 @@
                   title="刷新数据"
                 >
                   <font-awesome-icon icon="refresh" />
+                </button>
+                <button
+                  class="btn btn-small"
+                  @click="$emit('analyze', { result, tabIndex: index })"
+                  :disabled="result.analyzing"
+                >
+                  <font-awesome-icon icon="brain" />
+                  {{ result.analyzing ? '分析中...' : 'AI解析' }}
+                </button>
+                <button
+                  class="btn btn-small"
+                  @click="$emit('export', result)"
+                >
+                  <font-awesome-icon icon="download" />
+                  导出
                 </button>
               </div>
             </div>
@@ -269,22 +242,85 @@
 
         <!-- UPDATE/INSERT/DELETE结果 -->
         <div v-else-if="result.type === 'update'" class="update-result">
-          <div class="success-message">
+          <div class="update-toolbar">
+            <div class="toolbar-left">
+              <h4 class="result-title">
+                <font-awesome-icon :icon="getResultIcon(result)" />
+                {{ getResultTitle(result, index) }}
+              </h4>
+              <div class="result-meta">
+                <span v-if="result.executionTime" class="execution-time">
+                  <font-awesome-icon icon="clock" />
+                  {{ result.executionTime }}ms
+                </span>
+                <span class="affected-rows">
+                  <font-awesome-icon icon="edit" />
+                  {{ result.affectedRows }} 行受影响
+                </span>
+              </div>
+            </div>
+            <div class="toolbar-right">
+              <button
+                class="btn btn-small"
+                @click="refreshData(result, index)"
+                title="刷新数据"
+              >
+                <font-awesome-icon icon="refresh" />
+              </button>
+              <button
+                class="btn btn-small"
+                @click="$emit('export', result)"
+              >
+                <font-awesome-icon icon="download" />
+                导出
+              </button>
+            </div>
+          </div>
+          <div class="success-content">
             <font-awesome-icon icon="check-circle" />
             <span>执行成功</span>
-          </div>
-          <div class="affected-info">
-            <span>{{ result.affectedRows }} 行受影响</span>
           </div>
         </div>
 
         <!-- 错误结果 -->
         <div v-else-if="result.error" class="error-result">
-          <div class="error-header">
-            <font-awesome-icon icon="exclamation-triangle" />
-            <span>执行错误</span>
+          <div class="error-toolbar">
+            <div class="toolbar-left">
+              <h4 class="result-title">
+                <font-awesome-icon :icon="getResultIcon(result)" />
+                {{ getResultTitle(result, index) }}
+              </h4>
+              <div class="result-meta">
+                <span v-if="result.executionTime" class="execution-time">
+                  <font-awesome-icon icon="clock" />
+                  {{ result.executionTime }}ms
+                </span>
+                <span class="error-info">
+                  <font-awesome-icon icon="exclamation-triangle" />
+                  执行错误
+                </span>
+              </div>
+            </div>
+            <div class="toolbar-right">
+              <button
+                class="btn btn-small"
+                @click="refreshData(result, index)"
+                title="刷新数据"
+              >
+                <font-awesome-icon icon="refresh" />
+              </button>
+              <button
+                class="btn btn-small"
+                @click="$emit('export', result)"
+              >
+                <font-awesome-icon icon="download" />
+                导出
+              </button>
+            </div>
           </div>
-          <pre class="error-message">{{ result.error }}</pre>
+          <div class="error-content">
+            <pre class="error-message">{{ result.error }}</pre>
+          </div>
         </div>
       </div>
     </div>
@@ -480,29 +516,9 @@ export default {
       result.currentPage = 1
     }
 
-    // 搜索过滤
-    const handleSearch = (result) => {
-      result.filteredData = null
-      if (result.searchText && result.searchText.trim()) {
-        const searchLower = result.searchText.toLowerCase()
-        result.filteredData = result.data.filter(row => {
-          return result.columns.some(column => {
-            const value = row[column]
-            return value != null && String(value).toLowerCase().includes(searchLower)
-          })
-        })
-      }
-      result.currentPage = 1
-    }
-
-    // 获取过滤后的数据
-    const getFilteredData = (result) => {
-      return result.filteredData || result.data || []
-    }
-
-    // 获取过滤后的数量
-    const getFilteredCount = (result) => {
-      return getFilteredData(result).length
+    // 获取当前页数据数量
+    const getCurrentPageCount = (result) => {
+      return result.data ? result.data.length : 0
     }
 
     // 分页相关 - 使用后端分页数据
@@ -631,8 +647,7 @@ export default {
       getResultTitle,
       formatCellValue,
       sortColumn,
-      handleSearch,
-      getFilteredCount,
+      getCurrentPageCount,
       needPagination,
       getTotalPages,
       getPaginatedData,
@@ -666,7 +681,7 @@ export default {
   padding: 0 var(--spacing-md);
   background-color: var(--bg-tertiary);
   border-bottom: 1px solid var(--border-primary);
-  height: 40px;
+  height: 36px;
   flex-shrink: 0;
 }
 
@@ -783,39 +798,7 @@ export default {
   overflow: hidden;
 }
 
-/* 结果头部 */
-.result-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-md);
-  background-color: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-primary);
-}
-
-.result-info h4 {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text-primary);
-  font-size: 14px;
-}
-
-.result-meta {
-  display: flex;
-  gap: var(--spacing-md);
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.result-meta span {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
+/* 执行时间样式 */
 .execution-time {
   color: var(--info);
 }
@@ -828,39 +811,60 @@ export default {
   color: var(--success);
 }
 
-.result-actions {
-  display: flex;
-  gap: var(--spacing-sm);
-}
-
 /* 表格工具栏 */
-.table-toolbar {
+.table-toolbar,
+.update-toolbar,
+.error-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-xs) var(--spacing-md);
   background-color: var(--bg-tertiary);
   border-bottom: 1px solid var(--border-primary);
-  height: 36px;
+  height: 32px;
   flex-shrink: 0;
+  gap: var(--spacing-md);
 }
 
 .toolbar-left {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
+  flex: 1;
+  min-width: 0;
 }
 
-.search-input {
-  padding: 4px 8px;
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-xs);
-  font-size: 12px;
-  width: 200px;
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.result-title {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 .record-info {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-secondary);
 }
 
@@ -1040,10 +1044,10 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-xs) var(--spacing-md);
   background-color: var(--bg-tertiary);
   border-top: 1px solid var(--border-primary);
-  height: 36px;
+  height: 32px;
   flex-shrink: 0;
 }
 
@@ -1079,32 +1083,28 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.success-content {
+  display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--spacing-xl);
-}
-
-.success-message {
-  display: flex;
-  align-items: center;
   gap: var(--spacing-md);
-  font-size: 18px;
+  font-size: 16px;
   color: var(--success);
-  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-xl);
+  flex: 1;
 }
 
-.affected-info {
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-.error-header {
+.error-content {
+  flex: 1;
+  padding: var(--spacing-md);
+  overflow: auto;
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
-  font-size: 18px;
-  color: var(--error);
-  margin-bottom: var(--spacing-md);
+  justify-content: center;
 }
 
 .error-message {
@@ -1116,8 +1116,15 @@ export default {
   font-family: var(--font-family-mono);
   font-size: 12px;
   overflow: auto;
-  max-width: 600px;
-  max-height: 300px;
+  max-width: 100%;
+  max-height: 100%;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.error-info {
+  color: var(--error);
 }
 
 .empty-result {
