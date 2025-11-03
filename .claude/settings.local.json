@@ -31,7 +31,10 @@
       "Bash(git add .claude/settings.local.json .idea/workspace.xml)",
       "Bash(taskkill /PID 25640 /F)",
       "Bash(cmd //c \"taskkill /PID 25640 /F\")",
-      "Bash(cmd //c \"taskkill /PID 13012 /F\")"
+      "Bash(cmd //c \"taskkill /PID 13012 /F\")",
+      "Bash(cmd //c \"taskkill /PID 25200 /F\")",
+      "Bash(mvn compile -q)",
+      "Bash(./mvnw package -DskipTests -q)"
     ],
     "deny": [],
     "ask": []

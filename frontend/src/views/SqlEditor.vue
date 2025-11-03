@@ -483,7 +483,7 @@ export default {
           sessionId,
           sql,
           page: 1,  // 启用后端分页
-          pageSize: 50
+          pageSize: 20  // 默认20条/页
         })
       })
 
@@ -511,9 +511,9 @@ export default {
           columns: data.columns || [],
           totalCount: data.totalCount || data.data.length,
           // 初始化分页属性
-          pageSize: 50,
+          pageSize: 20,
           currentPage: 1,
-          totalPages: Math.ceil((data.totalCount || data.data.length) / 50),
+          totalPages: Math.ceil((data.totalCount || data.data.length) / 20),
           searchText: '',
           filteredData: null,
           sortColumn: null,
@@ -689,8 +689,8 @@ ${JSON.stringify(sampleData, null, 2)}
             body: JSON.stringify({
               sessionId: tab.sessionId,
               sql: result.sql,
-              page,
-              pageSize
+              page: page || 1,
+              pageSize: pageSize || 20
             })
           })
 

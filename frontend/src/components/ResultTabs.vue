@@ -253,10 +253,10 @@
                   class="page-size-select"
                   :disabled="result.loading"
                 >
+                  <option value="20">20条/页</option>
                   <option value="50">50条/页</option>
                   <option value="100">100条/页</option>
                   <option value="200">200条/页</option>
-                  <option value="500">500条/页</option>
                 </select>
               </div>
             </div>
@@ -508,13 +508,13 @@ export default {
     // 分页相关 - 使用后端分页数据
     const needPagination = (result) => {
       // 使用后端返回的总数判断
-      return result.totalCount && result.totalCount > (result.pageSize || 50)
+      return result.totalCount && result.totalCount > (result.pageSize || 20)
     }
 
     const getTotalPages = (result) => {
       // 使用后端计算的总页数
       if (result.totalPages) return result.totalPages
-      const pageSize = result.pageSize || 50
+      const pageSize = result.pageSize || 20
       return Math.ceil((result.totalCount || 0) / pageSize)
     }
 
