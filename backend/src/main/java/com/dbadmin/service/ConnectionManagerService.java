@@ -37,8 +37,11 @@ public class ConnectionManagerService {
             throw new SQLException("Connection not found or closed");
         }
 
+        // 清理SQL：移除末尾的分号和空白字符
+        String cleanSql = sql.trim().replaceAll(";+$", "");
+
         try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+             ResultSet rs = stmt.executeQuery(cleanSql)) {
 
             return resultSetToList(rs);
         }
@@ -57,10 +60,12 @@ public class ConnectionManagerService {
 
         if (applyPagination) {
             // 添加分页逻辑
-            String upperSql = sql.toUpperCase().trim();
+            // 清理SQL：移除末尾的分号和空白字符
+            String cleanSql = sql.trim().replaceAll(";+$", "");
+            String upperSql = cleanSql.toUpperCase().trim();
             if (!upperSql.contains(" LIMIT ")) {
                 // 先查询总数
-                String countSql = "SELECT COUNT(*) FROM (" + sql + ") AS total_count";
+                String countSql = "SELECT COUNT(*) FROM (" + cleanSql + ") AS total_count";
                 try (Statement stmt = conn.createStatement()) {
                     // 设置查询超时为30秒
                     stmt.setQueryTimeout(30);
@@ -73,18 +78,23 @@ public class ConnectionManagerService {
 
                 // 添加LIMIT子句
                 int offset = (page - 1) * pageSize;
-                finalSql = sql + " LIMIT " + pageSize + " OFFSET " + offset;
+                finalSql = cleanSql + " LIMIT " + pageSize + " OFFSET " + offset;
             } else {
                 // 已有LIMIT，查询实际数据量作为总数
                 totalCount = null;
             }
         }
 
-        // 执行查询
+        // 执行查询前再次清理SQL（以防非分页查询）
+        String sqlToExecute = finalSql;
+        if (!applyPagination) {
+            sqlToExecute = finalSql.trim().replaceAll(";+$", "");
+        }
+
         try (Statement stmt = conn.createStatement()) {
             // 设置查询超时为30秒
             stmt.setQueryTimeout(30);
-            try (ResultSet rs = stmt.executeQuery(finalSql)) {
+            try (ResultSet rs = stmt.executeQuery(sqlToExecute)) {
 
                 List<Map<String, Object>> data = resultSetToList(rs);
                 List<String> columns = new ArrayList<>();
@@ -113,8 +123,11 @@ public class ConnectionManagerService {
             throw new SQLException("Connection not found or closed");
         }
 
+        // 清理SQL：移除末尾的分号和空白字符
+        String cleanSql = sql.trim().replaceAll(";+$", "");
+
         try (Statement stmt = conn.createStatement()) {
-            return stmt.executeUpdate(sql);
+            return stmt.executeUpdate(cleanSql);
         }
     }
 

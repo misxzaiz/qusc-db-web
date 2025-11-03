@@ -36,7 +36,8 @@
       "Bash(mvn compile -q)",
       "Bash(./mvnw package -DskipTests -q)",
       "Bash(curl -s http://localhost:8080/api/sql/execute -X POST -H \"Content-Type: application/json\" -d '{\"\"\"\"sessionId\"\"\"\":\"\"\"\"test\"\"\"\",\"\"\"\"sql\"\"\"\":\"\"\"\"SELECT 1\"\"\"\",\"\"\"\"page\"\"\"\":1,\"\"\"\"pageSize\"\"\"\":20}')",
-      "Bash(curl -s http://localhost:8080/api/sql/execute -X POST -H \"Content-Type: application/json\" -d '{\"\"\"\"sessionId\"\"\"\":\"\"\"\"test\"\"\"\",\"\"\"\"sql\"\"\"\":\"\"\"\"SELECT 1\"\"\"\",\"\"\"\"page\"\"\"\":1,\"\"\"\"pageSize\"\"\"\":\"\"\"\"20\"\"\"\"}')"
+      "Bash(curl -s http://localhost:8080/api/sql/execute -X POST -H \"Content-Type: application/json\" -d '{\"\"\"\"sessionId\"\"\"\":\"\"\"\"test\"\"\"\",\"\"\"\"sql\"\"\"\":\"\"\"\"SELECT 1\"\"\"\",\"\"\"\"page\"\"\"\":1,\"\"\"\"pageSize\"\"\"\":\"\"\"\"20\"\"\"\"}')",
+      "Bash(findstr /C \"public QueryResult executeQuery\" D:quscqusc-dbbackendsrcmainjavacomdbadminserviceConnectionManagerService.java)"
     ],
     "deny": [],
     "ask": []

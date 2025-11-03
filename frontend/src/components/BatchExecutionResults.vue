@@ -73,10 +73,10 @@
     <div v-if="results.length > 0" class="result-content">
       <div v-if="activeResult" class="result-detail">
         <!-- SQL语句 -->
-        <div class="sql-display">
-          <h5>SQL语句:</h5>
-          <pre>{{ activeResult.sql }}</pre>
-        </div>
+<!--        <div class="sql-display">-->
+<!--          <h5>SQL语句:</h5>-->
+<!--          <pre>{{ activeResult.sql }}</pre>-->
+<!--        </div>-->
 
         <!-- 执行信息 -->
         <div class="execution-info">
