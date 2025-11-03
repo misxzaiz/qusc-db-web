@@ -13,6 +13,7 @@
               connected: item.sessionId && isConnected(item.connectionInfo?.id)
             }"
             @click="handleConnectionClick(item)"
+            @contextmenu.prevent="handleConnectionContextMenu($event, item)"
           >
             <span
               class="expand-icon"
@@ -177,6 +178,23 @@
       </div>
     </div>
 
+    <!-- 右键菜单 -->
+    <div
+      v-show="contextMenu.visible"
+      class="context-menu"
+      :style="contextMenu.style"
+      @click.stop
+    >
+      <div
+        class="menu-item"
+        @click="handleReconnect"
+        :class="{ disabled: !contextMenu.connection || !contextMenu.connection.sessionId }"
+      >
+        <font-awesome-icon icon="refresh" />
+        <span>重新连接</span>
+      </div>
+    </div>
+
     <!-- 连接状态栏 -->
     <div v-if="currentSession" class="status-bar">
       <div class="status-item">
@@ -206,7 +224,15 @@ export default {
     return {
       currentSessionId: null,
       currentSession: null,
-      savedConnections: []
+      savedConnections: [],
+      // 右键菜单相关
+      contextMenu: {
+        visible: false,
+        x: 0,
+        y: 0,
+        connection: null,
+        style: {}
+      }
     }
   },
 
@@ -255,6 +281,13 @@ export default {
         this.loadSavedConnections()
       }
     })
+  },
+
+  beforeUnmount() {
+    // 清理右键菜单事件监听
+    if (this.contextMenu.visible) {
+      document.removeEventListener('click', this.hideContextMenu)
+    }
   },
 
   methods: {
@@ -367,6 +400,72 @@ export default {
     // 刷新已保存的连接列表
     refreshSavedConnections() {
       this.loadSavedConnections()
+    },
+
+    // 处理连接节点右键
+    handleConnectionContextMenu(event, connection) {
+      // 只对已连接的连接显示重新连接
+      if (!connection.sessionId) return
+
+      this.contextMenu.connection = connection
+      this.contextMenu.visible = true
+
+      // 计算位置
+      const x = event.clientX
+      const y = event.clientY
+
+      // 防止超出视窗
+      const menuHeight = 40
+      const adjustedY = y + menuHeight > window.innerHeight
+        ? window.innerHeight - menuHeight - 5
+        : y
+
+      this.contextMenu.style = {
+        left: `${x}px`,
+        top: `${adjustedY}px`
+      }
+
+      // 点击其他地方关闭
+      document.addEventListener('click', this.hideContextMenu)
+    },
+
+    // 隐藏右键菜单
+    hideContextMenu() {
+      this.contextMenu.visible = false
+      document.removeEventListener('click', this.hideContextMenu)
+    },
+
+    // 重新连接实现
+    async handleReconnect() {
+      const connection = this.contextMenu.connection
+      if (!connection || !connection.sessionId) return
+
+      try {
+        // 保存当前状态
+        const wasCurrent = this.currentSessionId === connection.sessionId
+        const connectionInfo = connection.connectionInfo
+
+        // 断开连接
+        await connectionStore.disconnect(connection.sessionId)
+
+        // 重新连接
+        const newSessionId = await connectionStore.connect(connectionInfo)
+
+        // 如果是当前选中的连接，更新选中状态
+        if (wasCurrent) {
+          this.selectSession(newSessionId)
+          const session = connectionStore.getSession(newSessionId)
+          this.$emit('connection-selected', session)
+        }
+
+        // 简单的成功提示
+        console.log('重新连接成功')
+
+      } catch (error) {
+        alert('重新连接失败: ' + (error.response?.data?.error || error.message))
+      }
+
+      this.hideContextMenu()
     }
   }
 }
@@ -549,5 +648,45 @@ export default {
 .disconnect-btn {
   padding: 4px 12px;
   font-size: 11px;
+}
+
+/* 右键菜单样式 */
+.context-menu {
+  position: fixed;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
+  z-index: 1000;
+  min-width: 120px;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.menu-item:hover {
+  background-color: var(--bg-highlight);
+}
+
+.menu-item.disabled {
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+.menu-item.disabled:hover {
+  background-color: transparent;
+}
+
+.menu-item svg {
+  margin-right: 8px;
+  font-size: 14px;
 }
 </style>
