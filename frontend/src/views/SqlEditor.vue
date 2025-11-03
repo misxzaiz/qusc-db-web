@@ -1121,7 +1121,7 @@ ${tab.sqlText}
 
 /* 当右侧边栏展开时，增加padding */
 .main-content.sidebar-expanded {
-  padding-right: 400px;
+  padding-right: 600px;
 }
 
 /* Tab栏 */

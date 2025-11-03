@@ -1015,7 +1015,7 @@ export default {
 
 /* 展开时需要增加宽度以容纳面板 */
 .right-sidebar:not(.collapsed) {
-  width: 400px; /* 40px图标 + 360px面板 */
+  width: 600px; /* 40px图标 + 560px面板 */
 }
 
 .nav-icons {
@@ -1061,7 +1061,7 @@ export default {
   right: 40px; /* 图标宽度 */
   top: 0;
   bottom: 0;
-  width: 360px;
+  width: 560px;
   background-color: var(--bg-primary);
   border-right: 1px solid var(--border-primary);
   border-left: none;
@@ -1606,7 +1606,7 @@ export default {
 
 @keyframes spin {
   from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  to { transform: rotate(560deg); }
 }
 
 .form-actions {
