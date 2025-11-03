@@ -386,7 +386,7 @@ export default {
       answerModes: {
         concise: {
           name: '简洁',
-          prompt: '请简洁回答，控制在1-2句话，直接给出核心信息。如果是代码或SQL，请用markdown代码块格式返回。'
+          prompt: '请简洁回答，控制在1-2句话，直接给出核心信息，如果是代码或SQL，也需要一句总结。如果是代码或SQL，请用markdown代码块格式返回。'
         },
         medium: {
           name: '中等',
