@@ -175,3 +175,16 @@ application.log
 # H2 database
 *.db.mv.db
 *.db.trace.db
+
+# Build outputs
+/backend/src/main/resources/static/**
+!/backend/src/main/resources/static/.gitkeep
+dist/
+QUSC-DB-Portable/
+
+# Null files
+nul
+backend/nul
+
+# Documentation
+打包说明.md
