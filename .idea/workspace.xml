@@ -6,6 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="8b8ed7f8-fdbe-47eb-9213-b5d605de9dc3" name="更改" comment="feat(sql): 实现表结构缓存和智能SQL提示功能&#10;&#10;- 在connectionStore中添加表结构缓存机制&#10;- 新增getTableSchema和loadTableSchema方法用于管理表元数据&#10;-优化AtMention组件从缓存加载表列表和结构&#10;- 增强SqlCodeEditor的代码补全功能- 支持表名后输入点号(.)触发字段名补全&#10;- 支持SQL关键字后自动补全表名&#10;-从connectionStore获取表和字段信息用于提示&#10;- 添加异步加载表结构避免阻塞UI- 在api.js中新增getTableSchema接口方法">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/TabSidebar.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/TabSidebar.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/styles/theme.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/styles/theme.css" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

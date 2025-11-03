@@ -61,8 +61,8 @@ export default {
 }
 
 .logo {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
   color: var(--accent-primary);
   display: flex;
   align-items: center;
@@ -82,7 +82,8 @@ export default {
 .nav-link {
   color: var(--text-secondary);
   text-decoration: none;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   padding: 8px 16px;
   border-radius: var(--radius-sm);
   transition: var(--transition-fast);
@@ -99,7 +100,7 @@ export default {
 .nav-link.router-link-active {
   color: var(--accent-primary);
   background-color: var(--bg-quaternary);
-  font-weight: 500;
+  font-weight: var(--font-weight-semibold);
 }
 
 .nav-link svg {
@@ -114,7 +115,8 @@ export default {
 }
 
 .version {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
   color: var(--text-tertiary);
   padding: 4px 8px;
   background-color: var(--bg-quaternary);

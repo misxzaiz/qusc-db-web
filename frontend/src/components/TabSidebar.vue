@@ -10,14 +10,14 @@
       >
         <font-awesome-icon icon="database" />
       </button>
-      <button
-        class="nav-icon"
-        :class="{ active: !isCollapsed && activeTab === 'history' }"
-        @click="toggleTab('history')"
-        title="查询历史"
-      >
-        <font-awesome-icon icon="history" />
-      </button>
+<!--      <button-->
+<!--        class="nav-icon"-->
+<!--        :class="{ active: !isCollapsed && activeTab === 'history' }"-->
+<!--        @click="toggleTab('history')"-->
+<!--        title="查询历史"-->
+<!--      >-->
+<!--        <font-awesome-icon icon="history" />-->
+<!--      </button>-->
     </div>
 
     <!-- 弹出面板 -->
